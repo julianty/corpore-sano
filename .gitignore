@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 
 # Some resources
-.resources/
+resources/
+

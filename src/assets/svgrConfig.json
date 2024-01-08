@@ -1,0 +1,6 @@
+{
+  "typescript": true,
+  "ext": "tsx",
+  "outDir": "./svgr",
+  "jsxRuntime": "automatic"
+}

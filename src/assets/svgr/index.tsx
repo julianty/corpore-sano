@@ -1,0 +1,16 @@
+export { default as AbdominalMuscles } from "./AbdominalMuscles";
+export { default as AnteriorDeltoid } from "./AnteriorDeltoid";
+export { default as Biceps } from "./Biceps";
+export { default as BodyOutlineBack } from "./BodyOutlineBack";
+export { default as BodyOutlineFront } from "./BodyOutlineFront";
+export { default as Calves } from "./Calves";
+export { default as Glutes } from "./Glutes";
+export { default as Hamstring } from "./Hamstring";
+export { default as LattissimusDorsi } from "./LattissimusDorsi";
+export { default as Pectorals } from "./Pectorals";
+export { default as Quadriceps } from "./Quadriceps";
+export { default as React } from "./React";
+export { default as RearDeltoid } from "./RearDeltoid";
+export { default as SpinalErectors } from "./SpinalErectors";
+export { default as Trapezius } from "./Trapezius";
+export { default as Triceps } from "./Triceps";

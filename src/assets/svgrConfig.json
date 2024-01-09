@@ -2,5 +2,7 @@
   "typescript": true,
   "ext": "tsx",
   "outDir": "./svgr",
-  "jsxRuntime": "automatic"
+  "jsxRuntime": "automatic",
+  "svgProps": { "className": "muscle-svg" },
+  "dimensions": false
 }

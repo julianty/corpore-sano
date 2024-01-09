@@ -1,6 +1,11 @@
 import type { SVGProps } from "react";
 const SvgGlutes = (props: SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={394} height={928} {...props}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 394 928"
+    className="muscle-svg"
+    {...props}
+  >
     <path
       fill="none"
       stroke="#000"

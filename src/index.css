@@ -2,6 +2,13 @@
   position: absolute;
 }
 
+#Body_Outline_Front > path:hover {
+  fill: none;
+}
+#Body_Outline_Back > path:hover {
+  fill: none;
+}
+
 path:hover {
   fill: aqua;
 }

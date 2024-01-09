@@ -1,4 +1,5 @@
 import "@mantine/core/styles.css";
+import "./index.css";
 import { AppShell, Title } from "@mantine/core";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { MuscleDiagram } from "./components/MuscleDiagram";
@@ -12,7 +13,7 @@ function Dashboard() {
     <Grid>
       <Grid.Col span={12}>buttons</Grid.Col>
       <Grid.Col span={6}>
-        <Paper style={{ height: "50vh", ...paperStyle }} withBorder>
+        <Paper style={{ height: "60vh", ...paperStyle }} withBorder>
           <MuscleDiagram />
         </Paper>
       </Grid.Col>

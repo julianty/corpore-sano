@@ -1,8 +1,8 @@
 import React from "react";
 import { useState } from "react";
-import FrontMuscles from "../assets/svgr/FrontMuscles";
+import FrontMuscles from "../assets/FrontMuscles";
 import { Box, Group, Stack, Title, Text } from "@mantine/core";
-import BackMuscles from "../assets/svgr/BackMuscles";
+import BackMuscles from "../assets/BackMuscles";
 
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");

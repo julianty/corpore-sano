@@ -1,36 +1,37 @@
-import {
-  AbdominalMuscles,
-  AnteriorDeltoid,
-  Biceps,
-  BodyOutlineBack,
-  BodyOutlineFront,
-  Pectorals,
-  Quadriceps,
-} from "../assets/svgr/MuscleIndex";
-import { Box, Group } from "@mantine/core";
+import React from "react";
+import { useState } from "react";
+import FrontMuscles from "../assets/svgr/FrontMuscles";
+import { Box, Group, Stack, Title, Text } from "@mantine/core";
+import BackMuscles from "../assets/svgr/BackMuscles";
+
 export function MuscleDiagram() {
-  // function clickHandler(e: React.MouseEvent<SVGPathElement>) {
-  //   const path = e.target as SVGPathElement;
-  //   console.log(path.parentElement!.id);
-  // }
+  const [activeMuscle, setActiveMuscle] = useState("");
+
+  function onMouseEnterHandler(e: React.MouseEvent<SVGElement>) {
+    const target = e.target as HTMLElement;
+    const parentElement = target.parentElement!;
+    setActiveMuscle(parentElement.id);
+  }
   const svgProps = {
     width: "200px",
     height: "500px",
+    onMouseEnterHandler: onMouseEnterHandler,
   };
 
   return (
-    <Group grow>
-      <Box className="muscles-front">
-        <BodyOutlineFront {...svgProps} />
-        <Pectorals {...svgProps} />
-        <Biceps {...svgProps} />
-        <AnteriorDeltoid {...svgProps} />
-        <Quadriceps {...svgProps} />
-        <AbdominalMuscles {...svgProps} />
+    <Stack>
+      <Title order={2}>Body Diagram</Title>
+      <Box w="100%" h="500px">
+        <Group grow>
+          <Box className="muscles-front">
+            <FrontMuscles {...svgProps} />
+          </Box>
+          <Box className="muscles-back">
+            <BackMuscles {...svgProps} />
+          </Box>
+        </Group>
       </Box>
-      <Box className="muscles-back">
-        <BodyOutlineBack {...svgProps} />
-      </Box>
-    </Group>
+      <Text>{`You are currently hovering over ${activeMuscle}`}</Text>
+    </Stack>
   );
 }

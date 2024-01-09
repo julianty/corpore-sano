@@ -8,19 +8,21 @@ import { Paper, Grid, Stack } from "@mantine/core";
 function Dashboard() {
   const paperStyle = {
     // margin: "20px",
+    p: "md",
+    withBorder: true,
   };
   return (
-    <Grid>
+    <Grid w="100vw">
       <Grid.Col span={12}>buttons</Grid.Col>
       <Grid.Col span={6}>
-        <Paper style={{ height: "60vh", ...paperStyle }} withBorder>
+        <Paper {...paperStyle}>
           <MuscleDiagram />
         </Paper>
       </Grid.Col>
-      <Grid.Col span={6}>
+      <Grid.Col span={3}>
         <Stack>
-          <Paper style={{ height: "30vh", ...paperStyle }} withBorder></Paper>
-          <Paper style={{ height: "30vh", ...paperStyle }} withBorder></Paper>
+          <Paper h="30vh" {...paperStyle}></Paper>
+          <Paper h="30vh" {...paperStyle}></Paper>
         </Stack>
       </Grid.Col>
     </Grid>

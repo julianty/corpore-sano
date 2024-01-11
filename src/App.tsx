@@ -1,34 +1,9 @@
 import "@mantine/core/styles.css";
 import "./index.css";
-import { AppShell, Title } from "@mantine/core";
+import { AppShell, Burger, Title, Group } from "@mantine/core";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { MuscleDiagram } from "./components/MuscleDiagram";
-import { Paper, Grid, Stack } from "@mantine/core";
-
-function Dashboard() {
-  const paperStyle = {
-    // margin: "20px",
-    p: "md",
-    withBorder: true,
-  };
-  return (
-    <Grid w="100vw">
-      <Grid.Col span={12}>buttons</Grid.Col>
-      <Grid.Col span={6}>
-        <Paper w="450px" {...paperStyle}>
-          <MuscleDiagram />
-        </Paper>
-      </Grid.Col>
-      <Grid.Col span={3}>
-        <Stack>
-          <Paper h="30vh" {...paperStyle}></Paper>
-          <Paper h="30vh" {...paperStyle}></Paper>
-        </Stack>
-      </Grid.Col>
-    </Grid>
-  );
-}
-
+import { useDisclosure } from "@mantine/hooks";
+import { Dashboard } from "./components/Dashboard";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -41,14 +16,28 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const [opened, { toggle }] = useDisclosure();
+
   return (
     <AppShell
       header={{ height: 60 }}
-      navbar={{ width: 100, breakpoint: "sm" }}
+      navbar={{
+        width: 100,
+        breakpoint: "xs",
+        collapsed: { mobile: !opened },
+      }}
       padding="md"
     >
       <AppShell.Header>
-        <Title>Corpore Sano</Title>
+        <Group>
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="sm"
+            size={"sm"}
+          />
+          <Title>Corpore Sano</Title>
+        </Group>
       </AppShell.Header>
       <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
       <AppShell.Main>

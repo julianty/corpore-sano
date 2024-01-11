@@ -15,7 +15,7 @@ function Dashboard() {
     <Grid w="100vw">
       <Grid.Col span={12}>buttons</Grid.Col>
       <Grid.Col span={6}>
-        <Paper {...paperStyle}>
+        <Paper w="450px" {...paperStyle}>
           <MuscleDiagram />
         </Paper>
       </Grid.Col>

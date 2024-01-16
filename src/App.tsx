@@ -1,9 +1,14 @@
 import "@mantine/core/styles.css";
 import "./index.css";
-import { AppShell, Burger, Title, Group } from "@mantine/core";
+import { AppShell, Burger, Title, Group, Anchor } from "@mantine/core";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { Dashboard } from "./components/Dashboard";
+
+function WorkoutTool() {
+  return <div>Workout Tool</div>;
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -12,6 +17,10 @@ const router = createBrowserRouter([
   {
     path: "/about",
     element: <div>about?</div>,
+  },
+  {
+    path: "/tool",
+    element: <WorkoutTool />,
   },
 ]);
 
@@ -39,7 +48,11 @@ function App() {
           <Title>Corpore Sano</Title>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
+      <AppShell.Navbar p="md">
+        <Anchor href="/">Home</Anchor>
+        <Anchor href="/about">About</Anchor>
+        <Anchor href="/tool">Tool</Anchor>
+      </AppShell.Navbar>
       <AppShell.Main>
         <RouterProvider router={router} />
       </AppShell.Main>

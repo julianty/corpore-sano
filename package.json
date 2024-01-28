@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@mantine/core": "^7.3.2",
-    "@mantine/dates": "^7.3.2",
+    "@mantine/dates": "^7.5.0",
     "@mantine/form": "^7.4.1",
     "@mantine/hooks": "^7.3.2",
     "@reduxjs/toolkit": "^2.0.1",

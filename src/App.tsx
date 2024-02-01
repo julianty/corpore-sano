@@ -1,56 +1,16 @@
 import "@mantine/core/styles.css";
 import "./index.css";
-import {
-  AppShell,
-  Burger,
-  Title,
-  Group,
-  Anchor,
-  TextInput,
-  NumberInput,
-} from "@mantine/core";
+import { AppShell, Burger, Title, Group, Anchor } from "@mantine/core";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { Dashboard } from "./components/Dashboard";
-import { useForm } from "@mantine/form";
-import { DateInput } from "@mantine/dates";
+import { WorkoutInstance } from "./components/WorkoutInstance";
+
 function WorkoutTool() {
-  const form = useForm({
-    initialValues: {
-      workoutDate: new Date(),
-      exercises: [{ name: "Lateral Raise", sets: 2, reps: 10, weight: 30 }],
-    },
-  });
-  const exerciseFields = form.values.exercises.map((_, index) => {
-    const uniqueId = `inputKey${index}`;
-    return (
-      <Group key={`Group${uniqueId}`}>
-        <TextInput
-          key={`${uniqueId}name`}
-          {...form.getInputProps(`exercises.${index}.name`)}
-        />
-        <NumberInput
-          key={`${uniqueId}sets`}
-          {...form.getInputProps(`exercises.${index}.sets`)}
-        />
-        <NumberInput
-          key={`${uniqueId}reps`}
-          {...form.getInputProps(`exercises.${index}.reps`)}
-        />
-        <NumberInput
-          key={`${uniqueId}weight`}
-          {...form.getInputProps(`exercises.${index}.weight`)}
-        />
-      </Group>
-    );
-  });
   return (
     <div>
       <Title>Workout Tool</Title>
-      <form>
-        <DateInput {...form.getInputProps("workoutDate")} />
-        {exerciseFields}
-      </form>
+      <WorkoutInstance />
     </div>
   );
 }
@@ -72,7 +32,6 @@ const router = createBrowserRouter([
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
-
   return (
     <AppShell
       header={{ height: 60 }}

@@ -5,12 +5,14 @@ interface MuscleSVGProps {
 }
 
 export default function FrontMuscles(props: MuscleSVGProps) {
-  const onMouseEnterHandler = props.onMouseEnterHandler;
+  // const onMouseEnterHandler = props.onMouseEnterHandler;
+  const { width, height, onMouseEnterHandler } = props;
   return (
     <svg
       viewBox="0.00 0.00 394.00 928.00"
       xmlns="http://www.w3.org/2000/svg"
-      {...props}
+      width={width}
+      height={height}
     >
       <g
         strokeLinecap="round"

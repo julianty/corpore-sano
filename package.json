@@ -14,7 +14,7 @@
     "@mantine/dates": "^7.5.0",
     "@mantine/form": "^7.4.1",
     "@mantine/hooks": "^7.3.2",
-    "@reduxjs/toolkit": "^2.0.1",
+    "@reduxjs/toolkit": "^2.1.0",
     "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
     "firebase": "^10.7.2",

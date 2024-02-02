@@ -1,40 +1,59 @@
-import { Group, TextInput, NumberInput } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { Group, TextInput, NumberInput, Button } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
+import app from "../initializeFirebase";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+
+const FirestoreActions = {
+  upload: async () => {
+    const db = getFirestore(app);
+    const docRef = doc(db, "users", "adminUser");
+    const docSnap = await getDoc(docRef);
+    console.log(docSnap);
+  },
+};
+
+const demoData = {
+  workoutDate: new Date(),
+  // should the exercises structure be an object rather than an array?
+  exercises: [
+    { name: "Lateral Raise", sets: 2, reps: 10, weight: 30 },
+    { name: "Back Squat", sets: 1, reps: 3, weight: 100 },
+  ],
+};
 
 export function WorkoutInstance() {
-  const form = useForm({
-    initialValues: {
-      workoutDate: new Date(),
-      exercises: [{ name: "Lateral Raise", sets: 2, reps: 10, weight: 30 }],
-    },
-  });
-  const exerciseFields = form.values.exercises.map((_, index) => {
+  function changeHandler() {
+    console.log("Changed");
+  }
+  const exerciseFields = demoData.exercises.map((_, index) => {
     const uniqueId = `inputKey${index}`;
     return (
       <Group key={`Group${uniqueId}`}>
+        {/* Need to change this input to a dropdown after I have the exercise
+        catalog in place */}
         <TextInput
           key={`${uniqueId}name`}
-          {...form.getInputProps(`exercises.${index}.name`)}
+          defaultValue={demoData.exercises[index].name}
         />
         <NumberInput
           key={`${uniqueId}sets`}
-          {...form.getInputProps(`exercises.${index}.sets`)}
+          defaultValue={demoData.exercises[index].sets}
+          onChange={changeHandler}
         />
         <NumberInput
           key={`${uniqueId}reps`}
-          {...form.getInputProps(`exercises.${index}.reps`)}
+          defaultValue={demoData.exercises[index].reps}
         />
         <NumberInput
           key={`${uniqueId}weight`}
-          {...form.getInputProps(`exercises.${index}.weight`)}
+          defaultValue={demoData.exercises[index].weight}
         />
       </Group>
     );
   });
   return (
     <form>
-      <DateInput {...form.getInputProps("workoutDate")} />
+      <DateInput value={demoData.workoutDate} />
       {exerciseFields}
     </form>
   );

@@ -10,6 +10,12 @@ const FirestoreActions = {
     const docSnap = await getDoc(docRef);
     console.log(docSnap);
   },
+  fetchData: async () => {
+    const db = getFirestore(app);
+    const user = "demoUser";
+    const data = await getDoc(doc(db, "users", user));
+    console.log(data.data());
+  },
 };
 
 const demoData = {

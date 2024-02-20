@@ -2,8 +2,9 @@ import { Group, TextInput, NumberInput } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useEffect, useState } from "react";
-import { Exercise } from "../types";
+import { Exercise, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
+import { Timestamp } from "firebase/firestore";
 const demoData = {
   workoutDate: new Date(),
   // should the exercises structure be an object rather than an array?
@@ -13,20 +14,25 @@ const demoData = {
   ],
 };
 
-export function WorkoutInstance({ workoutId: string }) {
+export function WorkoutInstance(props: { workoutId: string }) {
+  const { workoutId } = props;
+  const [workoutDate, setWorkoutDate] = useState<Timestamp>();
   const [exercisesArray, setExercisesArray] = useState<Array<Exercise>>([]);
   const userId = useAppSelector((state) => state.auth.userId);
   useEffect(() => {
     FirestoreActions.fetchData(userId).then((value) => {
-      const resultObject = value as object;
-      setExercisesArray(Object.values(resultObject));
+      const resultObject = value as Workout;
+      const { date, ...exercises } = resultObject;
+      setWorkoutDate(date);
+      setExercisesArray(Object.values(exercises));
     });
   }, [userId]);
 
-  function changeHandler() {
-    FirestoreActions.update(userId);
+  function changeHandler(value: string | number, field: string) {
+    console.log(value);
+    FirestoreActions.updateWorkoutById(userId, workoutId);
   }
-  const exerciseFields = exercisesArray.map((item, index) => {
+  const exerciseFields = exercisesArray.map((_, index) => {
     const uniqueId = `inputKey${index}`;
     return (
       <Group key={`Group${uniqueId}`}>
@@ -39,7 +45,7 @@ export function WorkoutInstance({ workoutId: string }) {
         <NumberInput
           key={`${uniqueId}sets`}
           defaultValue={exercisesArray[index].sets}
-          onChange={changeHandler}
+          onChange={(value) => changeHandler(value, "sets")}
         />
         <NumberInput
           key={`${uniqueId}reps`}
@@ -55,7 +61,7 @@ export function WorkoutInstance({ workoutId: string }) {
   if (typeof exercisesArray !== "undefined") {
     return (
       <form>
-        <DateInput value={demoData.workoutDate} />
+        <DateInput value={workoutDate?.toDate()} />
         {exerciseFields}
       </form>
     );

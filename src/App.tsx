@@ -5,12 +5,23 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { Dashboard } from "./components/Dashboard";
 import { WorkoutInstance } from "./components/WorkoutInstance";
+import { useEffect, useState } from "react";
+import { useAppSelector } from "./hooks";
+import { FirestoreActions } from "./components/FirestoreActions";
 
 function WorkoutTool() {
+  const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
+  const userId = useAppSelector((state) => state.auth.userId);
+  // Fetch list of workout IDs to show
+  useEffect(() => {
+    FirestoreActions.fetchWorkoutIds(userId).then((value) => {
+      setWorkoutIdArray(value);
+    });
+  }, [userId]);
   return (
     <div>
       <Title>Workout Tool</Title>
-      <WorkoutInstance />
+      <WorkoutInstance workoutId={workoutIdArray[0]} />
     </div>
   );
 }

@@ -12,12 +12,14 @@ import { FirestoreActions } from "./components/FirestoreActions";
 function WorkoutTool() {
   const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
   const userId = useAppSelector((state) => state.auth.userId);
+
   // Fetch list of workout IDs to show
   useEffect(() => {
     FirestoreActions.fetchWorkoutIds(userId).then((value) => {
       setWorkoutIdArray(value);
     });
   }, [userId]);
+
   return (
     <div>
       <Title>Workout Tool</Title>

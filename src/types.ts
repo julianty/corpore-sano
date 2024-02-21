@@ -8,6 +8,10 @@ export interface Exercise {
 }
 
 export interface Workout {
-  date: Timestamp;
-  exercises?: Exercise;
+  date: Timestamp | undefined;
+  exercises?: ExerciseMap;
+}
+
+export interface ExerciseMap {
+  [id: string]: Exercise;
 }

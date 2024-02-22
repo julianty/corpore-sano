@@ -1,6 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export interface Exercise {
+  order: number;
   name: string;
   sets: number;
   reps: number;

@@ -30,7 +30,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
       };
       FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc);
     }
-  }, [exercisesObject, workoutDate, workoutId]);
+  }, [exercisesObject, workoutDate]);
 
   function changeHandler(
     value: string | number,
@@ -43,33 +43,38 @@ export function WorkoutInstance(props: { workoutId: string }) {
     };
     setExercisesObject(nextState);
   }
-  const exerciseFields = Object.entries(exercisesObject as object).map(
-    ([key, exercise]) => {
-      const uniqueId = `inputKey${key}`;
-      return (
-        <Group key={`Group${uniqueId}`}>
-          {/* Need to change this input to a dropdown after I have the exercise
-        catalog in place */}
-          <TextInput key={`${uniqueId}name`} defaultValue={exercise.name} />
-          <NumberInput
-            key={`${uniqueId}sets`}
-            defaultValue={exercise.sets}
-            onChange={(value) => changeHandler(value, key, "sets")}
-          />
-          <NumberInput
-            key={`${uniqueId}reps`}
-            defaultValue={exercise.reps}
-            onChange={(value) => changeHandler(value, key, "reps")}
-          />
-          <NumberInput
-            key={`${uniqueId}weight`}
-            defaultValue={exercise.weight}
-            onChange={(value) => changeHandler(value, key, "weight")}
-          />
-        </Group>
-      );
+  const exercisesArray = Object.entries(exercisesObject).sort(
+    (keyExA, keyExB) => {
+      const orderA = keyExA[1].order;
+      const orderB = keyExB[1].order;
+      return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
     }
   );
+  const exerciseFields = exercisesArray.map(([key, exercise]) => {
+    const uniqueId = `inputKey${key}`;
+    return (
+      <Group key={`Group${uniqueId}`}>
+        {/* Need to change this input to a dropdown after I have the exercise
+        catalog in place */}
+        <TextInput key={`${uniqueId}name`} defaultValue={exercise.name} />
+        <NumberInput
+          key={`${uniqueId}sets`}
+          defaultValue={exercise.sets}
+          onChange={(value) => changeHandler(value, key, "sets")}
+        />
+        <NumberInput
+          key={`${uniqueId}reps`}
+          defaultValue={exercise.reps}
+          onChange={(value) => changeHandler(value, key, "reps")}
+        />
+        <NumberInput
+          key={`${uniqueId}weight`}
+          defaultValue={exercise.weight}
+          onChange={(value) => changeHandler(value, key, "weight")}
+        />
+      </Group>
+    );
+  });
   if (typeof exercisesObject !== "undefined") {
     return (
       <>

@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
-
 export function WorkoutInstance(props: { workoutId: string }) {
   const { workoutId } = props;
-
   const [workoutDate, setWorkoutDate] = useState<Timestamp>();
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
 
@@ -24,6 +22,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
   }, [userId]);
 
   useEffect(() => {
+    // Runs when a change is detected
     if (Object.keys(exercisesObject).length !== 0) {
       const updatedDoc: Workout = {
         date: workoutDate,
@@ -31,7 +30,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
       };
       FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc);
     }
-  }, [exercisesObject, workoutDate, userId, workoutId]);
+  }, [exercisesObject, workoutDate, workoutId]);
 
   function changeHandler(
     value: string | number,
@@ -73,10 +72,16 @@ export function WorkoutInstance(props: { workoutId: string }) {
   );
   if (typeof exercisesObject !== "undefined") {
     return (
-      <form>
-        <DateInput value={workoutDate?.toDate()} />
+      <>
+        <DateInput
+          onChange={(value) =>
+            setWorkoutDate(Timestamp.fromDate(value as Date))
+          }
+          value={workoutDate?.toDate()}
+          maw={400}
+        />
         {exerciseFields}
-      </form>
+      </>
     );
   }
 }

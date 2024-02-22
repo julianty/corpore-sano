@@ -5,7 +5,11 @@ export const authSlice = createSlice({
   initialState: {
     userId: "demoUser",
   },
-  reducers: {},
+  reducers: {
+    logInUser(state, action) {
+      state.userId = action.payload;
+    },
+  },
 });
 
 export default authSlice.reducer;

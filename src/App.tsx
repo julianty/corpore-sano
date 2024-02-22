@@ -1,4 +1,5 @@
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 import "./index.css";
 import { AppShell, Burger, Title, Group, Anchor } from "@mantine/core";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -8,6 +9,7 @@ import { WorkoutInstance } from "./components/WorkoutInstance";
 import { useEffect, useState } from "react";
 import { useAppSelector } from "./hooks";
 import { FirestoreActions } from "./components/FirestoreActions";
+import { GoogleLogin } from "./GoogleLogin";
 
 function WorkoutTool() {
   const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
@@ -23,6 +25,7 @@ function WorkoutTool() {
   return (
     <div>
       <Title>Workout Tool</Title>
+      {/* Need to make this into a mapping function */}
       <WorkoutInstance workoutId={workoutIdArray[0]} />
     </div>
   );
@@ -64,6 +67,7 @@ function App() {
             size={"sm"}
           />
           <Title>Corpore Sano</Title>
+          <GoogleLogin />
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="md">

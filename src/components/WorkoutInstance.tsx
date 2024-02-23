@@ -1,10 +1,12 @@
-import { Group, TextInput, NumberInput } from "@mantine/core";
+import { Group, NumberInput, Select } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
+import exerciseCatalog from "../data/exerciseCatalog";
+
 export function WorkoutInstance(props: { workoutId: string }) {
   const { workoutId } = props;
   const [workoutDate, setWorkoutDate] = useState<Timestamp>();
@@ -13,6 +15,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
   const userId = useAppSelector((state) => state.auth.userId);
 
   useEffect(() => {
+    // Fetch user data
     FirestoreActions.fetchData(userId).then((value) => {
       const resultObject = value as Workout;
       const { date, ...exercises } = resultObject;
@@ -22,7 +25,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
   }, [userId]);
 
   useEffect(() => {
-    // Runs when a change is detected
+    // Runs when a change is detected on input values
     if (Object.keys(exercisesObject).length !== 0) {
       const updatedDoc: Workout = {
         date: workoutDate,
@@ -51,12 +54,14 @@ export function WorkoutInstance(props: { workoutId: string }) {
     }
   );
   const exerciseFields = exercisesArray.map(([key, exercise]) => {
+    const exerciseCatalogArray = exerciseCatalog.data.map(
+      (exerciseObj) => exerciseObj.name
+    );
     const uniqueId = `inputKey${key}`;
+
     return (
       <Group key={`Group${uniqueId}`}>
-        {/* Need to change this input to a dropdown after I have the exercise
-        catalog in place */}
-        <TextInput key={`${uniqueId}name`} defaultValue={exercise.name} />
+        <Select defaultValue={exercise.name} data={exerciseCatalogArray} />
         <NumberInput
           key={`${uniqueId}sets`}
           defaultValue={exercise.sets}

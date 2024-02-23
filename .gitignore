@@ -26,3 +26,5 @@ dist-ssr
 # Some resources
 resources/
 src/assets/*.svg
+src/data/UploadData.ts
+.env

@@ -14,19 +14,25 @@ import { GoogleLogin } from "./GoogleLogin";
 function WorkoutTool() {
   const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
   const userId = useAppSelector((state) => state.auth.userId);
-
-  // Fetch list of workout IDs to show
+  const [workouts, setWorkouts] = useState<Array<React.ReactElement>>([]);
   useEffect(() => {
+    // Fetches the workout Ids from firebase
+    setWorkoutIdArray([]);
     FirestoreActions.fetchWorkoutIds(userId).then((value) => {
       setWorkoutIdArray(value);
     });
   }, [userId]);
-
+  useEffect(() => {
+    setWorkouts(
+      workoutIdArray.map((workoutId) => (
+        <WorkoutInstance key={`workoutId${workoutId}`} workoutId={workoutId} />
+      ))
+    );
+  }, [workoutIdArray]);
   return (
     <div>
       <Title>Workout Tool</Title>
-      {/* Need to make this into a mapping function */}
-      <WorkoutInstance workoutId={workoutIdArray[0]} />
+      {workouts}
     </div>
   );
 }

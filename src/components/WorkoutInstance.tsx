@@ -1,7 +1,7 @@
 import { Group, NumberInput, Select } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
@@ -14,38 +14,24 @@ export function WorkoutInstance(props: { workoutId: string }) {
 
   const userId = useAppSelector((state) => state.auth.userId);
 
+  const updateWorkoutData = useCallback(
+    (updatedDoc: Workout) =>
+      FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc),
+    [userId, workoutId]
+  );
+
   useEffect(() => {
     // Fetch user data
-    FirestoreActions.fetchData(userId).then((value) => {
+    setWorkoutDate(Timestamp.now());
+    setExercisesObject({});
+    FirestoreActions.fetchData(userId, workoutId).then((value) => {
       const resultObject = value as Workout;
       const { date, ...exercises } = resultObject;
       setWorkoutDate(date);
       setExercisesObject(exercises as ExerciseMap);
     });
-  }, [userId]);
+  }, [userId, workoutId]);
 
-  useEffect(() => {
-    // Runs when a change is detected on input values
-    if (Object.keys(exercisesObject).length !== 0) {
-      const updatedDoc: Workout = {
-        date: workoutDate,
-        ...exercisesObject,
-      };
-      FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc);
-    }
-  }, [exercisesObject, workoutDate]);
-
-  function changeHandler(
-    value: string | number,
-    key: string,
-    field: keyof Exercise
-  ) {
-    const nextState = {
-      ...exercisesObject,
-      [key]: { ...exercisesObject[key], [field]: value },
-    };
-    setExercisesObject(nextState);
-  }
   const exercisesArray = Object.entries(exercisesObject).sort(
     (keyExA, keyExB) => {
       const orderA = keyExA[1].order;
@@ -53,6 +39,19 @@ export function WorkoutInstance(props: { workoutId: string }) {
       return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
     }
   );
+  function changeHandler(
+    value: string | number,
+    key: string,
+    field: keyof Exercise
+  ) {
+    // callback function for uploading changes to the input fields
+    const nextState = {
+      ...exercisesObject,
+      [key]: { ...exercisesObject[key], [field]: value },
+    };
+    setExercisesObject(nextState);
+    updateWorkoutData({ date: workoutDate, ...nextState });
+  }
   const exerciseFields = exercisesArray.map(([key, exercise]) => {
     const exerciseCatalogArray = exerciseCatalog.data.map(
       (exerciseObj) => exerciseObj.name
@@ -61,7 +60,11 @@ export function WorkoutInstance(props: { workoutId: string }) {
 
     return (
       <Group key={`Group${uniqueId}`}>
-        <Select defaultValue={exercise.name} data={exerciseCatalogArray} />
+        <Select
+          defaultValue={exercise.name}
+          data={exerciseCatalogArray}
+          onChange={(value) => changeHandler(value as string, key, "name")}
+        />
         <NumberInput
           key={`${uniqueId}sets`}
           defaultValue={exercise.sets}
@@ -80,13 +83,16 @@ export function WorkoutInstance(props: { workoutId: string }) {
       </Group>
     );
   });
+
   if (typeof exercisesObject !== "undefined") {
     return (
       <>
         <DateInput
-          onChange={(value) =>
-            setWorkoutDate(Timestamp.fromDate(value as Date))
-          }
+          onChange={(value) => {
+            const timestampDate = Timestamp.fromDate(value as Date);
+            setWorkoutDate(timestampDate);
+            updateWorkoutData({ date: timestampDate, ...exercisesObject });
+          }}
           value={workoutDate?.toDate()}
           maw={400}
         />

@@ -22,11 +22,9 @@ export const FirestoreActions = {
     const docRef = doc(db, "users", userId, "workouts", workoutId);
     setDoc(docRef, document);
   },
-  fetchData: async (userId: string) => {
+  fetchData: async (userId: string, workoutId: string) => {
     const db = getFirestore(app);
-    const data = await getDoc(
-      doc(db, "users", userId, "workouts", "workout001")
-    );
+    const data = await getDoc(doc(db, "users", userId, "workouts", workoutId));
     return data.data();
   },
   fetchWorkoutIds: async (userId: string) => {

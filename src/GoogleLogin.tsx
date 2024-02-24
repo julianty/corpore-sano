@@ -34,6 +34,7 @@ export function GoogleLogin() {
   }
   function handleSignOut() {
     signOut(auth).then(() => {
+      dispatch({ type: "auth/logInUser", payload: "demoUser" });
       console.log("Signed out successfully");
     });
   }

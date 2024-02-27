@@ -9,7 +9,12 @@ import {
 } from "firebase/firestore";
 import { Workout } from "../types";
 
+const db = getFirestore(app);
 export const FirestoreActions = {
+  createWorkout: (userId: string) => {
+    const newWorkoutDoc = doc(collection(db, "users", userId, "workouts"));
+    return newWorkoutDoc;
+  },
   // Might need to throw this out in the case where I only upload specific
   // entires as they change instead of amending the whole user file?
   // maybe it's managable by using the {merge: true} option
@@ -18,17 +23,21 @@ export const FirestoreActions = {
     workoutId: string,
     document: Workout
   ) => {
-    const db = getFirestore(app);
     const docRef = doc(db, "users", userId, "workouts", workoutId);
     setDoc(docRef, document);
   },
   fetchData: async (userId: string, workoutId: string) => {
-    const db = getFirestore(app);
-    const data = await getDoc(doc(db, "users", userId, "workouts", workoutId));
-    return data.data();
+    const docRef = doc(db, "users", userId, "workouts", workoutId);
+    // First check if data exists
+    // const docSnap = await getDoc(docRef)
+    const data = await getDoc(docRef);
+    if (data.exists()) {
+      return data.data();
+    } else {
+      console.log("FirestoreActions.fetchData: Document does not exist");
+    }
   },
   fetchWorkoutIds: async (userId: string) => {
-    const db = getFirestore(app);
     const querySnapshot = await getDocs(
       collection(db, "users", userId, "workouts")
     );

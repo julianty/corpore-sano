@@ -1,4 +1,4 @@
-import { Group, NumberInput, Select } from "@mantine/core";
+import { Button, Group, NumberInput, Select } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useCallback, useEffect, useState } from "react";
@@ -21,10 +21,14 @@ export function WorkoutInstance(props: { workoutId: string }) {
   );
 
   useEffect(() => {
-    // Fetch user data
+    // Clear data
     setWorkoutDate(Timestamp.now());
     setExercisesObject({});
+
+    // Fetch user data
     FirestoreActions.fetchData(userId, workoutId).then((value) => {
+      // If workout was just created, value = undefined
+      if (value === undefined) return;
       const resultObject = value as Workout;
       const { date, ...exercises } = resultObject;
       setWorkoutDate(date);
@@ -83,6 +87,20 @@ export function WorkoutInstance(props: { workoutId: string }) {
       </Group>
     );
   });
+  function addNewExercise() {
+    const newOrder = Object.values(exercisesObject).length + 1;
+    const newExerciseName = `exercise${Date.now()}`;
+    const newExerciseObject: Exercise = {
+      order: newOrder,
+      name: "",
+      sets: 0,
+      reps: 0,
+      weight: 0,
+    };
+    const newExercise: ExerciseMap = {};
+    newExercise[newExerciseName] = newExerciseObject;
+    setExercisesObject({ ...exercisesObject, ...newExercise });
+  }
 
   if (typeof exercisesObject !== "undefined") {
     return (
@@ -97,6 +115,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
           maw={400}
         />
         {exerciseFields}
+        <Button onClick={addNewExercise}> Add New Exercise</Button>
       </>
     );
   }

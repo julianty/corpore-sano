@@ -1,4 +1,4 @@
-import { MuscleDiagram } from "./MuscleDiagram";
+import { MuscleDiagram } from "../components/MuscleDiagram";
 import { Paper, Grid, Stack } from "@mantine/core";
 
 export function Dashboard() {

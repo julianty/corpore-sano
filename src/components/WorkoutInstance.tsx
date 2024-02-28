@@ -14,7 +14,7 @@ function createExerciseFieldsFromObject(
     key: string,
     field: keyof Exercise
   ) => void,
-  closeHandler: (key: string) => void
+  closeHandler: (workoutId: string) => void
 ) {
   // Might be a good idea to create a separate component for this
   const exercisesArray = Object.entries(exercisesObject).sort(
@@ -58,8 +58,11 @@ function createExerciseFieldsFromObject(
   return exerciseFields;
 }
 
-export function WorkoutInstance(props: { workoutId: string }) {
-  const { workoutId } = props;
+export function WorkoutInstance(props: {
+  workoutId: string;
+  workoutCloseHandler: (key: string) => void;
+}) {
+  const { workoutId, workoutCloseHandler } = props;
   const [workoutDate, setWorkoutDate] = useState<Timestamp>();
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
 
@@ -126,15 +129,18 @@ export function WorkoutInstance(props: { workoutId: string }) {
   if (typeof exercisesObject !== "undefined") {
     return (
       <>
-        <DateInput
-          onChange={(value) => {
-            const timestampDate = Timestamp.fromDate(value as Date);
-            setWorkoutDate(timestampDate);
-            updateWorkoutData({ date: timestampDate, ...exercisesObject });
-          }}
-          value={workoutDate?.toDate()}
-          maw={400}
-        />
+        <Group>
+          <DateInput
+            onChange={(value) => {
+              const timestampDate = Timestamp.fromDate(value as Date);
+              setWorkoutDate(timestampDate);
+              updateWorkoutData({ date: timestampDate, ...exercisesObject });
+            }}
+            value={workoutDate?.toDate()}
+            maw={400}
+          />
+          <CloseButton onClick={() => workoutCloseHandler(workoutId)} />
+        </Group>
         {createExerciseFieldsFromObject(
           exercisesObject,
           changeHandler,

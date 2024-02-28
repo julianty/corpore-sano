@@ -16,3 +16,7 @@ export interface Workout {
 export interface ExerciseMap {
   [id: string]: Exercise;
 }
+
+export interface WorkoutsObject {
+  [workoutId: string]: React.ReactElement;
+}

@@ -1,4 +1,4 @@
-import { Button, Group, NumberInput, Select } from "@mantine/core";
+import { Button, CloseButton, Group, NumberInput, Select } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useCallback, useEffect, useState } from "react";
@@ -6,6 +6,59 @@ import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import exerciseCatalog from "../data/exerciseCatalog";
+
+function createExerciseFieldsFromObject(
+  exercisesObject: ExerciseMap,
+  changeHandler: (
+    value: string | number,
+    key: string,
+    field: keyof Exercise
+  ) => void
+) {
+  // Might be a good idea to create a separate component for this
+  function closeHandler() {
+    console.log("Deleting exercise");
+  }
+  const exercisesArray = Object.entries(exercisesObject).sort(
+    (keyExA, keyExB) => {
+      const orderA = keyExA[1].order;
+      const orderB = keyExB[1].order;
+      return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
+    }
+  );
+  const exerciseFields = exercisesArray.map(([key, exercise]) => {
+    const exerciseCatalogArray = exerciseCatalog.data.map(
+      (exerciseObj) => exerciseObj.name
+    );
+    const uniqueId = `inputKey${key}`;
+    return (
+      <Group key={`Group${uniqueId}`}>
+        <Select
+          defaultValue={exercise.name}
+          data={exerciseCatalogArray}
+          onChange={(value) => changeHandler(value as string, key, "name")}
+        />
+        <NumberInput
+          key={`${uniqueId}sets`}
+          defaultValue={exercise.sets}
+          onChange={(value) => changeHandler(value, key, "sets")}
+        />
+        <NumberInput
+          key={`${uniqueId}reps`}
+          defaultValue={exercise.reps}
+          onChange={(value) => changeHandler(value, key, "reps")}
+        />
+        <NumberInput
+          key={`${uniqueId}weight`}
+          defaultValue={exercise.weight}
+          onChange={(value) => changeHandler(value, key, "weight")}
+        />
+        <CloseButton onClick={closeHandler} />
+      </Group>
+    );
+  });
+  return exerciseFields;
+}
 
 export function WorkoutInstance(props: { workoutId: string }) {
   const { workoutId } = props;
@@ -36,19 +89,12 @@ export function WorkoutInstance(props: { workoutId: string }) {
     });
   }, [userId, workoutId]);
 
-  const exercisesArray = Object.entries(exercisesObject).sort(
-    (keyExA, keyExB) => {
-      const orderA = keyExA[1].order;
-      const orderB = keyExB[1].order;
-      return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
-    }
-  );
   function changeHandler(
     value: string | number,
     key: string,
     field: keyof Exercise
   ) {
-    // callback function for uploading changes to the input fields
+    // ChangeHandler callback function for uploading changes to the input fields
     const nextState = {
       ...exercisesObject,
       [key]: { ...exercisesObject[key], [field]: value },
@@ -56,38 +102,8 @@ export function WorkoutInstance(props: { workoutId: string }) {
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
-  const exerciseFields = exercisesArray.map(([key, exercise]) => {
-    const exerciseCatalogArray = exerciseCatalog.data.map(
-      (exerciseObj) => exerciseObj.name
-    );
-    const uniqueId = `inputKey${key}`;
-
-    return (
-      <Group key={`Group${uniqueId}`}>
-        <Select
-          defaultValue={exercise.name}
-          data={exerciseCatalogArray}
-          onChange={(value) => changeHandler(value as string, key, "name")}
-        />
-        <NumberInput
-          key={`${uniqueId}sets`}
-          defaultValue={exercise.sets}
-          onChange={(value) => changeHandler(value, key, "sets")}
-        />
-        <NumberInput
-          key={`${uniqueId}reps`}
-          defaultValue={exercise.reps}
-          onChange={(value) => changeHandler(value, key, "reps")}
-        />
-        <NumberInput
-          key={`${uniqueId}weight`}
-          defaultValue={exercise.weight}
-          onChange={(value) => changeHandler(value, key, "weight")}
-        />
-      </Group>
-    );
-  });
   function addNewExercise() {
+    // ClickHandler for adding a new exercise
     const newOrder = Object.values(exercisesObject).length + 1;
     const newExerciseName = `exercise${Date.now()}`;
     const newExerciseObject: Exercise = {
@@ -114,7 +130,7 @@ export function WorkoutInstance(props: { workoutId: string }) {
           value={workoutDate?.toDate()}
           maw={400}
         />
-        {exerciseFields}
+        {createExerciseFieldsFromObject(exercisesObject, changeHandler)}
         <Button onClick={addNewExercise}> Add New Exercise</Button>
       </>
     );

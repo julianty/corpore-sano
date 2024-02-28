@@ -13,12 +13,10 @@ function createExerciseFieldsFromObject(
     value: string | number,
     key: string,
     field: keyof Exercise
-  ) => void
+  ) => void,
+  closeHandler: (key: string) => void
 ) {
   // Might be a good idea to create a separate component for this
-  function closeHandler() {
-    console.log("Deleting exercise");
-  }
   const exercisesArray = Object.entries(exercisesObject).sort(
     (keyExA, keyExB) => {
       const orderA = keyExA[1].order;
@@ -53,7 +51,7 @@ function createExerciseFieldsFromObject(
           defaultValue={exercise.weight}
           onChange={(value) => changeHandler(value, key, "weight")}
         />
-        <CloseButton onClick={closeHandler} />
+        <CloseButton onClick={() => closeHandler(key)} />
       </Group>
     );
   });
@@ -102,6 +100,13 @@ export function WorkoutInstance(props: { workoutId: string }) {
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
+  function closeHandler(exerciseKey: string) {
+    // Remove the clicked exercise from the exercise object
+    const nextState = { ...exercisesObject };
+    delete nextState[exerciseKey];
+    setExercisesObject(nextState);
+    updateWorkoutData({ date: workoutDate, ...nextState });
+  }
   function addNewExercise() {
     // ClickHandler for adding a new exercise
     const newOrder = Object.values(exercisesObject).length + 1;
@@ -130,7 +135,11 @@ export function WorkoutInstance(props: { workoutId: string }) {
           value={workoutDate?.toDate()}
           maw={400}
         />
-        {createExerciseFieldsFromObject(exercisesObject, changeHandler)}
+        {createExerciseFieldsFromObject(
+          exercisesObject,
+          changeHandler,
+          closeHandler
+        )}
         <Button onClick={addNewExercise}> Add New Exercise</Button>
       </>
     );

@@ -6,8 +6,10 @@ import {
   GoogleAuthProvider,
   signOut,
 } from "firebase/auth";
+import { useState } from "react";
 
 export function GoogleLogin() {
+  const [loggedIn, setLoggedIn] = useState(false);
   const dispatch = useAppDispatch();
   const auth = getAuth();
   const googleProvider = new GoogleAuthProvider();
@@ -20,6 +22,7 @@ export function GoogleLogin() {
       const user = result.user;
       console.log(user.uid);
       dispatch({ type: `auth/logInUser`, payload: user.uid });
+      setLoggedIn(true);
     });
     // .catch((error) => {
     // Handle Errors here.
@@ -36,12 +39,12 @@ export function GoogleLogin() {
     signOut(auth).then(() => {
       dispatch({ type: "auth/logInUser", payload: "demoUser" });
       console.log("Signed out successfully");
+      setLoggedIn(false);
     });
   }
-  return (
-    <>
-      <Button onClick={handleClick}>Login with Google</Button>
-      <Button onClick={handleSignOut}>Sign Out</Button>
-    </>
-  );
+  if (loggedIn) {
+    return <Button onClick={handleSignOut}>Sign Out</Button>;
+  } else {
+    return <Button onClick={handleClick}>Login with Google</Button>;
+  }
 }

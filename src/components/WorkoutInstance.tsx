@@ -1,62 +1,11 @@
-import { Button, CloseButton, Group, NumberInput, Select } from "@mantine/core";
+import { Button, CloseButton, Group, Table } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useCallback, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
-import exerciseCatalog from "../data/exerciseCatalog";
-
-function createExerciseFieldsFromObject(
-  exercisesObject: ExerciseMap,
-  changeHandler: (
-    value: string | number,
-    key: string,
-    field: keyof Exercise
-  ) => void,
-  closeHandler: (workoutId: string) => void
-) {
-  // Might be a good idea to create a separate component for this
-  const exercisesArray = Object.entries(exercisesObject).sort(
-    (keyExA, keyExB) => {
-      const orderA = keyExA[1].order;
-      const orderB = keyExB[1].order;
-      return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
-    }
-  );
-  const exerciseFields = exercisesArray.map(([key, exercise]) => {
-    const exerciseCatalogArray = exerciseCatalog.data.map(
-      (exerciseObj) => exerciseObj.name
-    );
-    const uniqueId = `inputKey${key}`;
-    return (
-      <Group key={`Group${uniqueId}`}>
-        <Select
-          defaultValue={exercise.name}
-          data={exerciseCatalogArray}
-          onChange={(value) => changeHandler(value as string, key, "name")}
-        />
-        <NumberInput
-          key={`${uniqueId}sets`}
-          defaultValue={exercise.sets}
-          onChange={(value) => changeHandler(value, key, "sets")}
-        />
-        <NumberInput
-          key={`${uniqueId}reps`}
-          defaultValue={exercise.reps}
-          onChange={(value) => changeHandler(value, key, "reps")}
-        />
-        <NumberInput
-          key={`${uniqueId}weight`}
-          defaultValue={exercise.weight}
-          onChange={(value) => changeHandler(value, key, "weight")}
-        />
-        <CloseButton onClick={() => closeHandler(key)} />
-      </Group>
-    );
-  });
-  return exerciseFields;
-}
+import { createExerciseFieldsFromObject } from "./createExerciseFieldsFromObject";
 
 export function WorkoutInstance(props: {
   workoutId: string;
@@ -141,12 +90,29 @@ export function WorkoutInstance(props: {
           />
           <CloseButton onClick={() => workoutCloseHandler(workoutId)} />
         </Group>
-        {createExerciseFieldsFromObject(
-          exercisesObject,
-          changeHandler,
-          closeHandler
-        )}
-        <Button onClick={addNewExercise}> Add New Exercise</Button>
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Name</Table.Th>
+              <Table.Th>Sets</Table.Th>
+              <Table.Th>Reps</Table.Th>
+              <Table.Th>Weight</Table.Th>
+              <Table.Th>Delete</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {createExerciseFieldsFromObject(
+              exercisesObject,
+              changeHandler,
+              closeHandler
+            )}
+            <Table.Tr>
+              <Table.Td>
+                <Button onClick={addNewExercise}> Add New Exercise</Button>
+              </Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
+        </Table>
       </>
     );
   }

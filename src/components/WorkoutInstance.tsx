@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
-import { createExerciseFieldsFromObject } from "./createExerciseFieldsFromObject";
+import { ExerciseFields } from "./ExerciseFields";
 
 export function WorkoutInstance(props: {
   workoutId: string;
@@ -16,6 +16,7 @@ export function WorkoutInstance(props: {
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
 
   const userId = useAppSelector((state) => state.auth.userId);
+  const [editMode, setEditMode] = useState(false);
 
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
@@ -24,6 +25,7 @@ export function WorkoutInstance(props: {
   );
 
   useEffect(() => {
+    // Runs when a new user logs in
     // Clear data
     setWorkoutDate(Timestamp.now());
     setExercisesObject({});
@@ -52,6 +54,7 @@ export function WorkoutInstance(props: {
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
+
   function closeHandler(exerciseKey: string) {
     // Remove the clicked exercise from the exercise object
     const nextState = { ...exercisesObject };
@@ -59,6 +62,7 @@ export function WorkoutInstance(props: {
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
+
   function addNewExercise() {
     // ClickHandler for adding a new exercise
     const newOrder = Object.values(exercisesObject).length + 1;
@@ -76,44 +80,90 @@ export function WorkoutInstance(props: {
   }
 
   if (typeof exercisesObject !== "undefined") {
-    return (
-      <>
-        <Group>
-          <DateInput
-            onChange={(value) => {
-              const timestampDate = Timestamp.fromDate(value as Date);
-              setWorkoutDate(timestampDate);
-              updateWorkoutData({ date: timestampDate, ...exercisesObject });
-            }}
-            value={workoutDate?.toDate()}
-            maw={400}
-          />
-          <CloseButton onClick={() => workoutCloseHandler(workoutId)} />
-        </Group>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Sets</Table.Th>
-              <Table.Th>Reps</Table.Th>
-              <Table.Th>Weight</Table.Th>
-              <Table.Th>Delete</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {createExerciseFieldsFromObject(
-              exercisesObject,
-              changeHandler,
-              closeHandler
-            )}
-            <Table.Tr>
-              <Table.Td>
-                <Button onClick={addNewExercise}> Add New Exercise</Button>
-              </Table.Td>
-            </Table.Tr>
-          </Table.Tbody>
-        </Table>
-      </>
-    );
+    if (editMode == false) {
+      return (
+        <>
+          <Group>
+            <DateInput
+              onChange={(value) => {
+                const timestampDate = Timestamp.fromDate(value as Date);
+                setWorkoutDate(timestampDate);
+                updateWorkoutData({ date: timestampDate, ...exercisesObject });
+              }}
+              value={workoutDate?.toDate()}
+              maw={400}
+            />
+            {/* <CloseButton onClick={() => workoutCloseHandler(workoutId)} /> */}
+            <Button onClick={() => setEditMode(true)}>edit</Button>
+          </Group>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Sets</Table.Th>
+                <Table.Th>Reps</Table.Th>
+                <Table.Th>Weight</Table.Th>
+                {/* <Table.Th>Delete</Table.Th> */}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              <ExerciseFields
+                exercisesObject={exercisesObject}
+                changeHandler={changeHandler}
+                closeHandler={closeHandler}
+                editMode={editMode}
+              />
+              <Table.Tr>
+                <Table.Td>
+                  <Button onClick={addNewExercise}> Add New Exercise</Button>
+                </Table.Td>
+              </Table.Tr>
+            </Table.Tbody>
+          </Table>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Group>
+            <DateInput
+              onChange={(value) => {
+                const timestampDate = Timestamp.fromDate(value as Date);
+                setWorkoutDate(timestampDate);
+                updateWorkoutData({ date: timestampDate, ...exercisesObject });
+              }}
+              value={workoutDate?.toDate()}
+              maw={400}
+            />
+            <CloseButton onClick={() => workoutCloseHandler(workoutId)} />
+            <Button onClick={() => setEditMode(false)}>edit</Button>
+          </Group>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Sets</Table.Th>
+                <Table.Th>Reps</Table.Th>
+                <Table.Th>Weight</Table.Th>
+                <Table.Th>Delete</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              <ExerciseFields
+                exercisesObject={exercisesObject}
+                changeHandler={changeHandler}
+                closeHandler={closeHandler}
+                editMode={editMode}
+              />
+              <Table.Tr>
+                <Table.Td>
+                  <Button onClick={addNewExercise}> Add New Exercise</Button>
+                </Table.Td>
+              </Table.Tr>
+            </Table.Tbody>
+          </Table>
+        </>
+      );
+    }
   }
 }

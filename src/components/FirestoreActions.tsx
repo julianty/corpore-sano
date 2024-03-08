@@ -41,10 +41,14 @@ export const FirestoreActions = {
     const querySnapshot = await getDocs(
       collection(db, "users", userId, "workouts")
     );
-    const workoutIdArray: Array<string> = [];
-    querySnapshot.forEach((doc) => {
-      workoutIdArray.push(doc.id);
-    });
+    const queryResult = querySnapshot.docs;
+    // Sorts workouts by date
+    queryResult.sort(
+      (docSnapshotA, docSnapshotB) =>
+        docSnapshotA.data().date.seconds - docSnapshotB.data().date.seconds
+    );
+    // Returns only workout Ids
+    const workoutIdArray = queryResult.map((docSnapshot) => docSnapshot.id);
     return workoutIdArray;
   },
 };

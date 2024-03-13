@@ -28,3 +28,6 @@ resources/
 src/assets/*.svg
 src/data/UploadData.ts
 .env
+
+# Hosting cache
+.firebase/hosting*

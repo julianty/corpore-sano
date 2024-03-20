@@ -1,30 +1,23 @@
-# React + TypeScript + Vite
+# Corpore Sano
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Corpore Sano is a fitness application built using React and powered by Firebase from Google. It offers simple workout tracking, weekly summaries, and export options.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Simple Workout Tracking
+Easily log your workouts with our simple interface. Add custom exercises, or use the ones in our catalog.
 
-## Expanding the ESLint configuration
+### Weekly Summaries
+Get detailed insights into your workout routines with weekly summaries. Identify understimulated muscles via estimated or user determined minimum effective volume (MEV) and target them effectively to optimize your training regimen.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Easy Export to .CSV or .XLS
+Choose how you want to export your data for use in other applications.
 
-- Configure the top-level `parserOptions` property like this:
+## Technologies Used
+React: The frontend of Corpore Sano is built using React, providing a responsive and interactive user experience.
+Firebase: Firebase from Google powers the backend of the application, offering seamless database management, authentication, and hosting services.
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+## Getting Started
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### Visit [the website](https://corpore-sano-2e626.web.app/)
+Sign up using your email address and password, or use your google account.

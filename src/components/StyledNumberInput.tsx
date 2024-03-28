@@ -16,9 +16,9 @@ export function StyledNumberInput(
       key={`${key}${fieldName}`}
       defaultValue={exercise[fieldName]}
       onChange={(value) => changeHandler(value, key, fieldName)}
-      styles={{ wrapper: { width: "30px" } }}
+      styles={{ wrapper: { width: "fit-content" } }}
       hideControls
-      variant="unstyled"
+      // variant={"unstyled"}
     />
   );
 }

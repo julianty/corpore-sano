@@ -12,8 +12,8 @@ function App() {
     <Container>
       <Stack p={{ sm: "sm", md: "lg" }}>
         <Group justify="space-between">
-          <Flex align={"center"} gap={"lg"} pt={"sm"}>
-            <Title m={{ sm: "sm", md: "lg" }}>Corpore Sano</Title>
+          <Flex align={"center"} gap="sm" pt={"sm"}>
+            <Title>Corpore Sano</Title>
             <IconBarbell size={36} />
           </Flex>
           <GoogleLogin />

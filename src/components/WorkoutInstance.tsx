@@ -1,4 +1,4 @@
-import { Button, CloseButton, Group, Table } from "@mantine/core";
+import { Button, Group, Paper, Table } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useCallback, useEffect, useState } from "react";
@@ -6,7 +6,7 @@ import { Exercise, ExerciseMap, Workout } from "../types";
 import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
-
+import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 export function WorkoutInstance(props: {
   workoutId: string;
   workoutCloseHandler: (key: string) => void;
@@ -79,91 +79,71 @@ export function WorkoutInstance(props: {
     setExercisesObject({ ...exercisesObject, ...newExercise });
   }
 
-  if (typeof exercisesObject !== "undefined") {
-    if (editMode == false) {
-      return (
-        <>
-          <Group>
-            <DateInput
-              onChange={(value) => {
-                const timestampDate = Timestamp.fromDate(value as Date);
-                setWorkoutDate(timestampDate);
-                updateWorkoutData({ date: timestampDate, ...exercisesObject });
-              }}
-              value={workoutDate?.toDate()}
-              maw={400}
-            />
-            {/* <CloseButton onClick={() => workoutCloseHandler(workoutId)} /> */}
-            <Button onClick={() => setEditMode(true)}>edit</Button>
-          </Group>
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Name</Table.Th>
-                <Table.Th>Sets</Table.Th>
-                <Table.Th>Reps</Table.Th>
-                <Table.Th>Weight</Table.Th>
-                {/* <Table.Th>Delete</Table.Th> */}
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              <ExerciseFields
-                exercisesObject={exercisesObject}
-                changeHandler={changeHandler}
-                closeHandler={closeHandler}
-                editMode={editMode}
-              />
-              <Table.Tr>
-                <Table.Td>
-                  <Button onClick={addNewExercise}> Add New Exercise</Button>
-                </Table.Td>
-              </Table.Tr>
-            </Table.Tbody>
-          </Table>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Group>
-            <DateInput
-              onChange={(value) => {
-                const timestampDate = Timestamp.fromDate(value as Date);
-                setWorkoutDate(timestampDate);
-                updateWorkoutData({ date: timestampDate, ...exercisesObject });
-              }}
-              value={workoutDate?.toDate()}
-              maw={400}
-            />
-            <CloseButton onClick={() => workoutCloseHandler(workoutId)} />
-            <Button onClick={() => setEditMode(false)}>edit</Button>
-          </Group>
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Name</Table.Th>
-                <Table.Th>Sets</Table.Th>
-                <Table.Th>Reps</Table.Th>
-                <Table.Th>Weight</Table.Th>
-                <Table.Th>Delete</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              <ExerciseFields
-                exercisesObject={exercisesObject}
-                changeHandler={changeHandler}
-                closeHandler={closeHandler}
-                editMode={editMode}
-              />
-              <Table.Tr>
-                <Table.Td>
-                  <Button onClick={addNewExercise}> Add New Exercise</Button>
-                </Table.Td>
-              </Table.Tr>
-            </Table.Tbody>
-          </Table>
-        </>
-      );
-    }
-  }
+  return (
+    <Paper p={{ xs: "md", md: "lg" }} withBorder>
+      <Group>
+        <DateInput
+          onChange={(value) => {
+            const timestampDate = Timestamp.fromDate(value as Date);
+            setWorkoutDate(timestampDate);
+            updateWorkoutData({ date: timestampDate, ...exercisesObject });
+          }}
+          value={workoutDate?.toDate()}
+          maw={400}
+          rightSection={<IconCalendar size={16} />}
+        />
+        <Button
+          ml="auto"
+          variant="light"
+          onClick={() => setEditMode(!editMode)}
+          color={"orange"}
+          leftSection={<IconEdit size={16} />}
+        >
+          edit
+        </Button>
+        <Button
+          color="red"
+          display={editMode ? "block" : "none"}
+          onClick={() => workoutCloseHandler(workoutId)}
+          leftSection={<IconX size={16} />}
+          variant="light"
+        >
+          Delete Workout
+        </Button>
+      </Group>
+      <Table>
+        <Table.Thead>
+          <Table.Tr>
+            {["Exercise Name", "Sets", "Reps", "Weight", "Delete"]
+              .filter((colName) => {
+                if (colName !== "Delete") return true;
+                if (editMode === true) return true;
+              })
+              .map((colName) => (
+                <Table.Th key={colName}>{colName}</Table.Th>
+              ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          <ExerciseFields
+            exercisesObject={exercisesObject}
+            changeHandler={changeHandler}
+            closeHandler={closeHandler}
+            editMode={editMode}
+          />
+          <Table.Tr>
+            <Table.Td>
+              <Button
+                leftSection={<IconPlus size={14} />}
+                onClick={addNewExercise}
+                variant="light"
+              >
+                Add Exercise
+              </Button>
+            </Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>
+    </Paper>
+  );
 }

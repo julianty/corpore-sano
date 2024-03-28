@@ -9,6 +9,7 @@ export interface Exercise {
 }
 
 export interface Workout {
+  // This should match the firestore workouts
   date: Timestamp | undefined;
   exercises?: ExerciseMap;
 }
@@ -40,4 +41,14 @@ export interface ExerciseFieldsProps {
   ) => void;
   closeHandler: (workoutId: string) => void;
   editMode: boolean;
+}
+
+export interface Muscle {
+  name: string;
+  sets?: number;
+  weightTotal?: number;
+}
+
+export interface MuscleSummary {
+  [name: string]: Muscle;
 }

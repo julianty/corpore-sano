@@ -1,12 +1,17 @@
-import { Button, Title } from "@mantine/core";
+import { Button, Stack, Title } from "@mantine/core";
 import { WorkoutInstance } from "../components/WorkoutInstance";
 import { useEffect, useState } from "react";
 import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../components/FirestoreActions";
 import { WorkoutsObject } from "../types";
+import { IconPlus } from "@tabler/icons-react";
 function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
   const { clickHandler } = props;
-  return <Button onClick={clickHandler}>Add New Workout</Button>;
+  return (
+    <Button leftSection={<IconPlus size={16} />} onClick={clickHandler}>
+      Add New Workout
+    </Button>
+  );
 }
 
 export function WorkoutTool() {
@@ -58,10 +63,10 @@ export function WorkoutTool() {
     setWorkoutsObject(nextState);
   }
   return (
-    <div>
-      <Title>Workout Tool</Title>
+    <Stack p={{ sm: "sm", md: "lg" }}>
+      <Title order={2}>Workout Tool</Title>
       {Object.values(workoutsObject)}
       <AddWorkoutButton clickHandler={addEmptyWorkout} />
-    </div>
+    </Stack>
   );
 }

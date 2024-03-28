@@ -51,4 +51,19 @@ export const FirestoreActions = {
     const workoutIdArray = queryResult.map((docSnapshot) => docSnapshot.id);
     return workoutIdArray;
   },
+  fetchWorkoutsAfterDate: async (userId: string, date: Date) => {
+    const querySnapshot = await getDocs(
+      collection(db, "users", userId, "workouts")
+    );
+    const queryResult = querySnapshot.docs;
+    // Sorts workouts by date
+    queryResult.sort(
+      (docSnapshotA, docSnapshotB) =>
+        docSnapshotA.data().date.seconds - docSnapshotB.data().date.seconds
+    );
+    const filteredResults = queryResult.filter((snapshot) => {
+      return snapshot.data().date.seconds * 1000 > date.getTime();
+    });
+    return filteredResults.map((snapshot) => snapshot.data());
+  },
 };

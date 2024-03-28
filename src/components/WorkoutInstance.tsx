@@ -7,6 +7,9 @@ import { FirestoreActions } from "./FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
+
+// TODO: Input field loses focus when typing weight
+
 export function WorkoutInstance(props: {
   workoutId: string;
   workoutCloseHandler: (key: string) => void;

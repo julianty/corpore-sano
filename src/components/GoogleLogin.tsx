@@ -7,6 +7,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { useState } from "react";
+import { IconBrandGoogle } from "@tabler/icons-react";
 
 export function GoogleLogin() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -45,6 +46,10 @@ export function GoogleLogin() {
   if (loggedIn) {
     return <Button onClick={handleSignOut}>Sign Out</Button>;
   } else {
-    return <Button onClick={handleClick}>Login with Google</Button>;
+    return (
+      <Button leftSection={<IconBrandGoogle size={16} />} onClick={handleClick}>
+        Google Login
+      </Button>
+    );
   }
 }

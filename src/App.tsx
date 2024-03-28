@@ -6,7 +6,7 @@ import { Title, Stack, Group, Container, Flex } from "@mantine/core";
 import { GoogleLogin } from "./components/GoogleLogin";
 import { WorkoutTool } from "./pages/WorkoutTool";
 import { IconBarbell } from "@tabler/icons-react";
-
+import { Dashboard } from "./pages/Dashboard";
 function App() {
   return (
     <Container>
@@ -18,7 +18,7 @@ function App() {
           </Flex>
           <GoogleLogin />
         </Group>
-        {/* <Dashboard /> */}
+        <Dashboard />
         <WorkoutTool />
       </Stack>
     </Container>

@@ -29,11 +29,10 @@ export function WorkoutTool() {
       const nextState = [...workoutIdArray].filter((id) =>
         id === workoutId ? false : true
       );
-      console.log(nextState, workoutId);
       FirestoreActions.deleteWorkoutById(userId, workoutId);
       setWorkoutIdArray(nextState);
     },
-    [workoutIdArray]
+    [workoutIdArray, userId]
   );
 
   function addEmptyWorkout(event: React.MouseEvent) {

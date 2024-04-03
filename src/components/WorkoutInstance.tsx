@@ -3,7 +3,7 @@ import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../hooks";
 import { useCallback, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../types";
-import { FirestoreActions } from "./FirestoreActions";
+import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";

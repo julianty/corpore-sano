@@ -6,6 +6,7 @@ import {
   collection,
   getDocs,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { Workout } from "../types";
 
@@ -25,6 +26,10 @@ export const FirestoreActions = {
   ) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);
     setDoc(docRef, document);
+  },
+  deleteWorkoutById: async (userId: string, workoutId: string) => {
+    const docRef = doc(db, "users", userId, "workouts", workoutId);
+    await deleteDoc(docRef);
   },
   fetchData: async (userId: string, workoutId: string) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);

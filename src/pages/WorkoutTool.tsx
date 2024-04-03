@@ -1,10 +1,10 @@
 import { Button, Stack, Title } from "@mantine/core";
 import { WorkoutInstance } from "../components/WorkoutInstance";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppSelector } from "../hooks";
-import { FirestoreActions } from "../components/FirestoreActions";
-import { WorkoutsObject } from "../types";
+import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { IconPlus } from "@tabler/icons-react";
+
 function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
   const { clickHandler } = props;
   return (
@@ -17,7 +17,6 @@ function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
 export function WorkoutTool() {
   const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
   const userId = useAppSelector((state) => state.auth.userId);
-  const [workoutsObject, setWorkoutsObject] = useState<WorkoutsObject>({});
   useEffect(() => {
     // Fetches the workout Ids from firebase
     setWorkoutIdArray([]);
@@ -25,20 +24,17 @@ export function WorkoutTool() {
       setWorkoutIdArray(value);
     });
   }, [userId]);
-
-  useEffect(() => {
-    const workoutsObject: WorkoutsObject = {};
-    workoutIdArray.forEach((id) => {
-      workoutsObject[id] = (
-        <WorkoutInstance
-          key={`workoutId${id}`}
-          workoutId={id}
-          workoutCloseHandler={workoutCloseHandler}
-        />
+  const workoutCloseHandler = useCallback(
+    (workoutId: string) => {
+      const nextState = [...workoutIdArray].filter((id) =>
+        id === workoutId ? false : true
       );
-    });
-    setWorkoutsObject(workoutsObject);
-  }, [workoutIdArray]);
+      console.log(nextState, workoutId);
+      FirestoreActions.deleteWorkoutById(userId, workoutId);
+      setWorkoutIdArray(nextState);
+    },
+    [workoutIdArray]
+  );
 
   function addEmptyWorkout(event: React.MouseEvent) {
     event.preventDefault;
@@ -46,26 +42,23 @@ export function WorkoutTool() {
     const newWorkoutDoc = FirestoreActions.createWorkout(userId);
     const docId = newWorkoutDoc.id;
 
-    const nextWorkoutsObject = { ...workoutsObject };
-    (nextWorkoutsObject[docId] = (
-      <WorkoutInstance
-        key={`workoutId${docId}`}
-        workoutId={docId}
-        workoutCloseHandler={workoutCloseHandler}
-      />
-    )),
-      setWorkoutsObject(nextWorkoutsObject);
+    const nextWorkoutIdArray = [...workoutIdArray, docId];
+    setWorkoutIdArray(nextWorkoutIdArray);
   }
 
-  function workoutCloseHandler(workoutId: string) {
-    const nextState = { ...workoutsObject };
-    delete nextState[workoutId];
-    setWorkoutsObject(nextState);
-  }
   return (
     <Stack p={{ sm: "sm", md: "lg" }}>
       <Title order={2}>Workout Tool</Title>
-      {Object.values(workoutsObject)}
+      {/* {Object.values(workoutsObject).map()} */}
+      {workoutIdArray.map((id) => {
+        return (
+          <WorkoutInstance
+            key={`workoutId${id}`}
+            workoutId={id}
+            workoutCloseHandler={workoutCloseHandler}
+          />
+        );
+      })}
       <AddWorkoutButton clickHandler={addEmptyWorkout} />
     </Stack>
   );

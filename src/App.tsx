@@ -4,9 +4,9 @@ import "./index.css";
 import { Title, Stack, Group, Container, Flex } from "@mantine/core";
 // import { Dashboard } from "./pages/Dashboard";
 import { GoogleLogin } from "./components/GoogleLogin";
-import { WorkoutTool } from "./pages/WorkoutTool";
+import { WorkoutTool } from "./components/WorkoutTool";
 import { IconBarbell } from "@tabler/icons-react";
-import { Dashboard } from "./pages/Dashboard";
+import { Dashboard } from "./components/Dashboard";
 function App() {
   return (
     <Container>
@@ -18,8 +18,10 @@ function App() {
           </Flex>
           <GoogleLogin />
         </Group>
-        <Dashboard />
-        <WorkoutTool />
+        <Stack p={{ sm: "sm", md: "lg" }}>
+          <Dashboard />
+          <WorkoutTool />
+        </Stack>
       </Stack>
     </Container>
   );

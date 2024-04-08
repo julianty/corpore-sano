@@ -1,22 +1,31 @@
-import { Group, Paper, Title, Text } from "@mantine/core";
+import { Group, Paper, Title, Text, Table } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { MuscleSummary, Workout } from "../types";
-import { muscleGroups as muscleGroupsData } from "../data/muscleGroups";
+import { Muscle, MuscleSummary, Workout } from "../types";
+import {
+  muscleGroups as muscleGroupsData,
+  parentGroups,
+} from "../data/muscleGroups";
 import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
-import { getMondayDate } from "../helperFunctions/getMondayDate";
+import { getByDaysElapsed } from "../helperFunctions/DateHelper";
 import exerciseCatalog from "../data/exerciseCatalog";
+
+const paperStyle = {
+  p: "md",
+  withBorder: true,
+};
 
 export default function WeeklySummary() {
   const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);
   const [muscleGroups, setMuscleGroups] =
     useState<MuscleSummary>(muscleGroupsData);
   const userId = useAppSelector((state) => state.auth.userId);
-
+  const [workedMuscles, setWorkedMuscles] = useState<Array<Muscle>>([]);
   // Query database to find workouts from this past week
   useEffect(() => {
-    const mondayDate = getMondayDate();
-    FirestoreActions.fetchWorkoutsAfterDate(userId, mondayDate).then(
+    // By default, get the workouts from seven days ago
+    const targetDate = getByDaysElapsed(7);
+    FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
       (workoutArray) => {
         setWorkoutArray(workoutArray.map((workout) => workout as Workout));
       }
@@ -37,34 +46,53 @@ export default function WeeklySummary() {
           (exercise) => exercise.name === exerciseObj.name
         )[0].muscles;
         muscles.forEach((muscleName) => {
-          // console.log(sets);
           newMuscleGroups[muscleName]["sets"] += sets;
           newMuscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
         });
       });
     });
+    // Picks out muscles that have any sets this week
+    setWorkedMuscles(
+      Object.values(muscleGroups).filter((muscle) => {
+        return muscle.sets! > 0 ? 1 : 0;
+      })
+    );
   }, [workoutArray, muscleGroups]);
 
-  // Picks out muscles that have any sets this week
-  const workedMuscles = Object.values(muscleGroups).filter((muscle) => {
-    return muscle.sets! > 0 ? 1 : 0;
-  });
-  console.log(workedMuscles);
+  // const workedMuscles = useMemo(() => {
+  //   return Object.values(muscleGroups).filter((muscle) => {
+  //     return muscle.sets! > 0 ? 1 : 0;
+  //   });
+  // }, [muscleGroups]);
   return (
-    <Paper>
-      <Group>
-        <Paper>
-          <Title order={5}>Muscles below MEV</Title>
-          {workedMuscles.map((muscle) => {
-            return (
-              <Text key={`workedMuscle${muscle.name}`}>{muscle.name}</Text>
-            );
-          })}
-        </Paper>
-        <Paper>
-          <Title order={5}>Muscles above MRV</Title>
-        </Paper>
-      </Group>
-    </Paper>
+    <Group align="flex-start">
+      <Paper {...paperStyle}>
+        <Title order={5}>Muscle Groups</Title>
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Group</Table.Th>
+              <Table.Th>Sets this week</Table.Th>
+              <Table.Th>Last Worked</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {parentGroups.map((group) => (
+              <Table.Tr key={group}>
+                <Table.Td>{group}</Table.Td>
+                <Table.Td>{0}</Table.Td>
+                <Table.Td>{"2 days ago"}</Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </Paper>
+      <Paper {...paperStyle}>
+        <Title order={5}>Muscles Worked</Title>
+        {workedMuscles.map((muscle) => {
+          return <Text key={`workedMuscle${muscle.name}`}>{muscle.name}</Text>;
+        })}
+      </Paper>
+    </Group>
   );
 }

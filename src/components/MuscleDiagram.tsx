@@ -8,7 +8,7 @@ import { useAppSelector } from "../hooks";
 import { MuscleSummary, Workout } from "../types";
 import { muscleGroups as muscleGroupsData } from "../data/muscleGroups";
 import exerciseCatalog from "../data/exerciseCatalog";
-import { getMondayDate } from "../helperFunctions/getMondayDate";
+import { getMondayDate } from "../helperFunctions/DateHelper";
 
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");

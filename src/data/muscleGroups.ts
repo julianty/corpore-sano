@@ -27,19 +27,19 @@ const muscleGroups = {
     name: "Triceps",
     sets: 0,
     weightTotal: 0,
-    partGroup: "Arms",
+    parentGroup: "Arms",
   },
   Biceps: {
     name: "Biceps",
     sets: 0,
     weightTotal: 0,
-    partGroup: "Arms",
+    parentGroup: "Arms",
   },
   Forearms: {
     name: "Forearms",
     sets: 0,
     weightTotal: 0,
-    partGroup: "Arms",
+    parentGroup: "Arms",
   },
   Pectorals: {
     name: "Pectorals",
@@ -85,6 +85,6 @@ const muscleGroups = {
   },
 };
 
-const parentGroups = ["Shoulders", "Back", "Arms", "Core", "Legs"];
+const parentGroups = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
 
 export { muscleGroups, parentGroups };

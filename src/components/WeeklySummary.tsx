@@ -1,6 +1,6 @@
-import { Group, Paper, Title, Text, Table } from "@mantine/core";
+import { Group, Paper, Title, Table } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Muscle, MuscleSummary, Workout } from "../types";
+import { MuscleSummary, Workout } from "../types";
 import {
   muscleGroups as muscleGroupsData,
   parentGroups,
@@ -14,13 +14,22 @@ const paperStyle = {
   p: "md",
   withBorder: true,
 };
-
+interface MuscleGroupsSets {
+  [name: string]: { sets: number; daysSinceLast?: number };
+}
 export default function WeeklySummary() {
   const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);
-  const [muscleGroups, setMuscleGroups] =
-    useState<MuscleSummary>(muscleGroupsData);
   const userId = useAppSelector((state) => state.auth.userId);
-  const [workedMuscles, setWorkedMuscles] = useState<Array<Muscle>>([]);
+  const [parentMuscleGroupsNumSets, setParentMuscleGroupsNumSets] =
+    useState<MuscleGroupsSets>({
+      Shoulders: { sets: 0 },
+      Back: { sets: 0 },
+      Chest: { sets: 0 },
+      Arms: { sets: 0 },
+      Core: { sets: 0 },
+      Legs: { sets: 0 },
+    });
+
   // Query database to find workouts from this past week
   useEffect(() => {
     // By default, get the workouts from seven days ago
@@ -32,38 +41,47 @@ export default function WeeklySummary() {
     );
   }, [userId]);
 
-  // Populate the muscleGroups object
   useEffect(() => {
-    setMuscleGroups(muscleGroupsData);
-    const newMuscleGroups: MuscleSummary = { ...muscleGroups };
+    // Update the muscleGroups object with data from Firebase via workoutArray
+    const muscleGroups: MuscleSummary = {};
+    Object.values(muscleGroupsData).forEach((muscle) => {
+      muscleGroups[muscle.name] = { muscle };
+    });
+    console.log(muscleGroups);
     workoutArray.forEach((workout) => {
-      Object.entries(workout).forEach(([key, exerciseObj]) => {
+      // const daysSinceWorkout = workout.date
+      const daysSinceWorkout = 1;
+      Object.entries(workout).forEach(([key, value]) => {
         if (key === "date") return;
-        const sets = exerciseObj.sets;
-        const reps = exerciseObj.reps;
-        const weight = exerciseObj.weight;
+        const sets = value.sets;
+        const reps = value.reps;
+        const weight = value.weight;
         const muscles = exerciseCatalog.data.filter(
-          (exercise) => exercise.name === exerciseObj.name
+          (exercise) => exercise.name === value.name
         )[0].muscles;
         muscles.forEach((muscleName) => {
-          newMuscleGroups[muscleName]["sets"] += sets;
-          newMuscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
+          muscleGroups[muscleName].muscle["sets"] += sets;
+          muscleGroups[muscleName].muscle["weightTotal"]! +=
+            sets * reps * weight;
+          muscleGroups[muscleName].lastWorked = daysSinceWorkout;
         });
       });
     });
-    // Picks out muscles that have any sets this week
-    setWorkedMuscles(
-      Object.values(muscleGroups).filter((muscle) => {
-        return muscle.sets! > 0 ? 1 : 0;
-      })
-    );
-  }, [workoutArray, muscleGroups]);
 
-  // const workedMuscles = useMemo(() => {
-  //   return Object.values(muscleGroups).filter((muscle) => {
-  //     return muscle.sets! > 0 ? 1 : 0;
-  //   });
-  // }, [muscleGroups]);
+    // Set the worked parent muscle groups
+    const newParentMuscleGroupsNumSets: MuscleGroupsSets = {};
+    Object.values(muscleGroups).forEach((muscleObj) => {
+      const lastWorked =
+        muscleObj.lastWorked !== undefined ? muscleObj.lastWorked : -1;
+      newParentMuscleGroupsNumSets[muscleObj.muscle.parentGroup] = {
+        sets: muscleObj.muscle.sets,
+        daysSinceLast: lastWorked,
+      };
+    });
+
+    setParentMuscleGroupsNumSets(newParentMuscleGroupsNumSets);
+  }, [workoutArray]);
+
   return (
     <Group align="flex-start">
       <Paper {...paperStyle}>
@@ -77,21 +95,21 @@ export default function WeeklySummary() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {parentGroups.map((group) => (
-              <Table.Tr key={group}>
-                <Table.Td>{group}</Table.Td>
-                <Table.Td>{0}</Table.Td>
-                <Table.Td>{"2 days ago"}</Table.Td>
-              </Table.Tr>
-            ))}
+            {parentGroups.map((group) => {
+              const daysSinceLast =
+                parentMuscleGroupsNumSets[group].daysSinceLast! < 0
+                  ? `7+`
+                  : parentMuscleGroupsNumSets[group].daysSinceLast;
+              return (
+                <Table.Tr key={group}>
+                  <Table.Td>{group}</Table.Td>
+                  <Table.Td>{parentMuscleGroupsNumSets[group].sets}</Table.Td>
+                  <Table.Td>{`${daysSinceLast} days ago`}</Table.Td>
+                </Table.Tr>
+              );
+            })}
           </Table.Tbody>
         </Table>
-      </Paper>
-      <Paper {...paperStyle}>
-        <Title order={5}>Muscles Worked</Title>
-        {workedMuscles.map((muscle) => {
-          return <Text key={`workedMuscle${muscle.name}`}>{muscle.name}</Text>;
-        })}
       </Paper>
     </Group>
   );

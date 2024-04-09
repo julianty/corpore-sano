@@ -1,7 +1,7 @@
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "./index.css";
-import { Title, Stack, Group, Container, Flex } from "@mantine/core";
+import { Title, Stack, Group, Container, Flex, Text } from "@mantine/core";
 // import { Dashboard } from "./pages/Dashboard";
 import { GoogleLogin } from "./components/GoogleLogin";
 import { WorkoutTool } from "./components/WorkoutTool";
@@ -19,6 +19,10 @@ function App() {
           <GoogleLogin />
         </Group>
         <Stack p={{ sm: "sm", md: "lg" }}>
+          <Text>
+            Welcome Guest, you are currently viewing a Demo User, Please log in
+            to track your own workouts.
+          </Text>
           <Dashboard />
           <WorkoutTool />
         </Stack>

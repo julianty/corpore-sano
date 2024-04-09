@@ -47,7 +47,6 @@ export default function WeeklySummary() {
     Object.values(muscleGroupsData).forEach((muscle) => {
       muscleGroups[muscle.name] = { muscle };
     });
-    console.log(muscleGroups);
     workoutArray.forEach((workout) => {
       // const daysSinceWorkout = workout.date
       const daysSinceWorkout = 1;

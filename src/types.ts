@@ -45,10 +45,11 @@ export interface ExerciseFieldsProps {
 
 export interface Muscle {
   name: string;
-  sets?: number;
+  sets: number;
   weightTotal?: number;
+  parentGroup: string;
 }
 
 export interface MuscleSummary {
-  [name: string]: Muscle;
+  [name: string]: { muscle: Muscle; lastWorked?: number };
 }

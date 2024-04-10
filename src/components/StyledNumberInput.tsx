@@ -15,7 +15,7 @@ export function StyledNumberInput(
     <NumberInput
       key={`${key}${fieldName}`}
       defaultValue={exercise[fieldName]}
-      onChange={(value) => changeHandler(value, key, fieldName)}
+      onBlur={(event) => changeHandler(event.target.value, key, fieldName)}
       styles={{ wrapper: { width: "fit-content" } }}
       hideControls
       // variant={"unstyled"}

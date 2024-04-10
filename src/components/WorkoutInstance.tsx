@@ -55,6 +55,7 @@ export function WorkoutInstance(props: {
       [key]: { ...exercisesObject[key], [field]: value },
     };
     setExercisesObject(nextState);
+    // Call for an update to firebase
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
 

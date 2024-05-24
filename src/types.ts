@@ -53,3 +53,9 @@ export interface Muscle {
 export interface MuscleSummary {
   [name: string]: { muscle: Muscle; lastWorked?: number };
 }
+
+export interface UserProfile {
+  username: string;
+  weightUnit: ["lbs", "kg"];
+  colorScheme: ["light", "dark"];
+}

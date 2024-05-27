@@ -55,7 +55,7 @@ export interface MuscleSummary {
 }
 
 export interface UserProfile {
-  username: string;
-  weightUnit: ["lbs", "kg"];
-  colorScheme: ["light", "dark"];
+  username?: string | undefined;
+  weightUnit?: "lbs" | "kg";
+  colorScheme?: "light" | "dark";
 }

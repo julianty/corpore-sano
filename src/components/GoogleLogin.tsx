@@ -21,8 +21,10 @@ export function GoogleLogin() {
       // const token = credential.accessToken;
       // The signed-in user info.
       const user = result.user;
-      console.log(user.uid);
-      dispatch({ type: `auth/logInUser`, payload: user.uid });
+      dispatch({
+        type: `auth/logInUser`,
+        payload: { uid: user.uid, displayName: user.displayName },
+      });
       setLoggedIn(true);
     });
     // .catch((error) => {

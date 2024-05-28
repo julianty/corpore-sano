@@ -19,9 +19,10 @@ import { WorkoutTool } from "./components/WorkoutTool";
 import { IconBarbell } from "@tabler/icons-react";
 import { Dashboard } from "./components/Dashboard";
 import { useDisclosure } from "@mantine/hooks";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { UserProfile } from "./types";
 import { useAppSelector } from "./hooks";
+import { FirestoreActions } from "./helperFunctions/FirestoreActions";
 
 interface UserPreferencesModalProps extends ModalProps {
   userProfileSetterCallback: (userProfile: UserProfile) => void;
@@ -30,13 +31,13 @@ interface UserPreferencesModalProps extends ModalProps {
 function UserPreferencesModal(props: UserPreferencesModalProps) {
   const userProfile = useContext(UserProfileContext);
   const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
+  const userId = useAppSelector((state) => state.auth.userId);
   function handleChange(value: string) {
     if (value === "lbs" || value === "kg") {
       setWeightUnit(value);
-      props.userProfileSetterCallback({
-        ...userProfile,
-        weightUnit: weightUnit,
-      });
+      const newUserProfile = { ...userProfile, weightUnit: weightUnit };
+      props.userProfileSetterCallback(newUserProfile);
+      FirestoreActions.updateUserPreferences(userId, newUserProfile);
     }
   }
   return (
@@ -86,12 +87,25 @@ function Header(props: {
 const UserProfileContext = createContext<UserProfile | undefined>(undefined);
 function App() {
   const displayName = useAppSelector((state) => state.auth.displayName);
+  const userId = useAppSelector((state) => state.auth.userId);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     username: displayName,
     weightUnit: "lbs",
     colorScheme: "dark",
   });
-
+  useEffect(() => {
+    // Update user profile based on new user
+    const userProfile = FirestoreActions.fetchUserPreferences(userId);
+    userProfile.then((profile) => {
+      const newUserProfile = {
+        ...userProfile,
+        username: displayName,
+        weightUnit: profile!.weightUnit,
+        colorScheme: profile!.colorScheme,
+      };
+      setUserProfile(newUserProfile);
+    });
+  }, [userId, displayName]);
   return (
     <Container>
       <Stack p={{ sm: "sm", md: "lg" }}>

@@ -7,8 +7,9 @@ import {
   getDocs,
   setDoc,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
-import { Workout } from "../types";
+import { UserProfile, Workout } from "../types";
 
 const db = getFirestore(app);
 export const FirestoreActions = {
@@ -70,5 +71,15 @@ export const FirestoreActions = {
       return snapshot.data().date.seconds * 1000 > date.getTime();
     });
     return filteredResults.map((snapshot) => snapshot.data());
+  },
+  fetchUserPreferences: async (userId: string) => {
+    const userProfile = await getDoc(
+      doc(db, "users", userId, "preferences", "userProfile")
+    );
+    return userProfile.data();
+  },
+  updateUserPreferences: async (userId: string, userProfile: UserProfile) => {
+    const docRef = doc(db, "users", userId, "preferences", "userProfile");
+    await updateDoc(docRef, { ...userProfile });
   },
 };

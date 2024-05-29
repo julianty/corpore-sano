@@ -1,3 +1,4 @@
+import { ModalProps } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 
 export interface Exercise {
@@ -58,4 +59,8 @@ export interface UserProfile {
   username?: string | undefined;
   weightUnit?: "lbs" | "kg";
   colorScheme?: "light" | "dark";
+}
+
+export interface UserPreferencesModalProps extends ModalProps {
+  userProfileSetterCallback: (userProfile: UserProfile) => void;
 }

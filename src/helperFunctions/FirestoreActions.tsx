@@ -34,13 +34,15 @@ export const FirestoreActions = {
   },
   fetchData: async (userId: string, workoutId: string) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);
-    // First check if data exists
-    // const docSnap = await getDoc(docRef)
+    // First check if data exists. It will not exist in the case that a new user logs in.
     const data = await getDoc(docRef);
     if (data.exists()) {
       return data.data();
     } else {
-      console.log("FirestoreActions.fetchData: Document does not exist");
+      // console.log("FirestoreActions.fetchData: Document does not exist");
+      // console.log(
+      //   `FirestoreActions.fetchData: userId:${userId}, workoutId:${workoutId}`
+      // );
     }
   },
   fetchWorkoutIds: async (userId: string) => {

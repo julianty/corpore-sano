@@ -1,9 +1,9 @@
 import { Text, Modal, SegmentedControl } from "@mantine/core";
 import { useContext, useState } from "react";
-import { UserPreferencesModalProps } from "./types";
-import { useAppSelector } from "./hooks";
-import { FirestoreActions } from "./helperFunctions/FirestoreActions";
-import { UserProfileContext } from "./App";
+import { UserPreferencesModalProps } from "../types";
+import { useAppSelector } from "../hooks";
+import { FirestoreActions } from "../helperFunctions/FirestoreActions";
+import { UserProfileContext } from "../App";
 
 // TODO: Move functions to new files for cleanliness
 export function UserPreferencesModal(props: UserPreferencesModalProps) {

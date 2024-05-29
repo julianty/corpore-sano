@@ -1,8 +1,8 @@
 import { Title, Group, Flex, Button, Menu } from "@mantine/core";
-import { GoogleLogin } from "./components/GoogleLogin";
+import { GoogleLogin } from "./GoogleLogin";
 import { IconBarbell } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
-import { UserProfile } from "./types";
+import { UserProfile } from "../types";
 import { UserPreferencesModal } from "./UserPreferencesModal";
 
 export function Header(props: {

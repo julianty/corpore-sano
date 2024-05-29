@@ -8,7 +8,7 @@ import { createContext, useEffect, useState } from "react";
 import { UserProfile } from "./types";
 import { useAppSelector } from "./hooks";
 import { FirestoreActions } from "./helperFunctions/FirestoreActions";
-import { Header } from "./Header";
+import { Header } from "./components/Header";
 
 export const UserProfileContext = createContext<UserProfile | undefined>(
   undefined

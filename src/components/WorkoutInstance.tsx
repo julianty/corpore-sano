@@ -7,8 +7,7 @@ import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
-
-// TODO: Input field loses focus when typing weight
+// TODO: Have a hover that pops up that explains how to change from kg to lbs.
 
 export function WorkoutInstance(props: {
   workoutId: string;

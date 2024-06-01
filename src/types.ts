@@ -1,6 +1,9 @@
 import { ModalProps } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 
+// TODO: Add favorite workouts as a user preference item
+// TODO: For each exercise, track the user's last, and maximum weight lifted. It might be more efficient to store it whenever a new workout is logged
+
 export interface Exercise {
   order: number;
   name: string;

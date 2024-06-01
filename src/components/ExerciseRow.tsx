@@ -4,6 +4,8 @@ import exerciseCatalog from "../data/exerciseCatalog";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../types";
 
+// TODO: Add a way to favorite workouts
+
 export function ExerciseRow({
   exercise,
   exerciseKey,

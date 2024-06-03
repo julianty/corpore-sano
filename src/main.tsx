@@ -6,8 +6,6 @@ import { Provider } from "react-redux";
 import React from "react";
 const theme = createTheme({});
 
-// TODO: Create a context provider to handle user preferences
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <MantineProvider defaultColorScheme="dark" theme={theme}>

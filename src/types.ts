@@ -1,9 +1,6 @@
 import { ModalProps } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 
-// TODO: Add favorite workouts as a user preference item
-// TODO: For each exercise, track the user's last, and maximum weight lifted. It might be more efficient to store it whenever a new workout is logged
-
 export interface Exercise {
   order: number;
   name: string;
@@ -62,8 +59,22 @@ export interface UserProfile {
   username?: string | undefined;
   weightUnit?: "lbs" | "kg";
   colorScheme?: "light" | "dark";
+  exerciseHistory?: [ExerciseHistory];
+  favoriteExercises?: [string];
 }
 
 export interface UserPreferencesModalProps extends ModalProps {
   userProfileSetterCallback: (userProfile: UserProfile) => void;
+}
+
+// TODO: Make it possible to jump to the workout wherein the maximum lift was hit.
+export interface ExerciseHistory {
+  // Do I need unique exercise IDs?
+  // id: string;
+  // Exercise name e.g. Overhead Press
+  name: string;
+  // Maximum lift on record
+  maxKg: number;
+  // Last recorded lift
+  lastKg: number;
 }

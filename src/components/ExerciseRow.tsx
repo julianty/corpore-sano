@@ -4,7 +4,10 @@ import exerciseCatalog from "../data/exerciseCatalog";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../types";
 
-// TODO: Add a way to favorite workouts
+// TODO: Add a way to favorite workouts: create an onClick callback that calls
+// firestoreActions to set the userProfile.favoriteExercises appropriately.
+
+// TODO: Add exerciseHistory as a prop
 
 export function ExerciseRow({
   exercise,
@@ -13,7 +16,7 @@ export function ExerciseRow({
   closeHandler,
   editMode,
 }: ExerciseRowProps) {
-  // Formats select items
+  // Formats items for select node
   const exerciseCatalogArray = exerciseCatalog.data.map(
     (exerciseObj) => exerciseObj.name
   );

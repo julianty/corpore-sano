@@ -5,6 +5,9 @@ import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { IconPlus } from "@tabler/icons-react";
 
+// TODO: Add a way to read favorite workouts: create a useEffect hook that calls
+// firestoreActions to read the userProfile.favoriteExercises into a provider
+
 function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
   const { clickHandler } = props;
   return (
@@ -48,7 +51,6 @@ export function WorkoutTool() {
   return (
     <Stack>
       <Title order={2}>Workout Tool</Title>
-      {/* {Object.values(workoutsObject).map()} */}
       {workoutIdArray.map((id) => {
         return (
           <WorkoutInstance

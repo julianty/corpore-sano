@@ -23,6 +23,7 @@ function App() {
     colorScheme: "dark",
   });
   useEffect(() => {
+    // TODO: Update this to read favoriteExercises and ExerciseHistory
     // Update user profile based on new user
     const userProfile = FirestoreActions.fetchUserPreferences(userId);
     userProfile.then((profile) => {
@@ -37,16 +38,16 @@ function App() {
   }, [userId, displayName]);
   return (
     <Container>
-      <Stack p={{ sm: "sm", md: "lg" }}>
-        <UserProfileContext.Provider value={userProfile}>
-          <Header userProfileSetterCallback={setUserProfile} />
-        </UserProfileContext.Provider>
+      <UserProfileContext.Provider value={userProfile}>
         <Stack p={{ sm: "sm", md: "lg" }}>
-          <Text>Welcome {displayName}!</Text>
-          <Dashboard />
-          <WorkoutTool />
+          <Header userProfileSetterCallback={setUserProfile} />
+          <Stack p={{ sm: "sm", md: "lg" }}>
+            <Text>Welcome {displayName}!</Text>
+            <Dashboard />
+            <WorkoutTool />
+          </Stack>
         </Stack>
-      </Stack>
+      </UserProfileContext.Provider>
     </Container>
   );
 }

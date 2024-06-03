@@ -8,13 +8,14 @@ import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
-
+// TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
   workoutId: string;
   workoutCloseHandler: (key: string) => void;
 }) {
   const { workoutId, workoutCloseHandler } = props;
   const [workoutDate, setWorkoutDate] = useState<Timestamp>();
+  // Tracks the exercises in this workout as separate objects
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
 
   const userId = useAppSelector((state) => state.auth.userId);
@@ -48,6 +49,7 @@ export function WorkoutInstance(props: {
     key: string,
     field: keyof Exercise
   ) {
+    // TODO: Update exercise history i.e. new Max, last weight lifted
     // ChangeHandler callback function for uploading changes to the input fields
     const nextState = {
       ...exercisesObject,

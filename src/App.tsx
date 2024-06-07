@@ -25,7 +25,7 @@ function App() {
   useEffect(() => {
     // TODO: Update this to read favoriteExercises and ExerciseHistory
     // Update user profile based on new user
-    const userProfile = FirestoreActions.fetchUserPreferences(userId);
+    const userProfile = FirestoreActions.fetchUserProfile(userId);
     userProfile.then((profile) => {
       const newUserProfile = {
         ...userProfile,

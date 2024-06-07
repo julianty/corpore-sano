@@ -74,14 +74,31 @@ export const FirestoreActions = {
     });
     return filteredResults.map((snapshot) => snapshot.data());
   },
-  fetchUserPreferences: async (userId: string) => {
+  fetchUserProfile: async (userId: string) => {
     const userProfile = await getDoc(
       doc(db, "users", userId, "preferences", "userProfile")
     );
     return userProfile.data();
   },
-  updateUserPreferences: async (userId: string, userProfile: UserProfile) => {
+  updateUserProfile: async (userId: string, userProfile: UserProfile) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await updateDoc(docRef, { ...userProfile });
+  },
+  fetchFavoriteExercises: async (userId: string) => {
+    const userProfile = await getDoc(
+      doc(db, "users", userId, "preferences", "userProfile")
+    );
+    if (userProfile.data() === undefined) {
+      return [];
+    } else {
+      return userProfile.data()!.favoriteExercises;
+    }
+  },
+  updateFavoriteExercises: async (
+    userId: string,
+    favoriteExercises: string[]
+  ) => {
+    const docRef = doc(db, "users", userId, "preferences", "userProfile");
+    await updateDoc(docRef, { favoriteExercises: favoriteExercises });
   },
 };

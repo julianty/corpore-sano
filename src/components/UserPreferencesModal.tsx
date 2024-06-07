@@ -20,7 +20,7 @@ export function UserPreferencesModal(props: UserPreferencesModalProps) {
       setColorScheme(value);
     }
     userProfileSetterCallback(newUserProfile);
-    FirestoreActions.updateUserPreferences(userId, newUserProfile);
+    FirestoreActions.updateUserProfile(userId, newUserProfile);
   }
 
   return (

@@ -31,7 +31,7 @@ const exerciseCatalog = {
     },
     {
       name: "Tricep Pulldown",
-      muscles: ["Tricep", "Deltoid", "Lattisimus Dorsi"],
+      muscles: ["Tricep", "Deltoids", "Lattisimus Dorsi"],
     },
     {
       name: "Seated Pectoral Fly",
@@ -39,7 +39,7 @@ const exerciseCatalog = {
     },
     {
       name: "Lateral Raise",
-      muscles: ["Lattisimus Dorsi", "Deltoid"],
+      muscles: ["Lattisimus Dorsi", "Deltoids"],
     },
   ],
 };

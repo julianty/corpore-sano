@@ -1,7 +1,7 @@
 import { NumberInput } from "@mantine/core";
 import { Exercise } from "../types";
 
-// defaultValue needs to be updated -- make it read from exerciseHistory
+// TODO: defaultValue needs to be updated -- make it read from exerciseHistory
 
 export function StyledNumberInput(
   fieldName: keyof Exercise,

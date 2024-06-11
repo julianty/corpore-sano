@@ -13,9 +13,10 @@ import { Exercise } from "../types";
 import exerciseCatalog from "../data/exerciseCatalog";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconStar, IconStarFilled } from "@tabler/icons-react";
-import { useAppSelector } from "../hooks";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 
 // TODO: Add exerciseHistory as a prop
 
@@ -26,12 +27,38 @@ export function ExerciseRow({
   closeHandler,
   editMode,
 }: ExerciseRowProps) {
+  // Redux state and dispatch
+  const favoriteExercises = useAppSelector(
+    (state) => state.exercises.favoriteExercises
+  );
+  const userId = useAppSelector((state) => state.auth.userId);
+  const dispatch = useAppDispatch();
+
+  // Update favorite exercises in Firestore when favoriteExercises changes
+  useEffect(() => {
+    FirestoreActions.updateFavoriteExercises(userId, favoriteExercises);
+  }, [favoriteExercises, userId]);
+
+  // Event Handlers
+  function favoriteClickHandler(exerciseName: string) {
+    console.log(
+      `favoriteExercises: ${favoriteExercises}, exerciseName: ${exerciseName}`
+    );
+    if (favoriteExercises.includes(exerciseName)) {
+      dispatch({
+        type: "exercises/removeFavoriteExercise",
+        payload: exerciseName,
+      });
+    } else {
+      dispatch({
+        type: "exercises/addFavoriteExercise",
+        payload: exerciseName,
+      });
+    }
+  }
   // Formats items for select node
   const exerciseCatalogArray = exerciseCatalog.data.map(
     (exerciseObj) => exerciseObj.name
-  );
-  const favoriteExercises = useAppSelector(
-    (state) => state.exercises.favoriteExercises
   );
   let deleteColumn;
   if (editMode == true) {
@@ -50,24 +77,13 @@ export function ExerciseRow({
       key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weight}`}
     >
       <Table.Td style={{ width: "300px" }}>
-        {/* <Select
-          searchable
-          defaultValue={exercise.name}
-          data={exerciseCatalogArray}
-          onChange={(value) =>
-            changeHandler(value as string, exerciseKey, "name")
-          }
-        /> */}
         <ExerciseCombobox
           defaultValue={exercise.name}
           catalog={exerciseCatalogArray}
           onChange={(value) =>
             changeHandler(value as string, exerciseKey, "name")
           }
-          // TODO: Implement favoriteClickHandler
-          favoriteClickHandler={() => {
-            console.log("Favorite clicked");
-          }}
+          favoriteClickHandler={favoriteClickHandler}
           favoriteExercises={favoriteExercises}
         />
       </Table.Td>
@@ -90,7 +106,7 @@ interface ExerciseComboboxProps extends ComboboxProps {
   catalog: string[];
   defaultValue: string;
   onChange: (value: string) => void;
-  favoriteClickHandler: () => void;
+  favoriteClickHandler: (exerciseName: string) => void;
   favoriteExercises: string[];
 }
 
@@ -109,10 +125,13 @@ function ExerciseCombobox(props: ExerciseComboboxProps) {
         <Group justify="space-between">
           {exerciseName}
           {props.favoriteExercises.includes(exerciseName) ? (
-            <IconStarFilled style={{ height: "1rem" }} />
+            <IconStarFilled
+              style={{ height: "1rem" }}
+              onClick={() => props.favoriteClickHandler(exerciseName)}
+            />
           ) : (
             <IconStar
-              onClick={props.favoriteClickHandler}
+              onClick={() => props.favoriteClickHandler(exerciseName)}
               style={{ height: "1rem" }}
             />
           )}
@@ -144,7 +163,18 @@ function ExerciseCombobox(props: ExerciseComboboxProps) {
         </InputBase>
       </Combobox.Target>
       <Combobox.Dropdown>
-        <Combobox.Options>{options}</Combobox.Options>
+        <Combobox.Options>
+          <Combobox.Group label="Favorites">
+            {options.filter((option) => {
+              return props.favoriteExercises.includes(option.props.value);
+            })}
+          </Combobox.Group>
+          <Combobox.Group label=" ">
+            {options.filter((option) => {
+              return !props.favoriteExercises.includes(option.props.value);
+            })}
+          </Combobox.Group>
+        </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>
   );

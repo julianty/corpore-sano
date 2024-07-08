@@ -45,7 +45,12 @@ export default function WeeklySummary() {
     // Update the muscleGroups object with data from Firebase via workoutArray
     const muscleGroups: MuscleSummary = {};
     Object.values(muscleGroupsData).forEach((muscle) => {
-      muscleGroups[muscle.name] = { muscle };
+      muscleGroups[muscle.name] = {
+        name: muscle.name,
+        sets: 0,
+        weightTotal: 0,
+        parentGroup: muscle.parentGroup,
+      };
     });
     workoutArray.forEach((workout) => {
       // const daysSinceWorkout = workout.date
@@ -59,9 +64,8 @@ export default function WeeklySummary() {
           (exercise) => exercise.name === value.name
         )[0].muscles;
         muscles.forEach((muscleName) => {
-          muscleGroups[muscleName].muscle["sets"] += sets;
-          muscleGroups[muscleName].muscle["weightTotal"]! +=
-            sets * reps * weight;
+          muscleGroups[muscleName]["sets"] += sets;
+          muscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
           muscleGroups[muscleName].lastWorked = daysSinceWorkout;
         });
       });
@@ -72,8 +76,8 @@ export default function WeeklySummary() {
     Object.values(muscleGroups).forEach((muscleObj) => {
       const lastWorked =
         muscleObj.lastWorked !== undefined ? muscleObj.lastWorked : -1;
-      newParentMuscleGroupsNumSets[muscleObj.muscle.parentGroup] = {
-        sets: muscleObj.muscle.sets,
+      newParentMuscleGroupsNumSets[muscleObj.parentGroup] = {
+        sets: muscleObj.sets,
         daysSinceLast: lastWorked,
       };
     });

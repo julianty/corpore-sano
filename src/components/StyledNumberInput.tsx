@@ -18,9 +18,12 @@ export function StyledNumberInput(
       key={`${key}${fieldName}`}
       defaultValue={exercise[fieldName]}
       onBlur={(event) => changeHandler(event.target.value, key, fieldName)}
-      styles={{ wrapper: { width: "fit-content" } }}
+      styles={{
+        wrapper: { width: "fit-content" },
+        input: { outline: "1px solid #495057", padding: "5px" },
+      }}
       hideControls
-      // variant={"unstyled"}
+      variant={"unstyled"}
     />
   );
 }

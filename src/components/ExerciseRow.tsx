@@ -76,7 +76,7 @@ export function ExerciseRow({
     <Table.Tr
       key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weight}`}
     >
-      <Table.Td style={{ width: "300px" }}>
+      <Table.Td style={{ width: "250px" }}>
         <ExerciseCombobox
           defaultValue={exercise.name}
           catalog={exerciseCatalogArray}

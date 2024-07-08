@@ -49,10 +49,11 @@ export interface Muscle {
   sets: number;
   weightTotal?: number;
   parentGroup: string;
+  lastWorked?: number;
 }
 
 export interface MuscleSummary {
-  [name: string]: { muscle: Muscle; lastWorked?: number };
+  [name: string]: Muscle;
 }
 
 export interface UserProfile {

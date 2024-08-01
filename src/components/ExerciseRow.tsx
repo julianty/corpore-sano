@@ -1,22 +1,16 @@
 import {
   CloseButton,
-  Combobox,
-  ComboboxProps,
-  Group,
-  Input,
-  InputBase,
   // Select,
   Table,
-  useCombobox,
 } from "@mantine/core";
 import { Exercise } from "../types";
 import exerciseCatalog from "../data/exerciseCatalog";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../types";
-import { useEffect, useState } from "react";
-import { IconStar, IconStarFilled } from "@tabler/icons-react";
+import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
+import { ExerciseCombobox } from "./ExerciseComobox";
 
 // TODO: Add exerciseHistory as a prop
 
@@ -99,83 +93,5 @@ export function ExerciseRow({
       ))}
       {deleteColumn}
     </Table.Tr>
-  );
-}
-
-interface ExerciseComboboxProps extends ComboboxProps {
-  catalog: string[];
-  defaultValue: string;
-  onChange: (value: string) => void;
-  favoriteClickHandler: (exerciseName: string) => void;
-  favoriteExercises: string[];
-}
-
-function ExerciseCombobox(props: ExerciseComboboxProps) {
-  const combobox = useCombobox();
-  const [value, setValue] = useState<string | null>(props.defaultValue);
-  const catalog = props.catalog;
-
-  const options = catalog.map((exerciseName) => {
-    return (
-      <Combobox.Option
-        active={exerciseName === props.defaultValue}
-        value={exerciseName}
-        key={exerciseName}
-      >
-        <Group justify="space-between">
-          {exerciseName}
-          {props.favoriteExercises.includes(exerciseName) ? (
-            <IconStarFilled
-              style={{ height: "1rem" }}
-              onClick={() => props.favoriteClickHandler(exerciseName)}
-            />
-          ) : (
-            <IconStar
-              onClick={() => props.favoriteClickHandler(exerciseName)}
-              style={{ height: "1rem" }}
-            />
-          )}
-        </Group>
-      </Combobox.Option>
-    );
-  });
-  return (
-    <Combobox
-      store={combobox}
-      resetSelectionOnOptionHover
-      onOptionSubmit={(val) => {
-        setValue(val);
-        combobox.updateSelectedOptionIndex("active");
-        props.onChange(val);
-      }}
-    >
-      <Combobox.Target>
-        <InputBase
-          component="button"
-          type="button"
-          pointer
-          rightSection={<Combobox.Chevron />}
-          onClick={() => combobox.toggleDropdown()}
-          rightSectionPointerEvents="none"
-          style={{ overflow: "hidden" }}
-        >
-          {value || <Input.Placeholder>Pick value</Input.Placeholder>}
-        </InputBase>
-      </Combobox.Target>
-      <Combobox.Dropdown>
-        <Combobox.Options>
-          <Combobox.Group label="Favorites">
-            {options.filter((option) => {
-              return props.favoriteExercises.includes(option.props.value);
-            })}
-          </Combobox.Group>
-          <Combobox.Group label=" ">
-            {options.filter((option) => {
-              return !props.favoriteExercises.includes(option.props.value);
-            })}
-          </Combobox.Group>
-        </Combobox.Options>
-      </Combobox.Dropdown>
-    </Combobox>
   );
 }

@@ -75,6 +75,7 @@ export function WorkoutInstance(props: {
     const newExerciseObject: Exercise = {
       order: newOrder,
       name: "",
+      variant: "",
       sets: 0,
       reps: 0,
       weight: 0,

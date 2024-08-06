@@ -13,6 +13,7 @@ interface ExerciseComboboxProps extends ComboboxProps {
   defaultValue: string;
   onChange: (value: string, property: keyof Exercise) => void;
   favoriteClickHandler: (exerciseName: string) => void;
+  exerciseNameChangeHandler: (name: string, variant: string) => void;
   favoriteExercises: string[];
 }
 
@@ -24,6 +25,31 @@ export function ExerciseCombobox(props: ExerciseComboboxProps) {
   const exerciseNames = exerciseCatalogUpdated.data.map(
     (exercise) => exercise.name
   );
+
+  const options = exerciseNames.map((exerciseName) => {
+    return (
+      <Combobox.Group label={exerciseName} key={exerciseName}>
+        {exerciseCatalogUpdated.data
+          .filter((exercise) => exercise.name === exerciseName)[0]
+          .variants?.map((variant) => {
+            return (
+              <Combobox.Option
+                key={variant}
+                value={variant}
+                onClick={() => {
+                  // props.onChange(variant, "variant");
+                  setValue(variant);
+                  // props.onChange(exerciseName, "name");
+                  props.exerciseNameChangeHandler(exerciseName, variant);
+                }}
+              >
+                {variant}
+              </Combobox.Option>
+            );
+          })}
+      </Combobox.Group>
+    );
+  });
 
   return (
     <Combobox store={combobox} resetSelectionOnOptionHover>
@@ -37,26 +63,12 @@ export function ExerciseCombobox(props: ExerciseComboboxProps) {
           rightSectionPointerEvents="none"
           style={{ overflow: "hidden" }}
         >
-          {value || <Input.Placeholder>Pick value</Input.Placeholder>}
+          {value || <Input.Placeholder>{}</Input.Placeholder>}
         </InputBase>
       </Combobox.Target>
       <Combobox.Dropdown>
-        <Combobox.Options>
-          {exerciseNames.map((exerciseName) => {
-            return (
-              <Combobox.Option
-                value={exerciseName}
-                key={exerciseName}
-                onClick={() => {
-                  setValue(exerciseName);
-                  props.onChange(exerciseName, "name");
-                  combobox.closeDropdown();
-                }}
-              >
-                {exerciseName}
-              </Combobox.Option>
-            );
-          })}
+        <Combobox.Options mah={400} style={{ overflowY: "auto" }}>
+          {options}
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>

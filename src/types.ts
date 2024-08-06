@@ -32,6 +32,11 @@ export interface ExerciseRowProps {
     fieldName: keyof Exercise
   ) => void;
   closeHandler: (key: string) => void;
+  exerciseNameChangeHandler: (
+    name: string,
+    variant: string,
+    key: string
+  ) => void;
   editMode: boolean;
 }
 export interface ExerciseFieldsProps {
@@ -42,6 +47,11 @@ export interface ExerciseFieldsProps {
     field: keyof Exercise
   ) => void;
   closeHandler: (workoutId: string) => void;
+  exerciseNameChangeHandler: (
+    name: string,
+    variant: string,
+    key: string
+  ) => void;
   editMode: boolean;
 }
 

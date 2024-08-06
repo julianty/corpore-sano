@@ -6,6 +6,7 @@ export function ExerciseFields({
   exercisesObject,
   changeHandler,
   closeHandler,
+  exerciseNameChangeHandler,
   editMode,
 }: ExerciseFieldsProps) {
   // Sorts the array based on the 'order' property of the exercise object
@@ -24,6 +25,7 @@ export function ExerciseFields({
       exerciseKey: key,
       changeHandler,
       closeHandler,
+      exerciseNameChangeHandler,
       editMode,
     };
     return <ExerciseRow key={key} {...exerciseRowProps} />;

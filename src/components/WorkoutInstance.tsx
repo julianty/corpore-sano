@@ -60,6 +60,20 @@ export function WorkoutInstance(props: {
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
 
+  function exerciseNameChangeHandler(
+    name: string,
+    variant: string,
+    key: string
+  ) {
+    // ChangeHandler for the exercise name
+    const nextState = {
+      ...exercisesObject,
+      [key]: { ...exercisesObject[key], name: name, variant: variant },
+    };
+    setExercisesObject(nextState);
+    updateWorkoutData({ date: workoutDate, ...nextState });
+  }
+
   function closeHandler(exerciseKey: string) {
     // Remove the clicked exercise from the exercise object
     const nextState = { ...exercisesObject };
@@ -134,6 +148,7 @@ export function WorkoutInstance(props: {
           <ExerciseFields
             exercisesObject={exercisesObject}
             changeHandler={changeHandler}
+            exerciseNameChangeHandler={exerciseNameChangeHandler}
             closeHandler={closeHandler}
             editMode={editMode}
           />

@@ -21,6 +21,7 @@ export function ExerciseRow({
   exerciseKey,
   changeHandler,
   closeHandler,
+  exerciseNameChangeHandler,
   editMode,
 }: ExerciseRowProps) {
   // Redux state and dispatch
@@ -74,7 +75,7 @@ export function ExerciseRow({
     >
       <Table.Td style={{ width: "250px" }}>
         <ExerciseCombobox
-          defaultValue={exercise.name}
+          defaultValue={exercise.variant}
           catalog={exerciseCatalogArray}
           onChange={(value, property) =>
             changeHandler(
@@ -82,6 +83,9 @@ export function ExerciseRow({
               exerciseKey,
               property as keyof Exercise
             )
+          }
+          exerciseNameChangeHandler={(name, variant) =>
+            exerciseNameChangeHandler(name, variant, exerciseKey)
           }
           favoriteClickHandler={favoriteClickHandler}
           favoriteExercises={favoriteExercises}

@@ -4,7 +4,7 @@ import {
   Table,
 } from "@mantine/core";
 import { Exercise } from "../types";
-import exerciseCatalog from "../data/exerciseCatalog";
+import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../types";
 import { useEffect } from "react";
@@ -13,6 +13,8 @@ import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
 
 // TODO: Add exerciseHistory as a prop
+
+const exerciseCatalog = exerciseCatalogUpdated;
 
 export function ExerciseRow({
   exercise,
@@ -74,8 +76,12 @@ export function ExerciseRow({
         <ExerciseCombobox
           defaultValue={exercise.name}
           catalog={exerciseCatalogArray}
-          onChange={(value) =>
-            changeHandler(value as string, exerciseKey, "name")
+          onChange={(value, property) =>
+            changeHandler(
+              value as string,
+              exerciseKey,
+              property as keyof Exercise
+            )
           }
           favoriteClickHandler={favoriteClickHandler}
           favoriteExercises={favoriteExercises}

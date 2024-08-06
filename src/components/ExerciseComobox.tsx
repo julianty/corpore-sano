@@ -7,10 +7,11 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
+import { Exercise } from "../types";
 interface ExerciseComboboxProps extends ComboboxProps {
   catalog: string[];
   defaultValue: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, property: keyof Exercise) => void;
   favoriteClickHandler: (exerciseName: string) => void;
   favoriteExercises: string[];
 }
@@ -18,22 +19,14 @@ interface ExerciseComboboxProps extends ComboboxProps {
 export function ExerciseCombobox(props: ExerciseComboboxProps) {
   const combobox = useCombobox();
   const [value, setValue] = useState<string | null>(props.defaultValue);
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  // const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   const exerciseNames = exerciseCatalogUpdated.data.map(
     (exercise) => exercise.name
   );
 
   return (
-    <Combobox
-      store={combobox}
-      resetSelectionOnOptionHover
-      onOptionSubmit={(val) => {
-        setValue(val);
-        combobox.updateSelectedOptionIndex("active");
-        props.onChange(val);
-      }}
-    >
+    <Combobox store={combobox} resetSelectionOnOptionHover>
       <Combobox.Target>
         <InputBase
           component="button"
@@ -49,33 +42,21 @@ export function ExerciseCombobox(props: ExerciseComboboxProps) {
       </Combobox.Target>
       <Combobox.Dropdown>
         <Combobox.Options>
-          {selectedExercise === null
-            ? exerciseNames.map((exerciseName) => {
-                return (
-                  <Combobox.Option
-                    value={exerciseName}
-                    key={exerciseName}
-                    onMouseDown={() => setSelectedExercise(exerciseName)}
-                  >
-                    {exerciseName}
-                  </Combobox.Option>
-                );
-              })
-            : exerciseCatalogUpdated.data
-                .filter((exercise) => exercise.name === selectedExercise)[0]
-                ?.variants?.map((variation) => (
-                  <Combobox.Option
-                    value={variation}
-                    key={variation}
-                    onClick={() => {
-                      setValue(variation);
-                      setSelectedExercise(null);
-                      combobox.closeDropdown();
-                    }}
-                  >
-                    {variation}
-                  </Combobox.Option>
-                ))}
+          {exerciseNames.map((exerciseName) => {
+            return (
+              <Combobox.Option
+                value={exerciseName}
+                key={exerciseName}
+                onClick={() => {
+                  setValue(exerciseName);
+                  props.onChange(exerciseName, "name");
+                  combobox.closeDropdown();
+                }}
+              >
+                {exerciseName}
+              </Combobox.Option>
+            );
+          })}
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>

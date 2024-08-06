@@ -8,8 +8,10 @@ import {
 import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { getByDaysElapsed } from "../helperFunctions/DateHelper";
-import exerciseCatalog from "../data/exerciseCatalog";
+// import exerciseCatalog from "../data/exerciseCatalog";
+import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
 
+const exerciseCatalog = exerciseCatalogUpdated;
 const paperStyle = {
   p: "md",
   withBorder: true,
@@ -60,14 +62,32 @@ export default function WeeklySummary() {
         const sets = value.sets;
         const reps = value.reps;
         const weight = value.weight;
-        const muscles = exerciseCatalog.data.filter(
-          (exercise) => exercise.name === value.name
-        )[0].muscles;
-        muscles.forEach((muscleName) => {
-          muscleGroups[muscleName]["sets"] += sets;
-          muscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
-          muscleGroups[muscleName].lastWorked = daysSinceWorkout;
-        });
+        // Check if the exercise exists in the exerciseCatalog
+        try {
+          if (
+            exerciseCatalog.data.filter(
+              (exercise) => exercise.name === value.name
+            ).length === 0
+          ) {
+            throw new Error(
+              `Exercise: ${value.name} not found in exerciseCatalog`
+            );
+          } else {
+            // Search for the muscles invloved in each exercise.name in the exerciseCatalog
+            const muscles = exerciseCatalog.data.filter(
+              (exercise) => exercise.name === value.name
+            )[0].muscles;
+            // For each of these muscles involved, update the muscleGroups object
+            muscles.forEach((muscleName) => {
+              muscleGroups[muscleName]["sets"] += sets;
+              muscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
+              muscleGroups[muscleName].lastWorked = daysSinceWorkout;
+            });
+          }
+        } catch (error) {
+          console.error(error);
+          return;
+        }
       });
     });
 

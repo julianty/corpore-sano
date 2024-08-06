@@ -1,6 +1,6 @@
 // Should I add equipment as a property of the exercise object? e.g. "equipment": ["Barbell", "Dumbbell", "Cable Machine", "Smith Machine", "Bodyweight"]
 
-const exerciseCatalog = {
+const exerciseCatalogUpdated = {
   data: [
     {
       name: "Squat",
@@ -46,6 +46,7 @@ const exerciseCatalog = {
     {
       name: "Tricep Pulldown",
       muscles: ["Tricep", "Deltoids", "Lattisimus Dorsi"],
+      variants: ["Rope Pulldown", "Straight Bar Pulldown", "V-Bar Pulldown"],
     },
     {
       name: "Pectoral Fly",
@@ -121,4 +122,4 @@ const exerciseCatalog = {
   ],
 };
 
-export default exerciseCatalog;
+export default exerciseCatalogUpdated;

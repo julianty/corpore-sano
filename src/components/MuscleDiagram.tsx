@@ -7,9 +7,10 @@ import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { useAppSelector } from "../hooks";
 import { MuscleSummary, Workout } from "../types";
 import { muscleGroups as muscleGroupsData } from "../data/muscleGroups";
-import exerciseCatalog from "../data/exerciseCatalog";
+// import exerciseCatalog from "../data/exerciseCatalog";
+import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
 import { getMondayDate } from "../helperFunctions/DateHelper";
-
+const exerciseCatalog = exerciseCatalogUpdated;
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");
   const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);

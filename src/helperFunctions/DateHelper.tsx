@@ -15,4 +15,10 @@ function getByDaysElapsed(days: number) {
   return targetDate;
 }
 
-export { getMondayDate, getByDaysElapsed };
+function getDateFromXDaysAgo(x: number) {
+  const targetDate = new Date();
+  targetDate.setTime(today.getTime() - x * mSecPerDay);
+  targetDate.setHours(0, 0, 0);
+  return targetDate;
+}
+export { getMondayDate, getByDaysElapsed, getDateFromXDaysAgo };

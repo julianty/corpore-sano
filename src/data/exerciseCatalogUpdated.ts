@@ -31,7 +31,7 @@ const exerciseCatalogUpdated = {
     },
     {
       name: "Bicep Curl",
-      muscles: ["Bicep", "Deltoids"],
+      muscles: ["Biceps", "Deltoids"],
       variants: [
         "Dumbbell Curl",
         "Hammer Curl",
@@ -45,7 +45,7 @@ const exerciseCatalogUpdated = {
     },
     {
       name: "Tricep Pulldown",
-      muscles: ["Tricep", "Deltoids", "Lattisimus Dorsi"],
+      muscles: ["Triceps", "Deltoids", "Lattisimus Dorsi"],
       variants: ["Rope Pulldown", "Straight Bar Pulldown", "V-Bar Pulldown"],
     },
     {

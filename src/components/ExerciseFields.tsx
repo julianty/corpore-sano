@@ -4,7 +4,7 @@ import { ExerciseRow } from "./ExerciseRow";
 
 export function ExerciseFields({
   exercisesObject,
-  changeHandler,
+  numberFieldChangeHandler,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
@@ -23,7 +23,7 @@ export function ExerciseFields({
     const exerciseRowProps: ExerciseRowProps = {
       exercise,
       exerciseKey: key,
-      changeHandler,
+      numberFieldChangeHandler,
       closeHandler,
       exerciseNameChangeHandler,
       editMode,

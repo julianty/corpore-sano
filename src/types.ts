@@ -26,8 +26,8 @@ export interface WorkoutsObject {
 export interface ExerciseRowProps {
   exercise: Exercise;
   exerciseKey: string;
-  changeHandler: (
-    value: string | number,
+  numberFieldChangeHandler: (
+    value: number,
     key: string,
     fieldName: keyof Exercise
   ) => void;
@@ -41,8 +41,8 @@ export interface ExerciseRowProps {
 }
 export interface ExerciseFieldsProps {
   exercisesObject: ExerciseMap;
-  changeHandler: (
-    value: string | number,
+  numberFieldChangeHandler: (
+    value: number,
     key: string,
     field: keyof Exercise
   ) => void;

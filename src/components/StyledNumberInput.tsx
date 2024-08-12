@@ -7,8 +7,8 @@ export function StyledNumberInput(
   fieldName: keyof Exercise,
   key: string,
   exercise: Exercise,
-  changeHandler: (
-    value: string | number,
+  numberFieldChangeHandler: (
+    value: number,
     key: string,
     fieldname: keyof Exercise
   ) => void
@@ -17,7 +17,9 @@ export function StyledNumberInput(
     <NumberInput
       key={`${key}${fieldName}`}
       defaultValue={exercise[fieldName]}
-      onBlur={(event) => changeHandler(event.target.value, key, fieldName)}
+      onBlur={(event) =>
+        numberFieldChangeHandler(Number(event.target.value), key, fieldName)
+      }
       styles={{
         wrapper: { width: "fit-content" },
         input: { outline: "1px solid #495057", padding: "5px" },

@@ -19,7 +19,7 @@ const exerciseCatalog = exerciseCatalogUpdated;
 export function ExerciseRow({
   exercise,
   exerciseKey,
-  changeHandler,
+  numberFieldChangeHandler: numberFieldChangeHandler,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
@@ -77,13 +77,6 @@ export function ExerciseRow({
         <ExerciseCombobox
           defaultValue={exercise.variant}
           catalog={exerciseCatalogArray}
-          onChange={(value, property) =>
-            changeHandler(
-              value as string,
-              exerciseKey,
-              property as keyof Exercise
-            )
-          }
           exerciseNameChangeHandler={(name, variant) =>
             exerciseNameChangeHandler(name, variant, exerciseKey)
           }
@@ -97,7 +90,7 @@ export function ExerciseRow({
             fieldName as keyof Exercise,
             exerciseKey,
             exercise,
-            changeHandler
+            numberFieldChangeHandler
           )}
         </Table.Td>
       ))}

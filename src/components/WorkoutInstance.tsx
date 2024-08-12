@@ -44,8 +44,8 @@ export function WorkoutInstance(props: {
     });
   }, [userId, workoutId]);
 
-  function changeHandler(
-    value: string | number,
+  function numberFieldChangeHandler(
+    value: number,
     key: string,
     field: keyof Exercise
   ) {
@@ -147,7 +147,7 @@ export function WorkoutInstance(props: {
         <Table.Tbody>
           <ExerciseFields
             exercisesObject={exercisesObject}
-            changeHandler={changeHandler}
+            numberFieldChangeHandler={numberFieldChangeHandler}
             exerciseNameChangeHandler={exerciseNameChangeHandler}
             closeHandler={closeHandler}
             editMode={editMode}

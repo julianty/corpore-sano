@@ -7,11 +7,9 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
-import { Exercise } from "../types";
 interface ExerciseComboboxProps extends ComboboxProps {
   catalog: string[];
   defaultValue: string;
-  onChange: (value: string, property: keyof Exercise) => void;
   favoriteClickHandler: (exerciseName: string) => void;
   exerciseNameChangeHandler: (name: string, variant: string) => void;
   favoriteExercises: string[];

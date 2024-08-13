@@ -7,7 +7,10 @@ import {
 } from "../data/muscleGroups";
 import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
-import { getByDaysElapsed } from "../helperFunctions/DateHelper";
+import {
+  calculateDaysBetweenDates,
+  getByDaysElapsed,
+} from "../helperFunctions/DateHelper";
 // import exerciseCatalog from "../data/exerciseCatalog";
 import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
 
@@ -20,6 +23,7 @@ interface MuscleGroupsSets {
   [name: string]: { sets: number; daysSinceLast?: number };
 }
 export default function WeeklySummary() {
+  // Workout array stores the workouts from the past week
   const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);
   const userId = useAppSelector((state) => state.auth.userId);
   const [parentMuscleGroupsNumSets, setParentMuscleGroupsNumSets] =
@@ -36,6 +40,7 @@ export default function WeeklySummary() {
   useEffect(() => {
     // By default, get the workouts from seven days ago
     const targetDate = getByDaysElapsed(7);
+    // Fetch the workouts that have been completed after the target date
     FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
       (workoutArray) => {
         setWorkoutArray(workoutArray.map((workout) => workout as Workout));
@@ -54,9 +59,13 @@ export default function WeeklySummary() {
         parentGroup: muscle.parentGroup,
       };
     });
+
     workoutArray.forEach((workout) => {
-      // const daysSinceWorkout = workout.date
-      const daysSinceWorkout = 1;
+      // Calculate the number of days it has been since the workout
+      const daysSinceWorkout = calculateDaysBetweenDates(
+        workout.date!.toDate(),
+        new Date()
+      );
       Object.entries(workout).forEach(([key, value]) => {
         if (key === "date") return;
         const sets = value.sets;
@@ -81,7 +90,7 @@ export default function WeeklySummary() {
             muscles.forEach((muscleName) => {
               muscleGroups[muscleName]["sets"] += sets;
               muscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
-              muscleGroups[muscleName].lastWorked = daysSinceWorkout;
+              muscleGroups[muscleName]["lastWorked"] = daysSinceWorkout;
             });
           }
         } catch (error) {
@@ -91,16 +100,60 @@ export default function WeeklySummary() {
       });
     });
 
-    // Set the worked parent muscle groups
-    const newParentMuscleGroupsNumSets: MuscleGroupsSets = {};
+    // Initialize object containing the worked parent muscle groups
+    // e.g. (Shoulders, Back, Chest, Arms, Core, Legs)
+    const newParentMuscleGroupsNumSets: MuscleGroupsSets = {
+      Shoulders: { sets: 0 },
+      Back: { sets: 0 },
+      Chest: { sets: 0 },
+      Arms: { sets: 0 },
+      Core: { sets: 0 },
+      Legs: { sets: 0 },
+    };
+
+    // Loop through each of the subcategories of muscle groups and
+    // update the parent muscle groups with the sets and days since last worked
+    // The problem with this is the double counting that occurs.
     Object.values(muscleGroups).forEach((muscleObj) => {
+      if (muscleObj.sets === 0) return;
       const lastWorked =
-        muscleObj.lastWorked !== undefined ? muscleObj.lastWorked : -1;
+        muscleObj.lastWorked !== undefined ? muscleObj.lastWorked : 8;
+      if (
+        newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast !==
+        undefined
+      ) {
+        newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast =
+          Math.min(
+            newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast!,
+            lastWorked
+          );
+      }
       newParentMuscleGroupsNumSets[muscleObj.parentGroup] = {
-        sets: muscleObj.sets,
+        sets:
+          newParentMuscleGroupsNumSets[muscleObj.parentGroup].sets +
+          muscleObj.sets,
         daysSinceLast: lastWorked,
       };
     });
+
+    // Loop through each workout
+    workoutArray.forEach((workout) => {
+      // Calculate the number of days since the workout
+      const daysSinceWorkout = calculateDaysBetweenDates(
+        workout.date!.toDate(),
+        new Date()
+      );
+      // Loop through each exercise in the workout
+      Object.entries(workout).forEach(([key, exercise]) => {
+        if (key === "date") return;
+        // Lookup the parent muscle group for the exercise
+        const parentGroup = exerciseCatalog.data.filter(
+          (exerciseData) => exerciseData.name === exercise.name
+        )[0].parentGroup;
+      });
+    });
+    // For each exercise, update the parent muscle groups with the sets
+    // and days since last worked
 
     setParentMuscleGroupsNumSets(newParentMuscleGroupsNumSets);
   }, [workoutArray]);
@@ -119,10 +172,11 @@ export default function WeeklySummary() {
           </Table.Thead>
           <Table.Tbody>
             {parentGroups.map((group) => {
-              const daysSinceLast =
-                parentMuscleGroupsNumSets[group].daysSinceLast! < 0
+              let daysSinceLast =
+                parentMuscleGroupsNumSets[group].daysSinceLast! >= 7
                   ? `7+`
                   : parentMuscleGroupsNumSets[group].daysSinceLast;
+              if (daysSinceLast === undefined) daysSinceLast = "7+";
               return (
                 <Table.Tr key={group}>
                   <Table.Td>{group}</Table.Td>

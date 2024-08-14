@@ -36,6 +36,7 @@ export default function WeeklySummary() {
       Legs: { sets: 0 },
     });
 
+  // On render and whenever the userId changes,
   // Query database to find workouts from this past week
   useEffect(() => {
     // By default, get the workouts from seven days ago
@@ -48,6 +49,7 @@ export default function WeeklySummary() {
     );
   }, [userId]);
 
+  // On render and whenever workoutArray changes,
   useEffect(() => {
     // Update the muscleGroups object with data from Firebase via workoutArray
     const muscleGroups: MuscleSummary = {};
@@ -113,11 +115,11 @@ export default function WeeklySummary() {
 
     // Loop through each of the subcategories of muscle groups and
     // update the parent muscle groups with the sets and days since last worked
-    // The problem with this is the double counting that occurs.
     Object.values(muscleGroups).forEach((muscleObj) => {
       if (muscleObj.sets === 0) return;
       const lastWorked =
         muscleObj.lastWorked !== undefined ? muscleObj.lastWorked : 8;
+
       if (
         newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast !==
         undefined
@@ -135,25 +137,6 @@ export default function WeeklySummary() {
         daysSinceLast: lastWorked,
       };
     });
-
-    // Loop through each workout
-    workoutArray.forEach((workout) => {
-      // Calculate the number of days since the workout
-      const daysSinceWorkout = calculateDaysBetweenDates(
-        workout.date!.toDate(),
-        new Date()
-      );
-      // Loop through each exercise in the workout
-      Object.entries(workout).forEach(([key, exercise]) => {
-        if (key === "date") return;
-        // Lookup the parent muscle group for the exercise
-        const parentGroup = exerciseCatalog.data.filter(
-          (exerciseData) => exerciseData.name === exercise.name
-        )[0].parentGroup;
-      });
-    });
-    // For each exercise, update the parent muscle groups with the sets
-    // and days since last worked
 
     setParentMuscleGroupsNumSets(newParentMuscleGroupsNumSets);
   }, [workoutArray]);

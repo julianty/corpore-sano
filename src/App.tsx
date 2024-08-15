@@ -22,6 +22,14 @@ function App() {
     weightUnit: "lbs",
     colorScheme: "dark",
   });
+
+  useEffect(() => {
+    // Ensure that the demo data is updated when the demo user logs in
+    if (userId === "demoUser") {
+      FirestoreActions.updateDemoData();
+    }
+  }, [userId]);
+
   useEffect(() => {
     // TODO: Update this to read favoriteExercises and ExerciseHistory
     // Update user profile based on new user

@@ -8,6 +8,7 @@ import {
   setDoc,
   deleteDoc,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { UserProfile, Workout } from "../types";
 
@@ -100,5 +101,37 @@ export const FirestoreActions = {
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await updateDoc(docRef, { favoriteExercises: favoriteExercises });
+  },
+  updateDemoData: async () => {
+    // This is a function to update the demo data in the database
+    // to demonstrate the functionality of the muscle summary
+    const userId = "demoUser";
+    // Fetch all workouts of demoUser
+    await FirestoreActions.fetchWorkoutIds(userId).then((workoutIds) => {
+      // Randomly choose dates within the last 7 days for each workout
+      const timestampsFromLastWeek: Timestamp[] = [];
+      [1, 2, 3, 4, 5, 6, 7].forEach((day) => {
+        const date = new Date();
+        date.setDate(date.getDate() - day);
+        timestampsFromLastWeek.push(Timestamp.fromDate(date));
+      });
+
+      workoutIds.forEach(async (workoutId) => {
+        // Replace each workout with a new workout with a date from the last week
+        const workout = await FirestoreActions.fetchData(userId, workoutId);
+        const updatedWorkout = {
+          ...(workout as Workout),
+          date: timestampsFromLastWeek.splice(
+            Math.floor(Math.random() * 7),
+            1
+          )[0],
+        };
+        await FirestoreActions.updateWorkoutById(
+          userId,
+          workoutId,
+          updatedWorkout
+        );
+      });
+    });
   },
 };

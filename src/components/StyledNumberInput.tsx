@@ -20,6 +20,7 @@ export function StyledNumberInput(
       onBlur={(event) =>
         numberFieldChangeHandler(Number(event.target.value), key, fieldName)
       }
+      onFocus={(event) => event.target.select()}
       styles={{
         wrapper: { width: "fit-content" },
         input: { outline: "1px solid #495057", padding: "5px" },

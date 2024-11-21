@@ -1,14 +1,14 @@
+import { Container, Stack, Text } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
-import "./index.css";
-import { Stack, Container, Text } from "@mantine/core";
-import { WorkoutTool } from "./components/WorkoutTool";
-import { Dashboard } from "./components/Dashboard";
 import { createContext, useEffect, useState } from "react";
-import { UserProfile } from "./types";
-import { useAppSelector } from "./hooks";
-import { FirestoreActions } from "./helperFunctions/FirestoreActions";
+import { Dashboard } from "./components/Dashboard";
 import { Header } from "./components/Header";
+import { WorkoutTool } from "./components/WorkoutTool";
+import { FirestoreActions } from "./helperFunctions/FirestoreActions";
+import { useAppSelector } from "./hooks";
+import "./index.css";
+import { UserProfile } from "./types";
 
 export const UserProfileContext = createContext<UserProfile | undefined>(
   undefined
@@ -50,13 +50,35 @@ function App() {
         <Stack p={{ sm: "sm", md: "lg" }}>
           <Header userProfileSetterCallback={setUserProfile} />
           <Stack p={{ sm: "sm", md: "lg" }}>
-            <Text>Welcome {displayName}!</Text>
+            {userId === "demoUser" ? (
+              <Hero />
+            ) : (
+              <Text>Welcome {displayName}!</Text>
+            )}
             <Dashboard />
             <WorkoutTool />
           </Stack>
         </Stack>
       </UserProfileContext.Provider>
     </Container>
+  );
+}
+
+function Hero() {
+  return (
+    <Stack gap="md">
+      <Text fw={700} size="xl">
+        Welcome to Corpore Sano!
+      </Text>
+      <Text size="md">
+        This is a demo account. Feel free to explore the app and add your own
+        workouts and exercises.
+      </Text>
+      <Text size="md">
+        You can also use the Google Login on the navbar to create your own
+        account! This service is still in development, so your data may be lost.
+      </Text>
+    </Stack>
   );
 }
 

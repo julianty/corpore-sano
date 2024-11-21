@@ -1,15 +1,15 @@
-import app from "../initializeFirebase";
 import {
-  getFirestore,
+  collection,
+  deleteDoc,
   doc,
   getDoc,
-  collection,
   getDocs,
+  getFirestore,
   setDoc,
-  deleteDoc,
-  updateDoc,
   Timestamp,
+  updateDoc,
 } from "firebase/firestore";
+import app from "../initializeFirebase";
 import { UserProfile, Workout } from "../types";
 
 const db = getFirestore(app);
@@ -40,10 +40,10 @@ export const FirestoreActions = {
     if (data.exists()) {
       return data.data();
     } else {
-      // console.log("FirestoreActions.fetchData: Document does not exist");
-      // console.log(
-      //   `FirestoreActions.fetchData: userId:${userId}, workoutId:${workoutId}`
-      // );
+      console.log("FirestoreActions.fetchData: Document does not exist");
+      console.log(
+        `FirestoreActions.fetchData: userId:${userId}, workoutId:${workoutId}`
+      );
     }
   },
   fetchWorkoutIds: async (userId: string) => {

@@ -3,13 +3,13 @@ import {
   // Select,
   Table,
 } from "@mantine/core";
-import { Exercise } from "../types";
-import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
+import { Exercise } from "../../types";
+import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { StyledNumberInput } from "./StyledNumberInput";
-import { ExerciseRowProps } from "../types";
+import { ExerciseRowProps } from "../../types";
 import { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../hooks";
-import { FirestoreActions } from "../helperFunctions/FirestoreActions";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
 
 // TODO: Add exerciseHistory as a prop

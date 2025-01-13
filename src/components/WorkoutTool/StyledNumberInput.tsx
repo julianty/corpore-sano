@@ -1,5 +1,5 @@
 import { NumberInput } from "@mantine/core";
-import { Exercise } from "../types";
+import { Exercise } from "../../types";
 
 // TODO: defaultValue needs to be updated -- make it read from exerciseHistory
 

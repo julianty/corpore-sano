@@ -1,15 +1,15 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-import FrontMuscles from "../assets/FrontMuscles";
+import FrontMuscles from "../../assets/FrontMuscles";
 import { Box, Group, Stack, Title, Text } from "@mantine/core";
-import BackMuscles from "../assets/BackMuscles";
-import { FirestoreActions } from "../helperFunctions/FirestoreActions";
-import { useAppSelector } from "../hooks";
-import { MuscleSummary, Workout } from "../types";
-import { muscleGroups as muscleGroupsData } from "../data/muscleGroups";
+import BackMuscles from "../../assets/BackMuscles";
+import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
+import { useAppSelector } from "../../hooks";
+import { MuscleSummary, Workout } from "../../types";
+import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 // import exerciseCatalog from "../data/exerciseCatalog";
-import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
-import { getMondayDate } from "../helperFunctions/DateHelper";
+import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
+import { getMondayDate } from "../../helperFunctions/DateHelper";
 const exerciseCatalog = exerciseCatalogUpdated;
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");

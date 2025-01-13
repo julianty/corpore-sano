@@ -1,8 +1,8 @@
 import { Button, Stack, Title } from "@mantine/core";
 import { WorkoutInstance } from "./WorkoutInstance";
 import { useCallback, useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../hooks";
-import { FirestoreActions } from "../helperFunctions/FirestoreActions";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { IconPlus } from "@tabler/icons-react";
 
 // TODO: Add a way to read favorite workouts: create a useEffect hook that calls

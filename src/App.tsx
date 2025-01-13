@@ -2,13 +2,14 @@ import { Container, Stack, Text } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import { createContext, useEffect, useState } from "react";
-import { Dashboard } from "./components/Dashboard";
+import { Dashboard } from "./components/Dashboard/Dashboard";
 import { Header } from "./components/Header";
-import { WorkoutTool } from "./components/WorkoutTool";
+import { WorkoutTool } from "./components/WorkoutTool/WorkoutTool";
 import { FirestoreActions } from "./helperFunctions/FirestoreActions";
 import { useAppSelector } from "./hooks";
 import "./index.css";
 import { UserProfile } from "./types";
+import { Hero } from "./components/Hero";
 
 export const UserProfileContext = createContext<UserProfile | undefined>(
   undefined
@@ -61,24 +62,6 @@ function App() {
         </Stack>
       </UserProfileContext.Provider>
     </Container>
-  );
-}
-
-function Hero() {
-  return (
-    <Stack gap="md">
-      <Text fw={700} size="xl">
-        Welcome to Corpore Sano!
-      </Text>
-      <Text size="md">
-        This is a demo account. Feel free to explore the app and add your own
-        workouts and exercises.
-      </Text>
-      <Text size="md">
-        You can also use the Google Login on the navbar to create your own
-        account! This service is still in development, so your data may be lost.
-      </Text>
-    </Stack>
   );
 }
 

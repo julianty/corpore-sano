@@ -1,5 +1,5 @@
 import { Button } from "@mantine/core";
-import { useAppDispatch } from "../hooks";
+import { useAppDispatch } from "../../hooks";
 import {
   getAuth,
   signInWithPopup,

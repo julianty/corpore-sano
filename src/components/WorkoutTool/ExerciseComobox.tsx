@@ -6,7 +6,7 @@ import {
   useCombobox,
 } from "@mantine/core";
 import { useState } from "react";
-import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
+import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 interface ExerciseComboboxProps extends ComboboxProps {
   catalog: string[];
   defaultValue: string;

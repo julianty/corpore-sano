@@ -1,5 +1,5 @@
 import { Title, Group, Flex, Button, Menu } from "@mantine/core";
-import { GoogleLogin } from "./GoogleLogin";
+import { GoogleLogin } from "./Auth/GoogleLogin";
 import { IconBarbell } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { UserProfile } from "../types";

@@ -1,18 +1,18 @@
 import { Group, Paper, Title, Table } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { MuscleSummary, Workout } from "../types";
+import { MuscleSummary, Workout } from "../../types";
 import {
   muscleGroups as muscleGroupsData,
   parentGroups,
-} from "../data/muscleGroups";
-import { useAppSelector } from "../hooks";
-import { FirestoreActions } from "../helperFunctions/FirestoreActions";
+} from "../../data/muscleGroups";
+import { useAppSelector } from "../../hooks";
+import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import {
   calculateDaysBetweenDates,
   getByDaysElapsed,
-} from "../helperFunctions/DateHelper";
+} from "../../helperFunctions/DateHelper";
 // import exerciseCatalog from "../data/exerciseCatalog";
-import exerciseCatalogUpdated from "../data/exerciseCatalogUpdated";
+import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 const paperStyle = {

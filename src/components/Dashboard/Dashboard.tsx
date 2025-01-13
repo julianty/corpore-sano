@@ -1,6 +1,6 @@
 import { Accordion, Stack, Title } from "@mantine/core";
 // import { MuscleDiagram } from "../components/MuscleDiagram";
-import WeeklySummary from "../components/WeeklySummary";
+import WeeklySummary from "./WeeklySummary";
 
 export function Dashboard() {
   return (

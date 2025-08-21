@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { UserProfileContext } from "../../App";
-import { kgToLbs, lbsToKg } from "../../utils";
+import { kgToLbs, lbsToKg } from "../../lib/utils";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {

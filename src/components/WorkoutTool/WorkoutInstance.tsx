@@ -1,12 +1,14 @@
 import { Button, Group, Paper, Table } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useAppSelector } from "../../hooks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../../types";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
+import { UserProfileContext } from "../../App";
+import { kgToLbs, lbsToKg } from "../../utils";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
@@ -14,6 +16,10 @@ export function WorkoutInstance(props: {
   workoutCloseHandler: (key: string) => void;
 }) {
   const { workoutId, workoutCloseHandler } = props;
+  const [weightUnits, setWeightUnits] = useState<"kg" | "lbs">("lbs");
+  const userProfileContext = useContext(UserProfileContext);
+  if (!userProfileContext) throw new Error("UserProfileContext undefined");
+  const { userProfile } = userProfileContext;
   const [workoutDate, setWorkoutDate] = useState<Timestamp>();
   // Tracks the exercises in this workout as separate objects
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
@@ -26,6 +32,9 @@ export function WorkoutInstance(props: {
       FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc),
     [userId, workoutId]
   );
+
+  // Update based on user context
+  useEffect(() => setWeightUnits(userProfile.weightUnit), [userProfile]);
 
   useEffect(() => {
     // Runs when a new user logs in
@@ -51,10 +60,27 @@ export function WorkoutInstance(props: {
   ) {
     // TODO: Update exercise history i.e. new Max, last weight lifted
     // ChangeHandler callback function for uploading changes to the input fields
-    const nextState = {
-      ...exercisesObject,
-      [key]: { ...exercisesObject[key], [field]: value },
-    };
+    let nextState = {};
+    if (field == "weightlbs" || field == "weightkg") {
+      // update the other corresponding weight
+      const [otherField, otherValue] =
+        field == "weightlbs"
+          ? ["weightkg", lbsToKg(value)]
+          : ["weightlbs", kgToLbs(value)];
+      nextState = {
+        ...exercisesObject,
+        [key]: {
+          ...exercisesObject[key],
+          [field]: value,
+          [otherField]: otherValue,
+        },
+      };
+    } else {
+      nextState = {
+        ...exercisesObject,
+        [key]: { ...exercisesObject[key], [field]: value },
+      };
+    }
     setExercisesObject(nextState);
     // Call for an update to firebase
     updateWorkoutData({ date: workoutDate, ...nextState });
@@ -92,7 +118,8 @@ export function WorkoutInstance(props: {
       variant: "",
       sets: 0,
       reps: 0,
-      weight: 0,
+      weightlbs: 0,
+      weightkg: 0,
     };
     const newExercise: ExerciseMap = {};
     newExercise[newExerciseName] = newExerciseObject;
@@ -134,11 +161,19 @@ export function WorkoutInstance(props: {
       <Table>
         <Table.Thead>
           <Table.Tr>
-            {["Exercise Name", "Sets", "Reps", "Weight", "Delete"]
+            {[
+              "Exercise Name",
+              "Sets",
+              "Reps",
+              `Weight (${weightUnits})`,
+              "Delete",
+            ]
+              // Remove the 'delete' column unless we're in edit mode
               .filter((colName) => {
                 if (colName !== "Delete") return true;
                 if (editMode === true) return true;
               })
+
               .map((colName) => (
                 <Table.Th key={colName}>{colName}</Table.Th>
               ))}

@@ -2,17 +2,13 @@ import { Title, Group, Flex, Button, Menu } from "@mantine/core";
 import { GoogleLogin } from "./Auth/GoogleLogin";
 import { IconBarbell } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
-import { UserProfile } from "../types";
 import { UserPreferencesModal } from "./UserPreferencesModal";
 
-export function Header(props: {
-  userProfileSetterCallback: (userProfile: UserProfile) => void;
-}) {
+export function Header() {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
       <UserPreferencesModal
-        userProfileSetterCallback={props.userProfileSetterCallback}
         opened={opened}
         onClose={close}
         title="User Preferences"

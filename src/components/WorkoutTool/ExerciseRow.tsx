@@ -7,10 +7,11 @@ import { Exercise } from "../../types";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../../types";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
+import { UserProfileContext } from "../../App";
 
 // TODO: Add exerciseHistory as a prop
 
@@ -30,6 +31,10 @@ export function ExerciseRow({
   );
   const userId = useAppSelector((state) => state.auth.userId);
   const dispatch = useAppDispatch();
+  const userProfileContext = useContext(UserProfileContext);
+  if (!userProfileContext)
+    throw new Error("Could not retrieve userProfileContext in ExerciseRow");
+  const weightUnit = userProfileContext.userProfile.weightUnit as "kg" | "lbs";
 
   // Update favorite exercises in Firestore when favoriteExercises changes
   useEffect(() => {
@@ -71,8 +76,9 @@ export function ExerciseRow({
   const uniqueId = `inputKey${exerciseKey}`;
   return (
     <Table.Tr
-      key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weight}`}
+      key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weightkg}`}
     >
+      {/* Exercise text field */}
       <Table.Td style={{ width: "250px" }}>
         <ExerciseCombobox
           defaultValue={exercise.variant}
@@ -84,16 +90,19 @@ export function ExerciseRow({
           favoriteExercises={favoriteExercises}
         />
       </Table.Td>
-      {["sets", "reps", "weight"].map((fieldName) => (
-        <Table.Td key={`${uniqueId}${fieldName}`}>
-          {StyledNumberInput(
-            fieldName as keyof Exercise,
-            exerciseKey,
-            exercise,
-            numberFieldChangeHandler
-          )}
-        </Table.Td>
-      ))}
+      {/* Number fields */}
+      {["sets", "reps", `weight${weightUnit}`]
+        // filter out the appropriate weight unit
+        .map((fieldName) => (
+          <Table.Td key={`${uniqueId}${fieldName}`}>
+            {StyledNumberInput(
+              fieldName as keyof Exercise,
+              exerciseKey,
+              exercise,
+              numberFieldChangeHandler
+            )}
+          </Table.Td>
+        ))}
       {deleteColumn}
     </Table.Tr>
   );

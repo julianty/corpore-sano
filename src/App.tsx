@@ -11,9 +11,14 @@ import "./index.css";
 import { UserProfile } from "./types";
 import { Hero } from "./components/Hero";
 
-export const UserProfileContext = createContext<UserProfile | undefined>(
-  undefined
-);
+export type UserProfileContextType = {
+  userProfile: UserProfile;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+};
+
+export const UserProfileContext = createContext<
+  UserProfileContextType | undefined
+>(undefined);
 
 function App() {
   const displayName = useAppSelector((state) => state.auth.displayName);
@@ -47,9 +52,9 @@ function App() {
   }, [userId, displayName]);
   return (
     <Container>
-      <UserProfileContext.Provider value={userProfile}>
+      <UserProfileContext.Provider value={{ userProfile, setUserProfile }}>
         <Stack p={{ sm: "sm", md: "lg" }}>
-          <Header userProfileSetterCallback={setUserProfile} />
+          <Header />
           <Stack p={{ sm: "sm", md: "lg" }}>
             {userId === "demoUser" ? (
               <Hero />

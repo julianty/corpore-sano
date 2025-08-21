@@ -11,7 +11,12 @@ import { IconPlus } from "@tabler/icons-react";
 function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
   const { clickHandler } = props;
   return (
-    <Button leftSection={<IconPlus size={16} />} onClick={clickHandler}>
+    <Button
+      leftSection={<IconPlus size={16} />}
+      onClick={clickHandler}
+      size="lg"
+      w={"50%"}
+    >
       Add New Workout
     </Button>
   );
@@ -30,7 +35,8 @@ export function WorkoutTool() {
     FirestoreActions.fetchFavoriteExercises(userId).then((value) => {
       dispatch({ type: `exercises/setFavoriteExercises`, payload: value });
     });
-  }, [userId]);
+  }, [userId, dispatch]);
+
   const workoutCloseHandler = useCallback(
     (workoutId: string) => {
       const nextState = [...workoutIdArray].filter((id) =>
@@ -55,16 +61,19 @@ export function WorkoutTool() {
   return (
     <Stack>
       <Title order={2}>Workout Tool</Title>
-      {workoutIdArray.map((id) => {
-        return (
-          <WorkoutInstance
-            key={`workoutId${id}`}
-            workoutId={id}
-            workoutCloseHandler={workoutCloseHandler}
-          />
-        );
-      })}
       <AddWorkoutButton clickHandler={addEmptyWorkout} />
+      {workoutIdArray
+        .slice(0)
+        .reverse()
+        .map((id) => {
+          return (
+            <WorkoutInstance
+              key={`workoutId${id}`}
+              workoutId={id}
+              workoutCloseHandler={workoutCloseHandler}
+            />
+          );
+        })}
     </Stack>
   );
 }

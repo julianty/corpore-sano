@@ -7,7 +7,9 @@ export interface Exercise {
   variant: string;
   sets: number;
   reps: number;
-  weight: number;
+  // weight: number;
+  weightlbs: number;
+  weightkg: number;
 }
 
 export interface Workout {
@@ -69,15 +71,13 @@ export interface MuscleSummary {
 
 export interface UserProfile {
   username?: string | undefined;
-  weightUnit?: "lbs" | "kg";
-  colorScheme?: "light" | "dark";
+  weightUnit: "lbs" | "kg";
+  colorScheme: "light" | "dark";
   exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
 }
 
-export interface UserPreferencesModalProps extends ModalProps {
-  userProfileSetterCallback: (userProfile: UserProfile) => void;
-}
+export interface UserPreferencesModalProps extends ModalProps {}
 
 // TODO: Make it possible to jump to the workout wherein the maximum lift was hit.
 export interface ExerciseHistory {

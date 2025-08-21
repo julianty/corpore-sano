@@ -1,5 +1,5 @@
-import { ExerciseRowProps } from "../types";
-import { ExerciseFieldsProps } from "../types";
+import { ExerciseRowProps } from "../../types";
+import { ExerciseFieldsProps } from "../../types";
 import { ExerciseRow } from "./ExerciseRow";
 
 export function ExerciseFields({

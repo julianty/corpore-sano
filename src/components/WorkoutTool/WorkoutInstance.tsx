@@ -9,6 +9,7 @@ import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { UserProfileContext } from "../../App";
 import { kgToLbs, lbsToKg } from "../../lib/utils";
+import { responsiveDimensions } from "../../styles/responsive";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
@@ -30,7 +31,7 @@ export function WorkoutInstance(props: {
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
       FirestoreActions.updateWorkoutById(userId, workoutId, updatedDoc),
-    [userId, workoutId]
+    [userId, workoutId],
   );
 
   // Update based on user context
@@ -56,7 +57,7 @@ export function WorkoutInstance(props: {
   function numberFieldChangeHandler(
     value: number,
     key: string,
-    field: keyof Exercise
+    field: keyof Exercise,
   ) {
     // TODO: Update exercise history i.e. new Max, last weight lifted
     // ChangeHandler callback function for uploading changes to the input fields
@@ -89,7 +90,7 @@ export function WorkoutInstance(props: {
   function exerciseNameChangeHandler(
     name: string,
     variant: string,
-    key: string
+    key: string,
   ) {
     // ChangeHandler for the exercise name
     const nextState = {
@@ -136,8 +137,9 @@ export function WorkoutInstance(props: {
             updateWorkoutData({ date: timestampDate, ...exercisesObject });
           }}
           value={workoutDate?.toDate()}
-          maw={400}
+          maw={responsiveDimensions.inputMaxWidth.md}
           rightSection={<IconCalendar size={16} />}
+          aria-label="Workout date"
         />
         <Button
           ml="auto"
@@ -145,6 +147,7 @@ export function WorkoutInstance(props: {
           onClick={() => setEditMode(!editMode)}
           color={"orange"}
           leftSection={<IconEdit size={16} />}
+          aria-label={editMode ? "Exit edit mode" : "Edit workout"}
         >
           edit
         </Button>
@@ -154,6 +157,7 @@ export function WorkoutInstance(props: {
           onClick={() => workoutCloseHandler(workoutId)}
           leftSection={<IconX size={16} />}
           variant="light"
+          aria-label="Delete this workout"
         >
           Delete Workout
         </Button>
@@ -193,6 +197,7 @@ export function WorkoutInstance(props: {
                 leftSection={<IconPlus size={14} />}
                 onClick={addNewExercise}
                 variant="light"
+                aria-label="Add a new exercise to this workout"
               >
                 Add Exercise
               </Button>

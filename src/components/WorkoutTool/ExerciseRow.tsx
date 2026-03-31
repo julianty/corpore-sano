@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
 import { UserProfileContext } from "../../App";
+import { responsiveDimensions } from "../../styles/responsive";
 
 // TODO: Add exerciseHistory as a prop
 
@@ -79,7 +80,7 @@ export function ExerciseRow({
       key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weightkg}`}
     >
       {/* Exercise text field */}
-      <Table.Td style={{ width: "250px" }}>
+      <Table.Td style={{ width: responsiveDimensions.exerciseRowWidth.md }}>
         <ExerciseCombobox
           defaultValue={exercise.variant}
           catalog={exerciseCatalogArray}

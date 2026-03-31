@@ -7,6 +7,7 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
+import { responsiveDimensions } from "../../styles/responsive";
 interface ExerciseComboboxProps extends ComboboxProps {
   catalog: string[];
   defaultValue: string;
@@ -65,7 +66,7 @@ export function ExerciseCombobox(props: ExerciseComboboxProps) {
         </InputBase>
       </Combobox.Target>
       <Combobox.Dropdown>
-        <Combobox.Options mah={400} style={{ overflowY: "auto" }}>
+        <Combobox.Options mah={responsiveDimensions.dropdownMaxHeight.md} style={{ overflowY: "auto" }}>
           {options}
         </Combobox.Options>
       </Combobox.Dropdown>

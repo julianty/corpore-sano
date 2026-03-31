@@ -10,6 +10,7 @@ import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 // import exerciseCatalog from "../data/exerciseCatalog";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { getMondayDate } from "../../helperFunctions/DateHelper";
+import { responsiveDimensions } from "../../styles/responsive";
 const exerciseCatalog = exerciseCatalogUpdated;
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");
@@ -57,15 +58,15 @@ export function MuscleDiagram() {
     setActiveMuscle(parentElement.id);
   }
   const svgProps = {
-    width: "200px",
-    height: "500px",
+    width: "100%",
+    height: responsiveDimensions.muscleChartHeight.md,
     onMouseEnterHandler: onMouseEnterHandler,
   };
 
   return (
     <Stack>
       <Title order={2}>Body Diagram</Title>
-      <Box w="100%" h="500px">
+      <Box w="100%" h={responsiveDimensions.muscleChartHeight.md}>
         <Group grow>
           <Box className="muscles-front">
             <FrontMuscles {...svgProps} />

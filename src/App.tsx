@@ -55,15 +55,17 @@ function App() {
       <UserProfileContext.Provider value={{ userProfile, setUserProfile }}>
         <Stack p={{ sm: "sm", md: "lg" }}>
           <Header />
-          <Stack p={{ sm: "sm", md: "lg" }}>
-            {userId === "demoUser" ? (
-              <Hero />
-            ) : (
-              <Text>Welcome {displayName}!</Text>
-            )}
-            <Dashboard />
-            <WorkoutTool />
-          </Stack>
+          <main id="main-content">
+            <Stack p={{ sm: "sm", md: "lg" }}>
+              {userId === "demoUser" ? (
+                <Hero />
+              ) : (
+                <Text>Welcome {displayName}!</Text>
+              )}
+              <Dashboard />
+              <WorkoutTool />
+            </Stack>
+          </main>
         </Stack>
       </UserProfileContext.Provider>
     </Container>

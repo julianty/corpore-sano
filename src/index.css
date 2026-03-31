@@ -1,5 +1,108 @@
+/* ===== Responsive Base Styles ===== */
+
+html {
+  font-size: 16px;
+}
+
+@media (max-width: 575px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Accessibility: Focus Visible ===== */
+
+*:focus-visible {
+  outline: 2px solid #1c7ed6; /* Mantine blue */
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ===== Responsive Typography ===== */
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: clamp(24px, 5vw, 40px);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(20px, 4vw, 32px);
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: clamp(18px, 3vw, 28px);
+  line-height: 1.4;
+}
+
+p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ===== Touch-Friendly Targets ===== */
+
+button,
+[role="button"],
+a,
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (min-width: 992px) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: auto;
+    min-width: auto;
+  }
+}
+
+/* ===== Responsive Images ===== */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== Overflow Handling ===== */
+
+table {
+  overflow-x: auto;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  table {
+    display: table;
+  }
+}
+
+/* ===== Muscle SVG Diagram ===== */
+
 .muscle-svg {
   position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 #Body_Outline_Front > path:hover {
@@ -11,4 +114,18 @@
 
 path:hover {
   fill: aqua;
+}
+
+/* ===== Semantic HTML Improvements ===== */
+
+main {
+  display: block;
+}
+
+nav {
+  display: block;
+}
+
+article {
+  display: block;
 }

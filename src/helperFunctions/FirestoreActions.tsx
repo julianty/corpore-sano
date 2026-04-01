@@ -27,7 +27,11 @@ export const FirestoreActions = {
     document: Workout
   ) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);
-    await setDoc(docRef, document);
+    const safeDocument = {
+      ...document,
+      date: document.date ?? Timestamp.fromDate(new Date()),
+    };
+    await setDoc(docRef, safeDocument);
   },
   deleteWorkoutById: async (userId: string, workoutId: string) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);

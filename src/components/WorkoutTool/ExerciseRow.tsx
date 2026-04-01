@@ -3,11 +3,11 @@ import {
   // Select,
   Table,
 } from "@mantine/core";
+import React, { useContext, useEffect, useMemo } from "react";
 import { Exercise } from "../../types";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../../types";
-import { useContext, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
@@ -18,7 +18,7 @@ import { responsiveDimensions } from "../../styles/responsive";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 
-export function ExerciseRow({
+function ExerciseRowComponent({
   exercise,
   exerciseKey,
   numberFieldChangeHandler: numberFieldChangeHandler,
@@ -60,8 +60,9 @@ export function ExerciseRow({
     }
   }
   // Formats items for select node
-  const exerciseCatalogArray = exerciseCatalog.data.map(
-    (exerciseObj) => exerciseObj.name
+  const exerciseCatalogArray = useMemo(
+    () => exerciseCatalog.data.map((exerciseObj) => exerciseObj.name),
+    [] // Static data, no dependencies
   );
   let deleteColumn;
   if (editMode == true) {
@@ -108,3 +109,5 @@ export function ExerciseRow({
     </Table.Tr>
   );
 }
+
+export const ExerciseRow = React.memo(ExerciseRowComponent);

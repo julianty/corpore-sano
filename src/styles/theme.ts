@@ -106,10 +106,6 @@ export const corporeTheme: MantineThemeOverride = {
           fontWeight: 600,
           transition: "all 150ms ease-in-out",
           minHeight: "36px",
-
-          "@media (max-width: 575px)": {
-            minHeight: "44px",
-          },
         },
       },
     },
@@ -117,7 +113,8 @@ export const corporeTheme: MantineThemeOverride = {
     TextInput: {
       styles: {
         input: {
-          transition: "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
+          transition:
+            "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
 
           "&:focus": {
             borderColor: designTokens.colors.primary,
@@ -129,7 +126,8 @@ export const corporeTheme: MantineThemeOverride = {
     NumberInput: {
       styles: {
         input: {
-          transition: "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
+          transition:
+            "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
 
           "&:focus": {
             borderColor: designTokens.colors.primary,

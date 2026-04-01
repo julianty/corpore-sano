@@ -1,5 +1,5 @@
 import { Group, Paper, Title, Table } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { MuscleSummary, Workout } from "../../types";
 import {
   muscleGroups as muscleGroupsData,
@@ -13,6 +13,10 @@ import {
 } from "../../helperFunctions/DateHelper";
 // import exerciseCatalog from "../data/exerciseCatalog";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
+import {
+  createExerciseMap,
+  getExerciseByName,
+} from "../../utils/exerciseLookup";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 const paperStyle = {
@@ -36,6 +40,12 @@ export default function WeeklySummary() {
       Legs: { sets: 0 },
     });
 
+  // Create Map for O(1) exercise lookups (static data, created once)
+  const exerciseMap = useMemo(
+    () => createExerciseMap(exerciseCatalog.data),
+    [],
+  );
+
   // On render and whenever the userId changes,
   // Query database to find workouts from this past week
   useEffect(() => {
@@ -45,7 +55,7 @@ export default function WeeklySummary() {
     FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
       (workoutArray) => {
         setWorkoutArray(workoutArray.map((workout) => workout as Workout));
-      }
+      },
     );
   }, [userId]);
 
@@ -66,30 +76,25 @@ export default function WeeklySummary() {
       // Calculate the number of days it has been since the workout
       const daysSinceWorkout = calculateDaysBetweenDates(
         workout.date!.toDate(),
-        new Date()
+        new Date(),
       );
       Object.entries(workout).forEach(([key, value]) => {
         if (key === "date") return;
         const sets = value.sets;
         const reps = value.reps;
         const weight = value.weight;
-        // Check if the exercise exists in the exerciseCatalog
+        // Check if the exercise exists in the exerciseCatalog using Map
         try {
-          if (
-            exerciseCatalog.data.filter(
-              (exercise) => exercise.name === value.name
-            ).length === 0
-          ) {
+          const exercise = getExerciseByName(exerciseMap, value.name);
+          if (!exercise) {
             throw new Error(
-              `Exercise: ${value.name} not found in exerciseCatalog`
+              `Exercise: ${value.name} not found in exerciseCatalog`,
             );
           } else {
-            // Search for the muscles invloved in each exercise.name in the exerciseCatalog
-            const muscles = exerciseCatalog.data.filter(
-              (exercise) => exercise.name === value.name
-            )[0].muscles;
+            // Get muscles involved in this exercise (O(1) lookup)
+            const muscles = exercise.muscles;
             // For each of these muscles involved, update the muscleGroups object
-            muscles.forEach((muscleName) => {
+            muscles.forEach((muscleName: string) => {
               muscleGroups[muscleName]["sets"] += sets;
               muscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
               muscleGroups[muscleName]["lastWorked"] = daysSinceWorkout;
@@ -127,7 +132,7 @@ export default function WeeklySummary() {
         newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast =
           Math.min(
             newParentMuscleGroupsNumSets[muscleObj.parentGroup].daysSinceLast!,
-            lastWorked
+            lastWorked,
           );
       }
       newParentMuscleGroupsNumSets[muscleObj.parentGroup] = {

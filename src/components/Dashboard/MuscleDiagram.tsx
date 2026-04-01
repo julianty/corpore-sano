@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useState } from "react";
 import FrontMuscles from "../../assets/FrontMuscles";
 import { Box, Group, Stack, Title, Text } from "@mantine/core";
@@ -11,6 +11,10 @@ import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { getMondayDate } from "../../helperFunctions/DateHelper";
 import { responsiveDimensions } from "../../styles/responsive";
+import {
+  createExerciseMap,
+  getExerciseByName,
+} from "../../utils/exerciseLookup";
 const exerciseCatalog = exerciseCatalogUpdated;
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");
@@ -19,13 +23,19 @@ export function MuscleDiagram() {
     useState<MuscleSummary>(muscleGroupsData);
   const userId = useAppSelector((state) => state.auth.userId);
 
+  // Create Map for O(1) exercise lookups (static data, created once)
+  const exerciseMap = useMemo(
+    () => createExerciseMap(exerciseCatalog.data),
+    [],
+  );
+
   // Query database to find workouts from this past week
   useEffect(() => {
     const mondayDate = getMondayDate();
     FirestoreActions.fetchWorkoutsAfterDate(userId, mondayDate).then(
       (workoutArray) => {
         setWorkoutArray(workoutArray.map((workout) => workout as Workout));
-      }
+      },
     );
   }, [userId]);
 
@@ -33,16 +43,18 @@ export function MuscleDiagram() {
   useEffect(() => {
     setMuscleGroups(muscleGroupsData);
     const newMuscleGroups: MuscleSummary = { ...muscleGroups };
+
     workoutArray.forEach((workout) => {
       Object.entries(workout).forEach(([key, exerciseObj]) => {
         if (key === "date") return;
         const sets = exerciseObj.sets;
         const reps = exerciseObj.reps;
         const weight = exerciseObj.weight;
-        const muscles = exerciseCatalog.data.filter(
-          (exercise) => exercise.name === exerciseObj.name
-        )[0].muscles;
-        muscles.forEach((muscleName) => {
+        // Use Map for O(1) lookup instead of filter
+        const exercise = getExerciseByName(exerciseMap, exerciseObj.name);
+        if (!exercise) return;
+        const muscles = exercise.muscles;
+        muscles.forEach((muscleName: string) => {
           newMuscleGroups[muscleName]["sets"] += sets;
           newMuscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
         });

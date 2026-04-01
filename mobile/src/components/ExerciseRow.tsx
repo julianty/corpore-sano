@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { View, StyleSheet } from "react-native";
-import { TextInput, IconButton, Text } from "react-native-paper";
+import { TextInput, IconButton } from "react-native-paper";
 import { Exercise, ExerciseRowProps } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
 

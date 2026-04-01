@@ -1,4 +1,3 @@
-import { ModalProps } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 
 export interface Exercise {
@@ -31,13 +30,13 @@ export interface ExerciseRowProps {
   numberFieldChangeHandler: (
     value: number,
     key: string,
-    fieldName: keyof Exercise
+    fieldName: keyof Exercise,
   ) => void;
   closeHandler: (key: string) => void;
   exerciseNameChangeHandler: (
     name: string,
     variant: string,
-    key: string
+    key: string,
   ) => void;
   editMode: boolean;
 }
@@ -46,13 +45,13 @@ export interface ExerciseFieldsProps {
   numberFieldChangeHandler: (
     value: number,
     key: string,
-    field: keyof Exercise
+    field: keyof Exercise,
   ) => void;
   closeHandler: (workoutId: string) => void;
   exerciseNameChangeHandler: (
     name: string,
     variant: string,
-    key: string
+    key: string,
   ) => void;
   editMode: boolean;
 }
@@ -76,8 +75,6 @@ export interface UserProfile {
   exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
 }
-
-export interface UserPreferencesModalProps extends ModalProps {}
 
 // TODO: Make it possible to jump to the workout wherein the maximum lift was hit.
 export interface ExerciseHistory {

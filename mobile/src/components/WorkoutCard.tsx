@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Card, Button, Text, IconButton } from "react-native-paper";
-import { Timestamp } from "firebase/firestore";
+import { Card, Button, IconButton } from "react-native-paper";
 import { Workout, Exercise, ExerciseMap } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -29,11 +28,11 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
   const [editMode, setEditMode] = useState(false);
 
   // Load workout on mount
-  useState(() => {
+  useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
       if (data) setWorkout(data as Workout);
     });
-  });
+  }, [userId, workoutId]);
 
   if (!workout) return null;
 

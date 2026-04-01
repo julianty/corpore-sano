@@ -1,11 +1,15 @@
-import { Modal, SegmentedControl, useMantineColorScheme } from "@mantine/core";
+import {
+  Modal,
+  ModalProps,
+  SegmentedControl,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { useContext } from "react";
-import { UserPreferencesModalProps } from "../types";
 import { useAppSelector } from "../hooks";
 import { FirestoreActions } from "../helperFunctions/FirestoreActions";
 import { UserProfileContext } from "../App";
 
-export function UserPreferencesModal(props: UserPreferencesModalProps) {
+export function UserPreferencesModal(props: ModalProps) {
   const { setColorScheme } = useMantineColorScheme();
   const { ...modalProps } = props;
   // Load user profile from context

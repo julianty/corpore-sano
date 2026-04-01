@@ -7,15 +7,14 @@ import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { useAppSelector } from "../../hooks";
 import { MuscleSummary, Workout } from "../../types";
 import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
-// import exerciseCatalog from "../data/exerciseCatalog";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
-import { getMondayDate } from "../../helperFunctions/DateHelper";
+import { getMondayDate, calculateDaysBetweenDates } from "../../helperFunctions/DateHelper";
 import { responsiveDimensions } from "../../styles/responsive";
-import {
-  createExerciseMap,
-  getExerciseByName,
-} from "../../utils/exerciseLookup";
+import { createExerciseMap } from "../../utils/exerciseLookup";
+import { buildMuscleSummary } from "../../core/services/muscleCalculations";
+
 const exerciseCatalog = exerciseCatalogUpdated;
+
 export function MuscleDiagram() {
   const [activeMuscle, setActiveMuscle] = useState("");
   const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);
@@ -23,13 +22,12 @@ export function MuscleDiagram() {
     useState<MuscleSummary>(muscleGroupsData);
   const userId = useAppSelector((state) => state.auth.userId);
 
-  // Create Map for O(1) exercise lookups (static data, created once)
+  // Static catalog map — created once
   const exerciseMap = useMemo(
     () => createExerciseMap(exerciseCatalog.data),
     [],
   );
 
-  // Query database to find workouts from this past week
   useEffect(() => {
     const mondayDate = getMondayDate();
     FirestoreActions.fetchWorkoutsAfterDate(userId, mondayDate).then(
@@ -39,29 +37,12 @@ export function MuscleDiagram() {
     );
   }, [userId]);
 
-  // Populate the muscleGroups object
   useEffect(() => {
-    setMuscleGroups(muscleGroupsData);
-    const newMuscleGroups: MuscleSummary = { ...muscleGroups };
-
-    workoutArray.forEach((workout) => {
-      Object.entries(workout).forEach(([key, exerciseObj]) => {
-        if (key === "date") return;
-        const sets = exerciseObj.sets;
-        const reps = exerciseObj.reps;
-        const weight = exerciseObj.weight;
-        // Use Map for O(1) lookup instead of filter
-        const exercise = getExerciseByName(exerciseMap, exerciseObj.name);
-        if (!exercise) return;
-        const muscles = exercise.muscles;
-        muscles.forEach((muscleName: string) => {
-          newMuscleGroups[muscleName]["sets"] += sets;
-          newMuscleGroups[muscleName]["weightTotal"]! += sets * reps * weight;
-        });
-      });
-    });
-    console.log(muscleGroups);
-  }, [workoutArray, muscleGroups]);
+    const getDaysSince = (date: Date) =>
+      calculateDaysBetweenDates(date, new Date());
+    const summary = buildMuscleSummary(workoutArray, exerciseMap, getDaysSince);
+    setMuscleGroups({ ...muscleGroupsData, ...summary });
+  }, [workoutArray, exerciseMap]);
 
   function onMouseEnterHandler(e: React.MouseEvent<SVGElement>) {
     // Captures mouse enter events to set activeMuscle state

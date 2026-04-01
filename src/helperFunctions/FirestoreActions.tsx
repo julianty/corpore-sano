@@ -5,9 +5,12 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  orderBy,
+  query,
   setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import app from "../initializeFirebase";
 import { UserProfile, Workout } from "../types";
@@ -51,33 +54,22 @@ export const FirestoreActions = {
     }
   },
   fetchWorkoutIds: async (userId: string) => {
-    const querySnapshot = await getDocs(
-      collection(db, "users", userId, "workouts")
+    const workoutsQuery = query(
+      collection(db, "users", userId, "workouts"),
+      orderBy("date", "asc")
     );
-    const queryResult = querySnapshot.docs;
-    // Sorts workouts by date
-    queryResult.sort(
-      (docSnapshotA, docSnapshotB) =>
-        docSnapshotA.data().date.seconds - docSnapshotB.data().date.seconds
-    );
-    // Returns only workout Ids
-    const workoutIdArray = queryResult.map((docSnapshot) => docSnapshot.id);
-    return workoutIdArray;
+    const querySnapshot = await getDocs(workoutsQuery);
+    return querySnapshot.docs.map((docSnapshot) => docSnapshot.id);
   },
   fetchWorkoutsAfterDate: async (userId: string, date: Date) => {
-    const querySnapshot = await getDocs(
-      collection(db, "users", userId, "workouts")
+    const dateTimestamp = Timestamp.fromDate(date);
+    const workoutsQuery = query(
+      collection(db, "users", userId, "workouts"),
+      where("date", ">=", dateTimestamp),
+      orderBy("date", "asc")
     );
-    const queryResult = querySnapshot.docs;
-    // Sorts workouts by date
-    queryResult.sort(
-      (docSnapshotA, docSnapshotB) =>
-        docSnapshotA.data().date.seconds - docSnapshotB.data().date.seconds
-    );
-    const filteredResults = queryResult.filter((snapshot) => {
-      return snapshot.data().date.seconds * 1000 > date.getTime();
-    });
-    return filteredResults.map((snapshot) => snapshot.data());
+    const querySnapshot = await getDocs(workoutsQuery);
+    return querySnapshot.docs.map((snapshot) => snapshot.data());
   },
   fetchUserProfile: async (userId: string) => {
     const userProfile = await getDoc(

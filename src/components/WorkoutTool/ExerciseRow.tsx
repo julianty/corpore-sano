@@ -37,9 +37,12 @@ function ExerciseRowComponent({
     throw new Error("Could not retrieve userProfileContext in ExerciseRow");
   const weightUnit = userProfileContext.userProfile.weightUnit as "kg" | "lbs";
 
-  // Update favorite exercises in Firestore when favoriteExercises changes
+  // Debounce Firestore writes when favoriteExercises changes
   useEffect(() => {
-    FirestoreActions.updateFavoriteExercises(userId, favoriteExercises);
+    const timer = setTimeout(() => {
+      FirestoreActions.updateFavoriteExercises(userId, favoriteExercises);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [favoriteExercises, userId]);
 
   // Event Handlers

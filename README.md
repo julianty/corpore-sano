@@ -15,15 +15,15 @@ A cross-platform fitness tracking app for logging workouts, monitoring weekly vo
 
 ## Tech Stack
 
-| Layer | Web | Mobile |
-|-------|-----|--------|
-| Framework | React 18 + Vite | React Native 0.81 + Expo 54 |
-| UI Library | Mantine v7 | React Native Paper (MD3) |
-| State | Redux Toolkit | Redux Toolkit (shared) |
-| Backend | Firebase / Firestore | Firebase / Firestore (shared) |
-| Auth | Firebase Auth + Google | Firebase Auth + Google Sign-In |
-| Routing | Single-page (Vite SPA) | expo-router v5 (file-based tabs) |
-| Testing | Jest + ts-jest | -- |
+| Layer      | Web                    | Mobile                           |
+| ---------- | ---------------------- | -------------------------------- |
+| Framework  | React 18 + Vite        | React Native 0.81 + Expo 54      |
+| UI Library | Mantine v7             | React Native Paper (MD3)         |
+| State      | Redux Toolkit          | Redux Toolkit (shared)           |
+| Backend    | Firebase / Firestore   | Firebase / Firestore (shared)    |
+| Auth       | Firebase Auth + Google | Firebase Auth + Google Sign-In   |
+| Routing    | Single-page (Vite SPA) | expo-router v5 (file-based tabs) |
+| Testing    | Jest + ts-jest         | --                               |
 
 ## Architecture
 

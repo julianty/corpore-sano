@@ -38,31 +38,34 @@ mobile/
 
 The mobile app reuses all business logic from the web app and only implements its own UI layer:
 
-| Shared from `../src/` via `@shared` | Mobile-only |
-|--------------------------------------|-------------|
-| Redux store, slices, typed hooks | Expo Router layouts and screens |
-| Domain types (Exercise, Workout, UserProfile) | React Native Paper components |
-| Firestore CRUD (`FirestoreActions`) | Google Sign-In flow (`signInWithCredential`) |
-| Muscle calculation services | Bottom tab navigation |
-| Exercise catalog and muscle group data | Platform-specific Firebase init (`.native.ts`) |
-| Date helpers, unit conversion utilities | |
-| O(1) exercise lookup map | |
+| Shared from `../src/` via `@shared`           | Mobile-only                                    |
+| --------------------------------------------- | ---------------------------------------------- |
+| Redux store, slices, typed hooks              | Expo Router layouts and screens                |
+| Domain types (Exercise, Workout, UserProfile) | React Native Paper components                  |
+| Firestore CRUD (`FirestoreActions`)           | Google Sign-In flow (`signInWithCredential`)   |
+| Muscle calculation services                   | Bottom tab navigation                          |
+| Exercise catalog and muscle group data        | Platform-specific Firebase init (`.native.ts`) |
+| Date helpers, unit conversion utilities       |                                                |
+| O(1) exercise lookup map                      |                                                |
 
 ## How the `@shared` Alias Works
 
 The alias is configured at three levels so TypeScript, Babel, and Metro all resolve it consistently:
 
 **TypeScript** (`tsconfig.json`) -- editor support and type checking:
+
 ```json
 "paths": { "@shared/*": ["../src/*"] }
 ```
 
 **Babel** (`babel.config.js`) -- build-time import rewriting:
+
 ```js
-["module-resolver", { alias: { "@shared": "../src" } }]
+["module-resolver", { alias: { "@shared": "../src" } }];
 ```
 
 **Metro** (`metro.config.js`) -- bundler file resolution:
+
 ```js
 config.watchFolders = [path.resolve(__dirname, "../src")];
 config.resolver.nodeModulesPaths = [

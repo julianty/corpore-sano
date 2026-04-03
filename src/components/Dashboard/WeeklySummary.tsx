@@ -13,10 +13,18 @@ import { createExerciseMap } from "../../utils/exerciseLookup";
 import {
   buildMuscleSummary,
   rollupToParentGroups,
+  getLastWorkedFreshness,
   ParentGroupSummary,
 } from "../../core/services/muscleCalculations";
 
 const exerciseCatalog = exerciseCatalogUpdated;
+
+const freshnessColor = {
+  fresh: "var(--mantine-color-green-6)",
+  moderate: "var(--mantine-color-yellow-6)",
+  stale: "var(--mantine-color-orange-6)",
+} as const;
+
 const paperStyle = {
   p: "md",
   withBorder: true,
@@ -53,7 +61,11 @@ export default function WeeklySummary() {
   useEffect(() => {
     const getDaysSince = (date: Date) =>
       calculateDaysBetweenDates(date, new Date());
-    const muscleSummary = buildMuscleSummary(workoutArray, exerciseMap, getDaysSince);
+    const muscleSummary = buildMuscleSummary(
+      workoutArray,
+      exerciseMap,
+      getDaysSince,
+    );
     setParentMuscleGroupsNumSets(rollupToParentGroups(muscleSummary));
   }, [workoutArray, exerciseMap]);
 
@@ -71,16 +83,29 @@ export default function WeeklySummary() {
           </Table.Thead>
           <Table.Tbody>
             {parentGroups.map((group) => {
-              let daysSinceLast =
-                parentMuscleGroupsNumSets[group].daysSinceLast! >= 7
-                  ? `7+`
-                  : parentMuscleGroupsNumSets[group].daysSinceLast;
-              if (daysSinceLast === undefined) daysSinceLast = "7+";
+              const data = parentMuscleGroupsNumSets[group];
+              const raw = data.daysSinceLast;
+              const freshness = getLastWorkedFreshness(raw);
+              let label: string;
+              if (raw === undefined || raw >= 7) {
+                label = "7+ days ago";
+              } else if (raw === 0) {
+                label = "Today";
+              } else {
+                label = `${raw} days ago`;
+              }
               return (
                 <Table.Tr key={group}>
                   <Table.Td>{group}</Table.Td>
-                  <Table.Td>{parentMuscleGroupsNumSets[group].sets}</Table.Td>
-                  <Table.Td>{`${daysSinceLast} days ago`}</Table.Td>
+                  <Table.Td>{data.sets}</Table.Td>
+                  <Table.Td
+                    style={{
+                      color: freshnessColor[freshness],
+                      fontWeight: freshness === "stale" ? 700 : undefined,
+                    }}
+                  >
+                    {label}
+                  </Table.Td>
                 </Table.Tr>
               );
             })}

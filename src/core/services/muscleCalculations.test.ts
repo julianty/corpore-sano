@@ -1,4 +1,8 @@
-import { buildMuscleSummary, rollupToParentGroups } from "./muscleCalculations";
+import {
+  buildMuscleSummary,
+  rollupToParentGroups,
+  getLastWorkedFreshness,
+} from "./muscleCalculations";
 import { createExerciseMap } from "../../utils/exerciseLookup";
 
 // --- fixtures ---
@@ -264,5 +268,71 @@ describe("rollupToParentGroups", () => {
 
     expect(result["Chest"].sets).toBe(0);
     expect(result["Chest"].daysSinceLast).toBeUndefined();
+  });
+});
+
+// --- buildMuscleSummary lastWorked Math.min fix ---
+
+describe("buildMuscleSummary lastWorked uses Math.min", () => {
+  it("keeps the smallest daysSince when a muscle appears in multiple workouts", () => {
+    // Workout 1 was 5 days ago, Workout 2 was 1 day ago — both hit Pectorals via Bench Press
+    let callCount = 0;
+    const getDaysSinceSequence = () => {
+      callCount++;
+      return callCount === 1 ? 5 : 1; // first workout = 5 days, second = 1 day
+    };
+
+    const workouts = [
+      {
+        date: ts(new Date("2024-01-01")),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+      {
+        date: ts(new Date("2024-01-05")),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+    ];
+
+    const result = buildMuscleSummary(
+      workouts,
+      exerciseMap,
+      getDaysSinceSequence,
+    );
+
+    expect(result["Pectorals"].lastWorked).toBe(1); // min(5, 1)
+    expect(result["Triceps"].lastWorked).toBe(1);
+    expect(result["Deltoids"].lastWorked).toBe(1);
+  });
+});
+
+// --- getLastWorkedFreshness tests ---
+
+describe("getLastWorkedFreshness", () => {
+  it("returns 'fresh' for 0 days", () => {
+    expect(getLastWorkedFreshness(0)).toBe("fresh");
+  });
+
+  it("returns 'fresh' for 2 days", () => {
+    expect(getLastWorkedFreshness(2)).toBe("fresh");
+  });
+
+  it("returns 'moderate' for 3 days", () => {
+    expect(getLastWorkedFreshness(3)).toBe("moderate");
+  });
+
+  it("returns 'moderate' for 4 days", () => {
+    expect(getLastWorkedFreshness(4)).toBe("moderate");
+  });
+
+  it("returns 'stale' for 5 days", () => {
+    expect(getLastWorkedFreshness(5)).toBe("stale");
+  });
+
+  it("returns 'stale' for 7+ days", () => {
+    expect(getLastWorkedFreshness(10)).toBe("stale");
+  });
+
+  it("returns 'stale' for undefined", () => {
+    expect(getLastWorkedFreshness(undefined)).toBe("stale");
   });
 });

@@ -52,7 +52,10 @@ export function buildMuscleSummary(
         muscleGroups[muscleName].sets += exerciseEntry.sets;
         muscleGroups[muscleName].weightTotal! +=
           exerciseEntry.sets * exerciseEntry.reps * weight;
-        muscleGroups[muscleName].lastWorked = daysSinceWorkout;
+        muscleGroups[muscleName].lastWorked =
+          muscleGroups[muscleName].lastWorked !== undefined
+            ? Math.min(muscleGroups[muscleName].lastWorked!, daysSinceWorkout)
+            : daysSinceWorkout;
       });
     });
   });
@@ -64,6 +67,18 @@ export function buildMuscleSummary(
  * Rolls up child muscle groups into the 6 parent group summaries
  * (Shoulders, Back, Chest, Arms, Core, Legs).
  */
+/**
+ * Returns a freshness category based on days since a muscle group was last worked.
+ * "fresh" = 0–2 days, "moderate" = 3–4 days, "stale" = 5+ days or undefined.
+ */
+export function getLastWorkedFreshness(
+  daysSinceLast: number | undefined,
+): "fresh" | "moderate" | "stale" {
+  if (daysSinceLast === undefined || daysSinceLast >= 5) return "stale";
+  if (daysSinceLast >= 3) return "moderate";
+  return "fresh";
+}
+
 export function rollupToParentGroups(
   muscleSummary: MuscleSummary,
 ): ParentGroupSummary {

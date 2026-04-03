@@ -116,7 +116,7 @@ function DotRow({
             ? `${DAY_LABELS[i]} — ${formatDate(date)}`
             : count > 0
               ? `${DAY_LABELS[i]} — ${formatDate(date)}: ${count} exercises`
-              : `${DAY_LABELS[i]} — ${formatDate(date)}: Rest day`;
+              : `${DAY_LABELS[i]} — ${formatDate(date)}`;
 
           return (
             <Tooltip key={i} label={tooltipLabel} withArrow>

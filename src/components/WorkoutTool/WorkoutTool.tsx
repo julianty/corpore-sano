@@ -2,11 +2,14 @@ import { Button, Stack, Title } from "@mantine/core";
 import { WorkoutInstance } from "./WorkoutInstance";
 import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
-import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
+import {
+  FirestoreActions,
+  WorkoutPageCursor,
+} from "../../helperFunctions/FirestoreActions";
 import { IconPlus } from "@tabler/icons-react";
+import { WorkoutEntry } from "../../types";
 
-// TODO: Add a way to read favorite workouts: create a useEffect hook that calls
-// firestoreActions to read the userProfile.favoriteExercises into a provider
+const PAGE_SIZE = 10;
 
 function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
   const { clickHandler } = props;
@@ -23,57 +26,88 @@ function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
 }
 
 export function WorkoutTool() {
-  const [workoutIdArray, setWorkoutIdArray] = useState<Array<string>>([]);
+  const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
+  const [cursor, setCursor] = useState<WorkoutPageCursor>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const userId = useAppSelector((state) => state.auth.userId);
   const dispatch = useAppDispatch();
+
   useEffect(() => {
-    // Fetches the workout Ids from firebase
-    setWorkoutIdArray([]);
-    FirestoreActions.fetchWorkoutIds(userId).then((value) => {
-      setWorkoutIdArray(value);
-    });
+    setWorkouts([]);
+    setCursor(null);
+    setHasMore(true);
+    setIsLoading(true);
+
+    FirestoreActions.fetchWorkoutsPaginated(userId, PAGE_SIZE)
+      .then((result) => {
+        setWorkouts(result.workouts);
+        setCursor(result.cursor);
+        setHasMore(result.hasMore);
+      })
+      .finally(() => setIsLoading(false));
+
     FirestoreActions.fetchFavoriteExercises(userId).then((value) => {
-      dispatch({ type: `exercises/setFavoriteExercises`, payload: value });
+      dispatch({ type: "exercises/setFavoriteExercises", payload: value });
     });
   }, [userId, dispatch]);
 
+  const loadMore = useCallback(() => {
+    if (!hasMore || isLoading) return;
+    setIsLoading(true);
+
+    FirestoreActions.fetchWorkoutsPaginated(userId, PAGE_SIZE, cursor)
+      .then((result) => {
+        setWorkouts((prev) => [...prev, ...result.workouts]);
+        setCursor(result.cursor);
+        setHasMore(result.hasMore);
+      })
+      .finally(() => setIsLoading(false));
+  }, [userId, cursor, hasMore, isLoading]);
+
   const workoutCloseHandler = useCallback(
     (workoutId: string) => {
-      const nextState = [...workoutIdArray].filter((id) =>
-        id === workoutId ? false : true
-      );
+      setWorkouts((prev) => prev.filter((w) => w.id !== workoutId));
       FirestoreActions.deleteWorkoutById(userId, workoutId);
-      setWorkoutIdArray(nextState);
     },
-    [workoutIdArray, userId]
+    [userId],
   );
 
   function addEmptyWorkout(event: React.MouseEvent) {
-    event.preventDefault;
-    // Create empty workout document
+    event.preventDefault();
     const newWorkoutDoc = FirestoreActions.createWorkout(userId);
     const docId = newWorkoutDoc.id;
 
-    const nextWorkoutIdArray = [...workoutIdArray, docId];
-    setWorkoutIdArray(nextWorkoutIdArray);
+    const newEntry: WorkoutEntry = {
+      id: docId,
+      data: { date: undefined },
+    };
+    setWorkouts((prev) => [newEntry, ...prev]);
   }
 
   return (
     <Stack>
       <Title order={2}>Workout Tool</Title>
       <AddWorkoutButton clickHandler={addEmptyWorkout} />
-      {workoutIdArray
-        .slice(0)
-        .reverse()
-        .map((id) => {
-          return (
-            <WorkoutInstance
-              key={`workoutId${id}`}
-              workoutId={id}
-              workoutCloseHandler={workoutCloseHandler}
-            />
-          );
-        })}
+      {workouts.map((entry) => (
+        <WorkoutInstance
+          key={`workoutId${entry.id}`}
+          workoutId={entry.id}
+          initialData={entry.data}
+          workoutCloseHandler={workoutCloseHandler}
+        />
+      ))}
+      {hasMore && (
+        <Button
+          onClick={loadMore}
+          loading={isLoading}
+          variant="light"
+          size="lg"
+          w="50%"
+        >
+          Load More Workouts
+        </Button>
+      )}
     </Stack>
   );
 }

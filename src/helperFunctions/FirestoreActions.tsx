@@ -2,18 +2,25 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentData,
   getDoc,
   getDocs,
   getFirestore,
+  limit,
   orderBy,
   query,
+  QueryConstraint,
+  QueryDocumentSnapshot,
   setDoc,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
 import app from "../initializeFirebase";
-import { UserProfile, Workout } from "../types";
+import { UserProfile, Workout, WorkoutEntry } from "../types";
+
+export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
 const db = getFirestore(app);
 export const FirestoreActions = {
@@ -27,7 +34,7 @@ export const FirestoreActions = {
   updateWorkoutById: async (
     userId: string,
     workoutId: string,
-    document: Workout
+    document: Workout,
   ) => {
     const docRef = doc(db, "users", userId, "workouts", workoutId);
     const safeDocument = {
@@ -49,14 +56,14 @@ export const FirestoreActions = {
     } else {
       console.log("FirestoreActions.fetchData: Document does not exist");
       console.log(
-        `FirestoreActions.fetchData: userId:${userId}, workoutId:${workoutId}`
+        `FirestoreActions.fetchData: userId:${userId}, workoutId:${workoutId}`,
       );
     }
   },
   fetchWorkoutIds: async (userId: string) => {
     const workoutsQuery = query(
       collection(db, "users", userId, "workouts"),
-      orderBy("date", "asc")
+      orderBy("date", "asc"),
     );
     const querySnapshot = await getDocs(workoutsQuery);
     return querySnapshot.docs.map((docSnapshot) => docSnapshot.id);
@@ -66,14 +73,43 @@ export const FirestoreActions = {
     const workoutsQuery = query(
       collection(db, "users", userId, "workouts"),
       where("date", ">=", dateTimestamp),
-      orderBy("date", "asc")
+      orderBy("date", "asc"),
     );
     const querySnapshot = await getDocs(workoutsQuery);
     return querySnapshot.docs.map((snapshot) => snapshot.data());
   },
+  fetchWorkoutsPaginated: async (
+    userId: string,
+    pageSize: number,
+    cursor?: WorkoutPageCursor,
+  ) => {
+    const constraints: QueryConstraint[] = [orderBy("date", "desc")];
+    if (cursor) {
+      constraints.push(startAfter(cursor));
+    }
+    constraints.push(limit(pageSize + 1));
+
+    const workoutsQuery = query(
+      collection(db, "users", userId, "workouts"),
+      ...constraints,
+    );
+    const querySnapshot = await getDocs(workoutsQuery);
+    const hasMore = querySnapshot.docs.length > pageSize;
+    const docs = hasMore
+      ? querySnapshot.docs.slice(0, pageSize)
+      : querySnapshot.docs;
+
+    const workouts: WorkoutEntry[] = docs.map((docSnap) => ({
+      id: docSnap.id,
+      data: docSnap.data() as Workout,
+    }));
+    const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+
+    return { workouts, cursor: lastDoc, hasMore };
+  },
   fetchUserProfile: async (userId: string) => {
     const userProfile = await getDoc(
-      doc(db, "users", userId, "preferences", "userProfile")
+      doc(db, "users", userId, "preferences", "userProfile"),
     );
     return userProfile.data();
   },
@@ -83,7 +119,7 @@ export const FirestoreActions = {
   },
   fetchFavoriteExercises: async (userId: string) => {
     const userProfile = await getDoc(
-      doc(db, "users", userId, "preferences", "userProfile")
+      doc(db, "users", userId, "preferences", "userProfile"),
     );
     if (userProfile.data() === undefined) {
       return [];
@@ -93,7 +129,7 @@ export const FirestoreActions = {
   },
   updateFavoriteExercises: async (
     userId: string,
-    favoriteExercises: string[]
+    favoriteExercises: string[],
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await updateDoc(docRef, { favoriteExercises: favoriteExercises });
@@ -119,13 +155,13 @@ export const FirestoreActions = {
           ...(workout as Workout),
           date: timestampsFromLastWeek.splice(
             Math.floor(Math.random() * 7),
-            1
+            1,
           )[0],
         };
         await FirestoreActions.updateWorkoutById(
           userId,
           workoutId,
-          updatedWorkout
+          updatedWorkout,
         );
       });
     });

@@ -14,16 +14,21 @@ import { responsiveDimensions } from "../../styles/responsive";
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
   workoutId: string;
+  initialData: Workout;
   workoutCloseHandler: (key: string) => void;
 }) {
-  const { workoutId, workoutCloseHandler } = props;
+  const { workoutId, initialData, workoutCloseHandler } = props;
   const [weightUnits, setWeightUnits] = useState<"kg" | "lbs">("lbs");
   const userProfileContext = useContext(UserProfileContext);
   if (!userProfileContext) throw new Error("UserProfileContext undefined");
   const { userProfile } = userProfileContext;
-  const [workoutDate, setWorkoutDate] = useState<Timestamp>();
-  // Tracks the exercises in this workout as separate objects
-  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>({});
+  const [workoutDate, setWorkoutDate] = useState<Timestamp>(() => {
+    return initialData.date ?? Timestamp.now();
+  });
+  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() => {
+    const { date, ...exercises } = initialData as unknown as Record<string, unknown>;
+    return exercises as ExerciseMap;
+  });
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
@@ -36,23 +41,6 @@ export function WorkoutInstance(props: {
 
   // Update based on user context
   useEffect(() => setWeightUnits(userProfile.weightUnit), [userProfile]);
-
-  useEffect(() => {
-    // Runs when a new user logs in
-    // Clear data
-    setWorkoutDate(Timestamp.now());
-    setExercisesObject({});
-
-    // Fetch user data
-    FirestoreActions.fetchData(userId, workoutId).then((value) => {
-      // If workout was just created, value = undefined
-      if (value === undefined) return;
-      const resultObject = value as Workout;
-      const { date, ...exercises } = resultObject;
-      setWorkoutDate(date);
-      setExercisesObject(exercises as ExerciseMap);
-    });
-  }, [userId, workoutId]);
 
   function numberFieldChangeHandler(
     value: number,

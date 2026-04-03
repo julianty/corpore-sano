@@ -76,6 +76,11 @@ export interface UserProfile {
   favoriteExercises?: [string];
 }
 
+export interface WorkoutEntry {
+  id: string;
+  data: Workout;
+}
+
 // TODO: Make it possible to jump to the workout wherein the maximum lift was hit.
 export interface ExerciseHistory {
   // Do I need unique exercise IDs?

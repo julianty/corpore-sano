@@ -116,7 +116,7 @@ export function WorkoutInstance(props: {
   }
 
   return (
-    <Paper p={{ xs: "md", md: "lg" }} withBorder>
+    <Paper id={`workout-${workoutId}`} p={{ xs: "md", md: "lg" }} withBorder>
       <Group>
         <DateInput
           onChange={(value) => {

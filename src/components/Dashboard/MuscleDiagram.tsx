@@ -8,7 +8,10 @@ import { useAppSelector } from "../../hooks";
 import { MuscleSummary, Workout } from "../../types";
 import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
-import { getMondayDate, calculateDaysBetweenDates } from "../../helperFunctions/DateHelper";
+import {
+  getMondayDate,
+  calculateDaysBetweenDates,
+} from "../../helperFunctions/DateHelper";
 import { responsiveDimensions } from "../../styles/responsive";
 import { createExerciseMap } from "../../utils/exerciseLookup";
 import { buildMuscleSummary } from "../../core/services/muscleCalculations";
@@ -31,8 +34,8 @@ export function MuscleDiagram() {
   useEffect(() => {
     const mondayDate = getMondayDate();
     FirestoreActions.fetchWorkoutsAfterDate(userId, mondayDate).then(
-      (workoutArray) => {
-        setWorkoutArray(workoutArray.map((workout) => workout as Workout));
+      (entries) => {
+        setWorkoutArray(entries.map((entry) => entry.data as Workout));
       },
     );
   }, [userId]);

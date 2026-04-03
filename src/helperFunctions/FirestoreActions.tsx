@@ -76,7 +76,10 @@ export const FirestoreActions = {
       orderBy("date", "asc"),
     );
     const querySnapshot = await getDocs(workoutsQuery);
-    return querySnapshot.docs.map((snapshot) => snapshot.data());
+    return querySnapshot.docs.map((snapshot) => ({
+      id: snapshot.id,
+      data: snapshot.data() as Workout,
+    }));
   },
   fetchWorkoutsPaginated: async (
     userId: string,

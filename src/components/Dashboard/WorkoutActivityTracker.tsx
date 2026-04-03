@@ -1,5 +1,5 @@
 import { Box, Group, Paper, Stack, Text, Title, Tooltip } from "@mantine/core";
-import { Workout } from "../../types";
+import { WorkoutEntry } from "../../types";
 
 type DotIntensity = "none" | "light" | "full";
 
@@ -16,6 +16,11 @@ const dotColors: Record<DotIntensity, string> = {
 };
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+
+interface DateInfo {
+  exerciseCount: number;
+  workoutIds: string[];
+}
 
 function getWeekDates(mondayDate: Date): Date[] {
   const dates: Date[] = [];
@@ -40,18 +45,40 @@ function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
-function buildWorkoutDateMap(workouts: Workout[]): Map<string, number> {
-  const map = new Map<string, number>();
-  workouts.forEach((workout) => {
-    if (!workout.date) return;
-    const date = workout.date.toDate();
+function buildWorkoutDateMap(
+  workoutEntries: WorkoutEntry[],
+): Map<string, DateInfo> {
+  const map = new Map<string, DateInfo>();
+  workoutEntries.forEach((entry) => {
+    if (!entry.data.date) return;
+    const date = entry.data.date.toDate();
     const key = toDateKey(date);
-    const exerciseCount = Object.keys(workout).filter(
-      (k) => k !== "date" && typeof workout[k as keyof Workout] === "object",
+    const exerciseCount = Object.keys(entry.data).filter(
+      (k) =>
+        k !== "date" &&
+        typeof (entry.data as unknown as Record<string, unknown>)[k] ===
+          "object",
     ).length;
-    map.set(key, (map.get(key) ?? 0) + exerciseCount);
+    const existing = map.get(key);
+    if (existing) {
+      existing.exerciseCount += exerciseCount;
+      existing.workoutIds.push(entry.id);
+    } else {
+      map.set(key, { exerciseCount, workoutIds: [entry.id] });
+    }
   });
   return map;
+}
+
+function scrollToWorkout(workoutIds: string[]) {
+  if (workoutIds.length === 0) return;
+  const el = document.getElementById(`workout-${workoutIds[0]}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  el.classList.remove("workout-highlight");
+  void el.offsetWidth; // force reflow so re-adding the class restarts the animation
+  el.classList.add("workout-highlight");
+  setTimeout(() => el.classList.remove("workout-highlight"), 1500);
 }
 
 function formatDate(date: Date): string {
@@ -69,7 +96,7 @@ function DotRow({
 }: {
   label: string;
   dates: Date[];
-  workoutMap: Map<string, number>;
+  workoutMap: Map<string, DateInfo>;
   today: Date;
 }) {
   return (
@@ -81,8 +108,10 @@ function DotRow({
         {dates.map((date, i) => {
           const isFuture = date > today;
           const key = toDateKey(date);
-          const count = workoutMap.get(key) ?? 0;
+          const info = workoutMap.get(key);
+          const count = info?.exerciseCount ?? 0;
           const intensity = isFuture ? "none" : getDotIntensity(count);
+          const hasWorkout = !isFuture && count > 0;
           const tooltipLabel = isFuture
             ? `${DAY_LABELS[i]} — ${formatDate(date)}`
             : count > 0
@@ -91,7 +120,16 @@ function DotRow({
 
           return (
             <Tooltip key={i} label={tooltipLabel} withArrow>
-              <Stack gap={2} align="center">
+              <Stack
+                gap={2}
+                align="center"
+                style={{ cursor: hasWorkout ? "pointer" : "default" }}
+                onClick={
+                  hasWorkout
+                    ? () => scrollToWorkout(info!.workoutIds)
+                    : undefined
+                }
+              >
                 <Text size="xs" c="dimmed">
                   {DAY_LABELS[i]}
                 </Text>
@@ -117,7 +155,11 @@ function DotRow({
   );
 }
 
-export function WorkoutActivityTracker({ workouts }: { workouts: Workout[] }) {
+export function WorkoutActivityTracker({
+  workoutEntries,
+}: {
+  workoutEntries: WorkoutEntry[];
+}) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -127,7 +169,7 @@ export function WorkoutActivityTracker({ workouts }: { workouts: Workout[] }) {
 
   const lastWeekDates = getWeekDates(lastMonday);
   const thisWeekDates = getWeekDates(thisMonday);
-  const workoutMap = buildWorkoutDateMap(workouts);
+  const workoutMap = buildWorkoutDateMap(workoutEntries);
 
   return (
     <Paper p="md" withBorder>

@@ -29,7 +29,12 @@ a:focus-visible {
 
 /* ===== Responsive Typography ===== */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin: 0;
   font-weight: 600;
 }
@@ -114,6 +119,25 @@ table {
 
 path:hover {
   fill: aqua;
+}
+
+/* ===== Workout Highlight Animation ===== */
+
+@keyframes workout-highlight {
+  0% {
+    background-color: color-mix(
+      in srgb,
+      var(--mantine-color-blue-1) 20%,
+      transparent
+    );
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.workout-highlight {
+  animation: workout-highlight 1.5s ease-out;
 }
 
 /* ===== Semantic HTML Improvements ===== */

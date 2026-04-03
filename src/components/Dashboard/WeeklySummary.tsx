@@ -1,6 +1,6 @@
 import { Group } from "@mantine/core";
 import { useEffect, useState, useMemo } from "react";
-import { Workout } from "../../types";
+import { Workout, WorkoutEntry } from "../../types";
 import { useAppSelector } from "../../hooks";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import {
@@ -29,7 +29,7 @@ const emptyParentGroups: ParentGroupSummary = {
 };
 
 export default function WeeklySummary() {
-  const [workoutArray, setWorkoutArray] = useState<Array<Workout>>([]);
+  const [workoutEntries, setWorkoutEntries] = useState<WorkoutEntry[]>([]);
   const userId = useAppSelector((state) => state.auth.userId);
   const [parentMuscleGroupsNumSets, setParentMuscleGroupsNumSets] =
     useState<ParentGroupSummary>(emptyParentGroups);
@@ -42,13 +42,14 @@ export default function WeeklySummary() {
   useEffect(() => {
     const targetDate = getByDaysElapsed(21);
     FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
-      (workoutArray) => {
-        setWorkoutArray(workoutArray.map((workout) => workout as Workout));
+      (entries) => {
+        setWorkoutEntries(entries);
       },
     );
   }, [userId]);
 
   useEffect(() => {
+    const workoutArray = workoutEntries.map((e) => e.data as Workout);
     const getDaysSince = (date: Date) =>
       calculateDaysBetweenDates(date, new Date());
     const muscleSummary = buildMuscleSummary(
@@ -58,12 +59,12 @@ export default function WeeklySummary() {
       7,
     );
     setParentMuscleGroupsNumSets(rollupToParentGroups(muscleSummary));
-  }, [workoutArray, exerciseMap]);
+  }, [workoutEntries, exerciseMap]);
 
   return (
     <Group align="flex-start">
       <MuscleGroupTable parentMuscleGroupsNumSets={parentMuscleGroupsNumSets} />
-      <WorkoutActivityTracker workouts={workoutArray} />
+      <WorkoutActivityTracker workoutEntries={workoutEntries} />
     </Group>
   );
 }

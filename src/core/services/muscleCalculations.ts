@@ -10,14 +10,17 @@ export interface ParentGroupSummary {
  * Pure function: builds a MuscleSummary from a list of workouts.
  * No React, no Firebase — safe to reuse in React Native.
  *
- * @param workouts      - Array of workouts with date + exercise entries
- * @param exerciseMap   - Pre-built Map<name, exerciseCatalogEntry> for O(1) lookup
- * @param getDaysSince  - Injected date helper: days between a past date and today
+ * @param workouts        - Array of workouts with date + exercise entries
+ * @param exerciseMap     - Pre-built Map<name, exerciseCatalogEntry> for O(1) lookup
+ * @param getDaysSince    - Injected date helper: days between a past date and today
+ * @param setsWindowDays  - Only count sets/weight for workouts within this many days.
+ *                          Workouts outside this window still contribute to lastWorked.
  */
 export function buildMuscleSummary(
   workouts: Workout[],
   exerciseMap: Map<string, unknown>,
   getDaysSince: (date: Date) => number,
+  setsWindowDays?: number,
 ): MuscleSummary {
   const muscleGroups: MuscleSummary = {};
   Object.values(muscleGroupsData).forEach((muscle) => {
@@ -48,10 +51,15 @@ export function buildMuscleSummary(
 
       (exercise as { muscles: string[] }).muscles.forEach((muscleName) => {
         if (!muscleGroups[muscleName]) return;
-        const weight = exerciseEntry.weightkg ?? exerciseEntry.weightlbs ?? 0;
-        muscleGroups[muscleName].sets += exerciseEntry.sets;
-        muscleGroups[muscleName].weightTotal! +=
-          exerciseEntry.sets * exerciseEntry.reps * weight;
+        const withinSetsWindow =
+          setsWindowDays === undefined || daysSinceWorkout <= setsWindowDays;
+        if (withinSetsWindow) {
+          const weight =
+            exerciseEntry.weightkg ?? exerciseEntry.weightlbs ?? 0;
+          muscleGroups[muscleName].sets += exerciseEntry.sets;
+          muscleGroups[muscleName].weightTotal! +=
+            exerciseEntry.sets * exerciseEntry.reps * weight;
+        }
         muscleGroups[muscleName].lastWorked =
           muscleGroups[muscleName].lastWorked !== undefined
             ? Math.min(muscleGroups[muscleName].lastWorked!, daysSinceWorkout)
@@ -92,7 +100,7 @@ export function rollupToParentGroups(
   };
 
   Object.values(muscleSummary).forEach((muscleObj) => {
-    if (muscleObj.sets === 0) return;
+    if (muscleObj.sets === 0 && muscleObj.lastWorked === undefined) return;
     const parent = muscleObj.parentGroup;
     if (!(parent in result)) return;
 

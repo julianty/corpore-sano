@@ -50,7 +50,7 @@ export default function WeeklySummary() {
   );
 
   useEffect(() => {
-    const targetDate = getByDaysElapsed(7);
+    const targetDate = getByDaysElapsed(21);
     FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
       (workoutArray) => {
         setWorkoutArray(workoutArray.map((workout) => workout as Workout));
@@ -65,6 +65,7 @@ export default function WeeklySummary() {
       workoutArray,
       exerciseMap,
       getDaysSince,
+      7,
     );
     setParentMuscleGroupsNumSets(rollupToParentGroups(muscleSummary));
   }, [workoutArray, exerciseMap]);
@@ -87,8 +88,8 @@ export default function WeeklySummary() {
               const raw = data.daysSinceLast;
               const freshness = getLastWorkedFreshness(raw);
               let label: string;
-              if (raw === undefined || raw >= 7) {
-                label = "7+ days ago";
+              if (raw === undefined) {
+                label = "—";
               } else if (raw === 0) {
                 label = "Today";
               } else {

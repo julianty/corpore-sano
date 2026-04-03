@@ -253,14 +253,31 @@ describe("rollupToParentGroups", () => {
     expect(result["Chest"].daysSinceLast).toBe(8);
   });
 
-  it("skips muscles with 0 sets — leaving parent group at 0 with no daysSinceLast", () => {
+  it("includes lastWorked from muscles with 0 sets (outside sets window)", () => {
     const muscleSummary = {
       Pectorals: {
         name: "Pectorals",
         sets: 0,
         weightTotal: 0,
         parentGroup: "Chest",
-        lastWorked: 1,
+        lastWorked: 10,
+      },
+    };
+
+    const result = rollupToParentGroups(muscleSummary as any);
+
+    expect(result["Chest"].sets).toBe(0);
+    expect(result["Chest"].daysSinceLast).toBe(10);
+  });
+
+  it("skips muscles with 0 sets and no lastWorked", () => {
+    const muscleSummary = {
+      Pectorals: {
+        name: "Pectorals",
+        sets: 0,
+        weightTotal: 0,
+        parentGroup: "Chest",
+        lastWorked: undefined,
       },
     };
 
@@ -334,5 +351,77 @@ describe("getLastWorkedFreshness", () => {
 
   it("returns 'stale' for undefined", () => {
     expect(getLastWorkedFreshness(undefined)).toBe("stale");
+  });
+});
+
+// --- setsWindowDays tests ---
+
+describe("buildMuscleSummary with setsWindowDays", () => {
+  it("excludes sets from workouts outside the sets window", () => {
+    const workouts = [
+      {
+        date: ts(new Date()),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+    ];
+
+    // Workout is 10 days old, window is 7 days
+    const result = buildMuscleSummary(workouts, exerciseMap, () => 10, 7);
+
+    expect(result["Pectorals"].sets).toBe(0);
+    expect(result["Pectorals"].weightTotal).toBe(0);
+  });
+
+  it("still tracks lastWorked for workouts outside the sets window", () => {
+    const workouts = [
+      {
+        date: ts(new Date()),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+    ];
+
+    const result = buildMuscleSummary(workouts, exerciseMap, () => 10, 7);
+
+    expect(result["Pectorals"].lastWorked).toBe(10);
+  });
+
+  it("includes sets from workouts within the sets window", () => {
+    const workouts = [
+      {
+        date: ts(new Date()),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+    ];
+
+    const result = buildMuscleSummary(workouts, exerciseMap, () => 5, 7);
+
+    expect(result["Pectorals"].sets).toBe(3);
+    expect(result["Pectorals"].lastWorked).toBe(5);
+  });
+
+  it("splits sets and lastWorked across windows correctly", () => {
+    let callCount = 0;
+    const getDaysSinceSeq = () => {
+      callCount++;
+      return callCount === 1 ? 10 : 3; // first workout 10 days ago, second 3 days ago
+    };
+
+    const workouts = [
+      {
+        date: ts(new Date("2024-01-01")),
+        ex1: { name: "Bench Press", sets: 4, reps: 10, weightkg: 80 },
+      } as any,
+      {
+        date: ts(new Date("2024-01-08")),
+        ex1: { name: "Bench Press", sets: 3, reps: 10, weightkg: 80 },
+      } as any,
+    ];
+
+    const result = buildMuscleSummary(workouts, exerciseMap, getDaysSinceSeq, 7);
+
+    // Only the second workout (3 days ago) contributes sets
+    expect(result["Pectorals"].sets).toBe(3);
+    // lastWorked is min(10, 3) = 3
+    expect(result["Pectorals"].lastWorked).toBe(3);
   });
 });

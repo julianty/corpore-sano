@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "site": "corpore-sano-2e626",
     "public": "dist",
     "ignore": [
       "firebase.json",

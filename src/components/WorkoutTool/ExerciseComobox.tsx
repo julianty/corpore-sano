@@ -16,41 +16,38 @@ interface ExerciseComboboxProps extends ComboboxProps {
   favoriteExercises: string[];
 }
 
+// Static catalog data — computed once at module level, never changes
+const EXERCISE_NAMES = exerciseCatalogUpdated.data.map((e) => e.name);
+const EXERCISE_OPTIONS_DATA = EXERCISE_NAMES.map((exerciseName) => ({
+  exerciseName,
+  variants:
+    exerciseCatalogUpdated.data.find((e) => e.name === exerciseName)
+      ?.variants ?? [],
+}));
+
 function ExerciseComboboxComponent(props: ExerciseComboboxProps) {
   const combobox = useCombobox();
   const [value, setValue] = useState<string | null>(props.defaultValue);
-  // const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
-  const exerciseNames = exerciseCatalogUpdated.data.map(
-    (exercise) => exercise.name,
-  );
-
+  const { exerciseNameChangeHandler } = props;
   const options = useMemo(() => {
-    return exerciseNames.map((exerciseName) => {
-      return (
-        <Combobox.Group label={exerciseName} key={exerciseName}>
-          {exerciseCatalogUpdated.data
-            .filter((exercise) => exercise.name === exerciseName)[0]
-            .variants?.map((variant) => {
-              return (
-                <Combobox.Option
-                  key={variant}
-                  value={variant}
-                  onClick={() => {
-                    // props.onChange(variant, "variant");
-                    setValue(variant);
-                    // props.onChange(exerciseName, "name");
-                    props.exerciseNameChangeHandler(exerciseName, variant);
-                  }}
-                >
-                  {variant}
-                </Combobox.Option>
-              );
-            })}
-        </Combobox.Group>
-      );
-    });
-  }, [exerciseNames, props]);
+    return EXERCISE_OPTIONS_DATA.map(({ exerciseName, variants }) => (
+      <Combobox.Group label={exerciseName} key={exerciseName}>
+        {variants.map((variant) => (
+          <Combobox.Option
+            key={variant}
+            value={variant}
+            onClick={() => {
+              setValue(variant);
+              exerciseNameChangeHandler(exerciseName, variant);
+            }}
+          >
+            {variant}
+          </Combobox.Option>
+        ))}
+      </Combobox.Group>
+    ));
+  }, [exerciseNameChangeHandler]);
 
   return (
     <Combobox store={combobox} resetSelectionOnOptionHover>

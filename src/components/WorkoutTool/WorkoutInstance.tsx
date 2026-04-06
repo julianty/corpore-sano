@@ -3,9 +3,11 @@ import {
   Button,
   Divider,
   Group,
+  Modal,
   Paper,
   Stack,
   Table,
+  Text,
   Tooltip,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
@@ -45,6 +47,7 @@ export function WorkoutInstance(props: {
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 48em)") ?? false;
 
   const updateWorkoutData = useCallback(
@@ -168,7 +171,7 @@ export function WorkoutInstance(props: {
               <Tooltip label="Delete workout" withArrow>
                 <ActionIcon
                   color="red"
-                  onClick={() => workoutCloseHandler(workoutId)}
+                  onClick={() => setDeleteConfirmOpen(true)}
                   variant="light"
                   size="lg"
                   aria-label="Delete this workout"
@@ -247,6 +250,34 @@ export function WorkoutInstance(props: {
           </Table.ScrollContainer>
         )}
       </Stack>
+      <Modal
+        opened={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Delete workout"
+        centered
+      >
+        <Text mb="lg">
+          Are you sure you want to delete this workout? This action cannot be
+          undone.
+        </Text>
+        <Group justify="flex-end">
+          <Button
+            variant="default"
+            onClick={() => setDeleteConfirmOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            onClick={() => {
+              setDeleteConfirmOpen(false);
+              workoutCloseHandler(workoutId);
+            }}
+          >
+            Delete
+          </Button>
+        </Group>
+      </Modal>
     </Paper>
   );
 }

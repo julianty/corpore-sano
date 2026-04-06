@@ -8,6 +8,7 @@ export function ExerciseFields({
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
+  isMobile,
 }: ExerciseFieldsProps) {
   // Sorts the array based on the 'order' property of the exercise object
   const exercisesArray = Object.entries(exercisesObject).sort(
@@ -15,7 +16,7 @@ export function ExerciseFields({
       const orderA = keyExA[1].order;
       const orderB = keyExB[1].order;
       return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
-    }
+    },
   );
   // Generates an array of <NumberInputs> corresponding to
   // exercisename - sets - reps - weight
@@ -27,6 +28,7 @@ export function ExerciseFields({
       closeHandler,
       exerciseNameChangeHandler,
       editMode,
+      isMobile,
     };
     return <ExerciseRow key={key} {...exerciseRowProps} />;
   });

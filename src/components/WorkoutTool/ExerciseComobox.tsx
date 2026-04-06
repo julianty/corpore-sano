@@ -70,7 +70,7 @@ function ExerciseComboboxComponent(props: ExerciseComboboxProps) {
       <Combobox.Dropdown>
         <Combobox.Options
           mah={responsiveDimensions.dropdownMaxHeight.md}
-          style={{ overflowY: "auto" }}
+          style={{ overflowY: "auto", maxHeight: "min(400px, 60vh)" }}
         >
           {options}
         </Combobox.Options>

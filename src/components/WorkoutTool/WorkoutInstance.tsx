@@ -1,5 +1,15 @@
-import { Button, Group, Paper, Table } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Divider,
+  Group,
+  Paper,
+  Stack,
+  Table,
+  Tooltip,
+} from "@mantine/core";
 import { DateInput } from "@mantine/dates";
+import { useMediaQuery } from "@mantine/hooks";
 import { useAppSelector } from "../../hooks";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Exercise, ExerciseMap, Workout } from "../../types";
@@ -26,12 +36,16 @@ export function WorkoutInstance(props: {
     return initialData.date ?? Timestamp.now();
   });
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() => {
-    const { date, ...exercises } = initialData as unknown as Record<string, unknown>;
+    const { date, ...exercises } = initialData as unknown as Record<
+      string,
+      unknown
+    >;
     return exercises as ExerciseMap;
   });
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 48em)") ?? false;
 
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
@@ -116,83 +130,123 @@ export function WorkoutInstance(props: {
   }
 
   return (
-    <Paper id={`workout-${workoutId}`} p={{ xs: "md", md: "lg" }} withBorder>
-      <Group>
-        <DateInput
-          onChange={(value) => {
-            const timestampDate = Timestamp.fromDate(value as Date);
-            setWorkoutDate(timestampDate);
-            updateWorkoutData({ date: timestampDate, ...exercisesObject });
-          }}
-          value={workoutDate?.toDate()}
-          maw={responsiveDimensions.inputMaxWidth.md}
-          rightSection={<IconCalendar size={16} />}
-          aria-label="Workout date"
-        />
-        <Button
-          ml="auto"
-          variant="light"
-          onClick={() => setEditMode(!editMode)}
-          color={"orange"}
-          leftSection={<IconEdit size={16} />}
-          aria-label={editMode ? "Exit edit mode" : "Edit workout"}
-        >
-          edit
-        </Button>
-        <Button
-          color="red"
-          display={editMode ? "block" : "none"}
-          onClick={() => workoutCloseHandler(workoutId)}
-          leftSection={<IconX size={16} />}
-          variant="light"
-          aria-label="Delete this workout"
-        >
-          Delete Workout
-        </Button>
-      </Group>
-      <Table>
-        <Table.Thead>
-          <Table.Tr>
-            {[
-              "Exercise Name",
-              "Sets",
-              "Reps",
-              `Weight (${weightUnits})`,
-              "Delete",
-            ]
-              // Remove the 'delete' column unless we're in edit mode
-              .filter((colName) => {
-                if (colName !== "Delete") return true;
-                if (editMode === true) return true;
-              })
-
-              .map((colName) => (
-                <Table.Th key={colName}>{colName}</Table.Th>
-              ))}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          <ExerciseFields
-            exercisesObject={exercisesObject}
-            numberFieldChangeHandler={numberFieldChangeHandler}
-            exerciseNameChangeHandler={exerciseNameChangeHandler}
-            closeHandler={closeHandler}
-            editMode={editMode}
+    <Paper
+      id={`workout-${workoutId}`}
+      p={{ base: "xs", sm: "md" }}
+      withBorder
+      shadow="sm"
+    >
+      <Stack gap="sm">
+        <Group>
+          <DateInput
+            onChange={(value) => {
+              const timestampDate = Timestamp.fromDate(value as Date);
+              setWorkoutDate(timestampDate);
+              updateWorkoutData({ date: timestampDate, ...exercisesObject });
+            }}
+            value={workoutDate?.toDate()}
+            maw={responsiveDimensions.inputMaxWidth.md}
+            rightSection={<IconCalendar size={16} />}
+            aria-label="Workout date"
           />
-          <Table.Tr>
-            <Table.Td>
-              <Button
-                leftSection={<IconPlus size={14} />}
-                onClick={addNewExercise}
-                variant="light"
-                aria-label="Add a new exercise to this workout"
+          <Group ml="auto" gap="xs">
+            <Tooltip
+              label={editMode ? "Exit edit mode" : "Edit workout"}
+              withArrow
+            >
+              <ActionIcon
+                variant={editMode ? "filled" : "light"}
+                onClick={() => setEditMode(!editMode)}
+                color="orange"
+                size="lg"
+                aria-label={editMode ? "Exit edit mode" : "Edit workout"}
               >
-                Add Exercise
-              </Button>
-            </Table.Td>
-          </Table.Tr>
-        </Table.Tbody>
-      </Table>
+                <IconEdit size={16} />
+              </ActionIcon>
+            </Tooltip>
+            {editMode && (
+              <Tooltip label="Delete workout" withArrow>
+                <ActionIcon
+                  color="red"
+                  onClick={() => workoutCloseHandler(workoutId)}
+                  variant="light"
+                  size="lg"
+                  aria-label="Delete this workout"
+                >
+                  <IconX size={16} />
+                </ActionIcon>
+              </Tooltip>
+            )}
+          </Group>
+        </Group>
+        <Divider />
+        {isMobile ? (
+          <Stack gap="xs">
+            <ExerciseFields
+              exercisesObject={exercisesObject}
+              numberFieldChangeHandler={numberFieldChangeHandler}
+              exerciseNameChangeHandler={exerciseNameChangeHandler}
+              closeHandler={closeHandler}
+              editMode={editMode}
+              isMobile
+            />
+            <Button
+              leftSection={<IconPlus size={14} />}
+              onClick={addNewExercise}
+              variant="light"
+              fullWidth
+              aria-label="Add a new exercise to this workout"
+            >
+              Add Exercise
+            </Button>
+          </Stack>
+        ) : (
+          <Table.ScrollContainer minWidth={400}>
+            <Table highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  {[
+                    "Exercise Name",
+                    "Sets",
+                    "Reps",
+                    `Weight (${weightUnits})`,
+                    "Delete",
+                  ]
+                    .filter((colName) => {
+                      if (colName !== "Delete") return true;
+                      if (editMode === true) return true;
+                    })
+                    .map((colName) => (
+                      <Table.Th key={colName}>{colName}</Table.Th>
+                    ))}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                <ExerciseFields
+                  exercisesObject={exercisesObject}
+                  numberFieldChangeHandler={numberFieldChangeHandler}
+                  exerciseNameChangeHandler={exerciseNameChangeHandler}
+                  closeHandler={closeHandler}
+                  editMode={editMode}
+                  isMobile={false}
+                />
+                <Table.Tr>
+                  <Table.Td>
+                    <Button
+                      leftSection={<IconPlus size={14} />}
+                      onClick={addNewExercise}
+                      variant="light"
+                      aria-label="Add a new exercise to this workout"
+                    >
+                      Add Exercise
+                    </Button>
+                  </Table.Td>
+                </Table.Tr>
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+        )}
+      </Stack>
     </Paper>
   );
 }

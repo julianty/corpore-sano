@@ -39,6 +39,7 @@ export interface ExerciseRowProps {
     key: string,
   ) => void;
   editMode: boolean;
+  isMobile: boolean;
 }
 export interface ExerciseFieldsProps {
   exercisesObject: ExerciseMap;
@@ -54,6 +55,7 @@ export interface ExerciseFieldsProps {
     key: string,
   ) => void;
   editMode: boolean;
+  isMobile: boolean;
 }
 
 export interface Muscle {

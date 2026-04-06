@@ -1,6 +1,8 @@
 import {
   CloseButton,
-  // Select,
+  Group,
+  Paper,
+  Stack,
   Table,
 } from "@mantine/core";
 import React, { useContext, useEffect, useMemo } from "react";
@@ -21,10 +23,11 @@ const exerciseCatalog = exerciseCatalogUpdated;
 function ExerciseRowComponent({
   exercise,
   exerciseKey,
-  numberFieldChangeHandler: numberFieldChangeHandler,
+  numberFieldChangeHandler,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
+  isMobile,
 }: ExerciseRowProps) {
   // Redux state and dispatch
   const favoriteExercises = useAppSelector(
@@ -67,48 +70,79 @@ function ExerciseRowComponent({
     () => exerciseCatalog.data.map((exerciseObj) => exerciseObj.name),
     [] // Static data, no dependencies
   );
-  let deleteColumn;
-  if (editMode == true) {
-    deleteColumn = (
-      <Table.Td>
-        <CloseButton onClick={() => closeHandler(exerciseKey)} />
-      </Table.Td>
+
+  const combobox = (
+    <ExerciseCombobox
+      defaultValue={exercise.variant}
+      catalog={exerciseCatalogArray}
+      exerciseNameChangeHandler={(name, variant) =>
+        exerciseNameChangeHandler(name, variant, exerciseKey)
+      }
+      favoriteClickHandler={favoriteClickHandler}
+      favoriteExercises={favoriteExercises}
+    />
+  );
+
+  const numberFields = ["sets", "reps", `weight${weightUnit}`] as const;
+  const fieldLabels: Record<string, string> = {
+    sets: "Sets",
+    reps: "Reps",
+    weightlbs: "Weight (lbs)",
+    weightkg: "Weight (kg)",
+  };
+
+  if (isMobile) {
+    return (
+      <Paper p="xs" withBorder>
+        <Stack gap="xs">
+          <Group gap="xs">
+            <div style={{ flex: 1 }}>{combobox}</div>
+            {editMode && (
+              <CloseButton onClick={() => closeHandler(exerciseKey)} />
+            )}
+          </Group>
+          <Group grow gap="xs">
+            {numberFields.map((fieldName) => (
+              <StyledNumberInput
+                key={`${exerciseKey}${fieldName}`}
+                fieldName={fieldName as keyof Exercise}
+                exerciseKey={exerciseKey}
+                exercise={exercise}
+                numberFieldChangeHandler={numberFieldChangeHandler}
+                isMobile
+                label={fieldLabels[fieldName]}
+              />
+            ))}
+          </Group>
+        </Stack>
+      </Paper>
     );
-  } else {
-    deleteColumn = null;
   }
-  // Generate a unique key for each exercise
+
+  // Desktop: table row layout
   const uniqueId = `inputKey${exerciseKey}`;
   return (
     <Table.Tr
       key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weightkg}`}
     >
-      {/* Exercise text field */}
       <Table.Td style={{ width: responsiveDimensions.exerciseRowWidth.md }}>
-        <ExerciseCombobox
-          defaultValue={exercise.variant}
-          catalog={exerciseCatalogArray}
-          exerciseNameChangeHandler={(name, variant) =>
-            exerciseNameChangeHandler(name, variant, exerciseKey)
-          }
-          favoriteClickHandler={favoriteClickHandler}
-          favoriteExercises={favoriteExercises}
-        />
+        {combobox}
       </Table.Td>
-      {/* Number fields */}
-      {["sets", "reps", `weight${weightUnit}`]
-        // filter out the appropriate weight unit
-        .map((fieldName) => (
-          <Table.Td key={`${uniqueId}${fieldName}`}>
-            {StyledNumberInput(
-              fieldName as keyof Exercise,
-              exerciseKey,
-              exercise,
-              numberFieldChangeHandler
-            )}
-          </Table.Td>
-        ))}
-      {deleteColumn}
+      {numberFields.map((fieldName) => (
+        <Table.Td key={`${uniqueId}${fieldName}`} ta="center">
+          <StyledNumberInput
+            fieldName={fieldName as keyof Exercise}
+            exerciseKey={exerciseKey}
+            exercise={exercise}
+            numberFieldChangeHandler={numberFieldChangeHandler}
+          />
+        </Table.Td>
+      ))}
+      {editMode && (
+        <Table.Td>
+          <CloseButton onClick={() => closeHandler(exerciseKey)} />
+        </Table.Td>
+      )}
     </Table.Tr>
   );
 }

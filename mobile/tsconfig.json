@@ -4,7 +4,6 @@
     "strict": true,
     "paths": {
       "@shared/*": ["../src/*"],
-      "react": ["./node_modules/@types/react"],
       "react-native": ["./node_modules/react-native"]
     },
     "typeRoots": ["./node_modules/@types"]

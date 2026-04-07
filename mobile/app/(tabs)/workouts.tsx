@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList } from "react-native";
-import { FAB } from "react-native-paper";
+import { FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -25,7 +24,7 @@ export default function WorkoutsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <FlatList
         data={workoutIds}
         keyExtractor={(id) => id}
@@ -34,12 +33,20 @@ export default function WorkoutsScreen() {
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
-      <FAB
-        icon="plus"
-        style={{ position: "absolute", right: 16, bottom: 24 }}
+      <TouchableOpacity
         onPress={addWorkout}
-        label="Add Workout"
-      />
+        style={{
+          position: "absolute",
+          right: 16,
+          bottom: 24,
+          backgroundColor: "#007AFF",
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "600" }}>+ Add Workout</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }

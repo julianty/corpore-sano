@@ -3,17 +3,13 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: "#4dabf7" }}>
+    <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen
         name="index"
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="chart-bar"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
           ),
         }}
       />

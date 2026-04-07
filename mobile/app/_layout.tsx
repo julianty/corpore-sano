@@ -1,8 +1,6 @@
 import { useEffect, useState, createContext } from "react";
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import { Provider } from "react-redux";
-import { PaperProvider, MD3DarkTheme, MD3LightTheme } from "react-native-paper";
-import { useColorScheme } from "react-native";
 import { store } from "@shared/store";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -18,8 +16,6 @@ export const UserProfileContext = createContext<
 >(undefined);
 
 function AppProviders() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? MD3DarkTheme : MD3LightTheme;
   const userId = useAppSelector((state) => state.auth.userId);
   const displayName = useAppSelector((state) => state.auth.displayName);
 
@@ -49,9 +45,7 @@ function AppProviders() {
 
   return (
     <UserProfileContext.Provider value={{ userProfile, setUserProfile }}>
-      <PaperProvider theme={theme}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </PaperProvider>
+      <Slot />
     </UserProfileContext.Provider>
   );
 }

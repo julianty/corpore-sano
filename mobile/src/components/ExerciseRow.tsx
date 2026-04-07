@@ -1,6 +1,5 @@
 import { useContext } from "react";
-import { View, StyleSheet } from "react-native";
-import { TextInput, IconButton } from "react-native-paper";
+import { View, StyleSheet, TextInput, Pressable, Text } from "react-native";
 import { Exercise, ExerciseRowProps } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
 
@@ -24,44 +23,45 @@ export function ExerciseRow({
   return (
     <View style={styles.row}>
       <TextInput
-        style={styles.nameInput}
-        label="Exercise"
+        style={[styles.input, styles.nameInput]}
+        placeholder="Exercise"
+        placeholderTextColor="#999"
         value={exercise.name}
         onChangeText={(name) =>
           exerciseNameChangeHandler(name, exercise.variant, exerciseKey)
         }
-        dense
       />
       <TextInput
-        style={styles.numInput}
-        label="Sets"
+        style={[styles.input, styles.numInput]}
+        placeholder="Sets"
+        placeholderTextColor="#999"
         value={String(exercise.sets)}
         onChangeText={(v) => handleNumber("sets", v)}
         keyboardType="numeric"
-        dense
       />
       <TextInput
-        style={styles.numInput}
-        label="Reps"
+        style={[styles.input, styles.numInput]}
+        placeholder="Reps"
+        placeholderTextColor="#999"
         value={String(exercise.reps)}
         onChangeText={(v) => handleNumber("reps", v)}
         keyboardType="numeric"
-        dense
       />
       <TextInput
-        style={styles.numInput}
-        label={weightUnit}
+        style={[styles.input, styles.numInput]}
+        placeholder={weightUnit}
+        placeholderTextColor="#999"
         value={String(exercise[weightField] ?? 0)}
         onChangeText={(v) => handleNumber(weightField, v)}
         keyboardType="numeric"
-        dense
       />
       {editMode && (
-        <IconButton
-          icon="close"
-          size={18}
+        <Pressable
           onPress={() => closeHandler(exerciseKey)}
-        />
+          style={styles.closeButton}
+        >
+          <Text style={styles.closeButtonText}>×</Text>
+        </Pressable>
       )}
     </View>
   );
@@ -74,6 +74,20 @@ const styles = StyleSheet.create({
     gap: 4,
     marginVertical: 4,
   },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 12,
+  },
   nameInput: { flex: 2 },
   numInput: { flex: 1, minWidth: 60 },
+  closeButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 24,
+    height: 24,
+  },
+  closeButtonText: { fontSize: 20, fontWeight: "bold", color: "#999" },
 });

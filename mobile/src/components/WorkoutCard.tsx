@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Card, Button, IconButton } from "react-native-paper";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  Pressable,
+} from "react-native";
 import { Workout, Exercise, ExerciseMap } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -87,20 +93,25 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
     : "No date";
 
   return (
-    <Card style={styles.card}>
-      <Card.Title
-        title={dateLabel}
-        right={() => (
-          <View style={styles.cardActions}>
-            <IconButton
-              icon={editMode ? "check" : "pencil"}
-              onPress={() => setEditMode((e) => !e)}
-            />
-            <IconButton icon="delete" onPress={() => onDelete(workoutId)} />
-          </View>
-        )}
-      />
-      <Card.Content>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{dateLabel}</Text>
+        <View style={styles.cardActions}>
+          <Pressable
+            onPress={() => setEditMode((e) => !e)}
+            style={styles.iconButton}
+          >
+            <Text style={styles.iconButtonText}>{editMode ? "✓" : "✏"}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onDelete(workoutId)}
+            style={styles.iconButton}
+          >
+            <Text style={styles.iconButtonText}>🗑</Text>
+          </Pressable>
+        </View>
+      </View>
+      <View style={styles.cardContent}>
         <ScrollView>
           {Object.entries(exercisesObject).map(([key, exercise]) => (
             <ExerciseRow
@@ -115,22 +126,46 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
           ))}
         </ScrollView>
         {editMode && (
-          <Button
-            mode="outlined"
-            icon="plus"
-            onPress={addNewExercise}
-            style={styles.addButton}
-          >
-            Add Exercise
-          </Button>
+          <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
+            <Text style={styles.addButtonText}>+ Add Exercise</Text>
+          </TouchableOpacity>
         )}
-      </Card.Content>
-    </Card>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, marginVertical: 8 },
-  cardActions: { flexDirection: "row" },
-  addButton: { marginTop: 8 },
+  card: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  cardTitle: { fontSize: 16, fontWeight: "600" },
+  cardActions: { flexDirection: "row", gap: 8 },
+  iconButton: { padding: 4 },
+  iconButtonText: { fontSize: 16 },
+  cardContent: { padding: 12 },
+  addButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  addButtonText: { fontSize: 14, fontWeight: "600", color: "#333" },
 });

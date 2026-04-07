@@ -1,6 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { ScrollView } from "react-native";
-import { DataTable, Text, Card, ActivityIndicator } from "react-native-paper";
+import {
+  ScrollView,
+  View,
+  Text,
+  ActivityIndicator as RNActivityIndicator,
+} from "react-native";
 
 import { Workout } from "@shared/types";
 import { parentGroups } from "@shared/data/muscleGroups";
@@ -53,48 +57,128 @@ export function WeeklySummary() {
     setParentGroups(rollupToParentGroups(summary));
   }, [workoutArray, exerciseMap]);
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 24 }} />;
+  if (loading)
+    return <RNActivityIndicator size="large" style={{ marginTop: 24 }} />;
 
   return (
-    <Card style={{ margin: 16 }}>
-      <Card.Title title="Muscle Groups This Week" />
-      <Card.Content>
-        <ScrollView horizontal>
-          <DataTable>
-            <DataTable.Header>
-              <DataTable.Title style={{ width: 110 }}>Group</DataTable.Title>
-              <DataTable.Title numeric style={{ width: 110 }}>
-                Sets
-              </DataTable.Title>
-              <DataTable.Title style={{ width: 130 }}>
+    <View
+      style={{
+        margin: 16,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      <View
+        style={{
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: "#ddd",
+        }}
+      >
+        <Text style={{ fontSize: 16, fontWeight: "600" }}>
+          Muscle Groups This Week
+        </Text>
+      </View>
+      <ScrollView horizontal>
+        <View>
+          {/* Header row */}
+          <View
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ddd",
+            }}
+          >
+            <View
+              style={{
+                width: 110,
+                paddingVertical: 8,
+                paddingHorizontal: 8,
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ fontWeight: "600", fontSize: 12 }}>Group</Text>
+            </View>
+            <View
+              style={{
+                width: 110,
+                paddingVertical: 8,
+                paddingHorizontal: 8,
+                justifyContent: "center",
+                alignItems: "flex-end",
+              }}
+            >
+              <Text style={{ fontWeight: "600", fontSize: 12 }}>Sets</Text>
+            </View>
+            <View
+              style={{
+                width: 130,
+                paddingVertical: 8,
+                paddingHorizontal: 8,
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ fontWeight: "600", fontSize: 12 }}>
                 Last Worked
-              </DataTable.Title>
-            </DataTable.Header>
-            {parentGroups.map((group) => {
-              const data = parentGroups_[group];
-              const last =
-                data.daysSinceLast === undefined
+              </Text>
+            </View>
+          </View>
+          {/* Data rows */}
+          {parentGroups.map((group) => {
+            const data = parentGroups_[group];
+            const last =
+              data.daysSinceLast === undefined
+                ? "7+ days ago"
+                : data.daysSinceLast >= 7
                   ? "7+ days ago"
-                  : data.daysSinceLast >= 7
-                    ? "7+ days ago"
-                    : `${data.daysSinceLast} days ago`;
-              return (
-                <DataTable.Row key={group}>
-                  <DataTable.Cell style={{ width: 110 }}>
-                    {group}
-                  </DataTable.Cell>
-                  <DataTable.Cell numeric style={{ width: 110 }}>
-                    {data.sets}
-                  </DataTable.Cell>
-                  <DataTable.Cell style={{ width: 130 }}>
-                    <Text variant="bodySmall">{last}</Text>
-                  </DataTable.Cell>
-                </DataTable.Row>
-              );
-            })}
-          </DataTable>
-        </ScrollView>
-      </Card.Content>
-    </Card>
+                  : `${data.daysSinceLast} days ago`;
+            return (
+              <View
+                key={group}
+                style={{
+                  flexDirection: "row",
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#eee",
+                }}
+              >
+                <View
+                  style={{
+                    width: 110,
+                    paddingVertical: 8,
+                    paddingHorizontal: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 12 }}>{group}</Text>
+                </View>
+                <View
+                  style={{
+                    width: 110,
+                    paddingVertical: 8,
+                    paddingHorizontal: 8,
+                    justifyContent: "center",
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <Text style={{ fontSize: 12 }}>{data.sets}</Text>
+                </View>
+                <View
+                  style={{
+                    width: 130,
+                    paddingVertical: 8,
+                    paddingHorizontal: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 11 }}>{last}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 }

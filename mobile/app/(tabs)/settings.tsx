@@ -1,32 +1,15 @@
-import { ScrollView } from "react-native";
-import { Text, Divider } from "react-native-paper";
+import { ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { UserPreferences } from "../../src/components/UserPreferences";
-import { GoogleSignIn } from "../../src/components/GoogleSignIn";
-import { useAppSelector } from "@shared/hooks";
 
 export default function SettingsScreen() {
-  const displayName = useAppSelector((state) => state.auth.displayName);
-
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView>
-        <Text variant="headlineMedium" style={{ margin: 16 }}>
+        <Text style={{ margin: 16, fontSize: 22, fontWeight: "600", color: "#000" }}>
           Settings
         </Text>
-        <Text
-          variant="bodyMedium"
-          style={{ marginHorizontal: 16, marginBottom: 16 }}
-        >
-          Signed in as {displayName}
-        </Text>
-        <Divider />
         <UserPreferences />
-        <Divider />
-        <Text variant="labelLarge" style={{ margin: 16 }}>
-          Account
-        </Text>
-        <GoogleSignIn />
       </ScrollView>
     </SafeAreaView>
   );

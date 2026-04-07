@@ -17,7 +17,7 @@ service cloud.firestore {
     	allow read, write: if request.auth.uid in ["demoUser", "admin", "3KsFInijl6eLlWxbimCUzljmCai2"];
       
       // Temporary rule for development
-      allow read, write: if request.time < timestamp.date(2024, 8, 31);
+      allow read, write: if request.time < timestamp.date(2026, 8, 31);
     }
   }
 }

@@ -122,6 +122,10 @@ function SetRow({
   const [repsText, setRepsText] = useState(String(set.reps));
   const [weightText, setWeightText] = useState(String(set[weightField] ?? 0));
 
+  function stripLeadingZero(v: string) {
+    return v.replace(/^0+(\d)/, "$1");
+  }
+
   return (
     <View style={styles.setRow}>
       <Text style={[styles.setNumLabel, styles.setNumCol]}>{index + 1}</Text>
@@ -129,8 +133,9 @@ function SetRow({
         style={[styles.input, styles.setField]}
         value={repsText}
         onChangeText={(v) => {
-          setRepsText(v);
-          onUpdate(index, "reps", v);
+          const stripped = stripLeadingZero(v);
+          setRepsText(stripped);
+          onUpdate(index, "reps", stripped);
         }}
         keyboardType="numeric"
         placeholderTextColor="#999"
@@ -139,8 +144,9 @@ function SetRow({
         style={[styles.input, styles.setField]}
         value={weightText}
         onChangeText={(v) => {
-          setWeightText(v);
-          onUpdate(index, weightField, v);
+          const stripped = stripLeadingZero(v);
+          setWeightText(stripped);
+          onUpdate(index, weightField, stripped);
         }}
         keyboardType="numeric"
         placeholderTextColor="#999"

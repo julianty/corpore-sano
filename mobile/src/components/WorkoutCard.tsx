@@ -9,10 +9,9 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
-import { Workout, Exercise, ExerciseMap } from "@shared/types";
+import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
-import { lbsToKg, kgToLbs } from "@shared/lib/utils";
 import { ExerciseRow } from "./ExerciseRow";
 
 interface WorkoutCardProps {
@@ -24,10 +23,7 @@ const EMPTY_EXERCISE: Exercise = {
   order: 0,
   name: "",
   variant: "",
-  sets: 0,
-  reps: 0,
-  weightlbs: 0,
-  weightkg: 0,
+  sets: [],
 };
 
 export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
@@ -46,7 +42,12 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
   if (!workout) return null;
 
   const exercisesObject: ExerciseMap = Object.fromEntries(
-    Object.entries(workout).filter(([k]) => k !== "date"),
+    Object.entries(workout)
+      .filter(([k]) => k !== "date")
+      .map(([k, v]) => {
+        const ex = v as Exercise;
+        return [k, Array.isArray(ex.sets) ? ex : { ...ex, sets: [] }];
+      }),
   ) as ExerciseMap;
 
   async function saveWorkout(updated: Workout) {
@@ -54,15 +55,9 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
     await FirestoreActions.updateWorkoutById(userId, workoutId, updated);
   }
 
-  function numberFieldChangeHandler(
-    value: number,
-    key: string,
-    field: keyof Exercise,
-  ) {
+  function onSetsChange(key: string, sets: SetEntry[]) {
     const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], [field]: value };
-    if (field === "weightlbs") updated[key].weightkg = lbsToKg(value);
-    if (field === "weightkg") updated[key].weightlbs = kgToLbs(value);
+    updated[key] = { ...updated[key], sets };
     saveWorkout({ ...workout!, ...updated });
   }
 
@@ -157,7 +152,7 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
               key={key}
               exercise={exercise}
               exerciseKey={key}
-              numberFieldChangeHandler={numberFieldChangeHandler}
+              onSetsChange={onSetsChange}
               closeHandler={closeHandler}
               exerciseNameChangeHandler={exerciseNameChangeHandler}
               editMode={editMode}

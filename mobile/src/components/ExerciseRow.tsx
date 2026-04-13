@@ -1,37 +1,45 @@
 import { useContext, useState } from "react";
 import { View, StyleSheet, TextInput, Pressable, Text } from "react-native";
-import { Exercise, ExerciseRowProps } from "@shared/types";
+import { ExerciseRowProps, SetEntry } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
 import { ExercisePickerModal } from "./ExercisePickerModal";
+import { lbsToKg, kgToLbs } from "@shared/lib/utils";
 
 export function ExerciseRow({
   exercise,
   exerciseKey,
-  numberFieldChangeHandler,
+  onSetsChange,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
 }: ExerciseRowProps) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
-  const weightField = `weight${weightUnit}` as keyof Exercise;
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [setsText, setSetsText] = useState(String(exercise.sets));
-  const [repsText, setRepsText] = useState(String(exercise.reps));
-  const [weightText, setWeightText] = useState(String(exercise[weightField] ?? 0));
-
-  function handleNumber(
-    field: keyof Exercise,
-    raw: string,
-    setText: (s: string) => void
-  ) {
-    setText(raw);
-    const value = parseFloat(raw);
-    if (!isNaN(value)) numberFieldChangeHandler(value, exerciseKey, field);
-  }
 
   const displayName = exercise.variant || exercise.name || "Select exercise";
   const hasExercise = exercise.variant || exercise.name;
+
+  function updateSet(index: number, field: keyof SetEntry, rawValue: string) {
+    const value = parseFloat(rawValue);
+    if (isNaN(value)) return;
+    const updated = exercise.sets.map((s, i) => {
+      if (i !== index) return s;
+      if (field === "weightlbs") return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
+      if (field === "weightkg") return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
+      return { ...s, [field]: value };
+    });
+    onSetsChange(exerciseKey, updated);
+  }
+
+  function addSet() {
+    const lastSet = exercise.sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
+    onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
+  }
+
+  function removeSet(index: number) {
+    onSetsChange(exerciseKey, exercise.sets.filter((_, i) => i !== index));
+  }
 
   return (
     <View style={styles.card}>
@@ -64,38 +72,84 @@ export function ExerciseRow({
           </Pressable>
         )}
       </View>
-      <View style={styles.fieldsRow}>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Sets</Text>
-          <TextInput
-            style={[styles.input, styles.numInput]}
-            placeholderTextColor="#999"
-            value={setsText}
-            onChangeText={(v) => handleNumber("sets", v, setSetsText)}
-            keyboardType="numeric"
-          />
+
+      {exercise.sets.length > 0 && (
+        <View style={styles.setHeader}>
+          <Text style={[styles.headerLabel, styles.setNumCol]}>#</Text>
+          <Text style={[styles.headerLabel, styles.setField]}>Reps</Text>
+          <Text style={[styles.headerLabel, styles.setField]}>
+            Weight ({weightUnit})
+          </Text>
+          {editMode && <View style={styles.removeSpacer} />}
         </View>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Reps</Text>
-          <TextInput
-            style={[styles.input, styles.numInput]}
-            placeholderTextColor="#999"
-            value={repsText}
-            onChangeText={(v) => handleNumber("reps", v, setRepsText)}
-            keyboardType="numeric"
-          />
-        </View>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Weight ({weightUnit})</Text>
-          <TextInput
-            style={[styles.input, styles.numInput]}
-            placeholderTextColor="#999"
-            value={weightText}
-            onChangeText={(v) => handleNumber(weightField, v, setWeightText)}
-            keyboardType="numeric"
-          />
-        </View>
-      </View>
+      )}
+
+      {exercise.sets.map((set, index) => (
+        <SetRow
+          key={index}
+          index={index}
+          set={set}
+          weightUnit={weightUnit}
+          editMode={editMode}
+          onUpdate={updateSet}
+          onRemove={removeSet}
+        />
+      ))}
+
+      <Pressable onPress={addSet} style={styles.addSetButton}>
+        <Text style={styles.addSetText}>+ Add Set</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function SetRow({
+  index,
+  set,
+  weightUnit,
+  editMode,
+  onUpdate,
+  onRemove,
+}: {
+  index: number;
+  set: SetEntry;
+  weightUnit: "lbs" | "kg";
+  editMode: boolean;
+  onUpdate: (index: number, field: keyof SetEntry, rawValue: string) => void;
+  onRemove: (index: number) => void;
+}) {
+  const weightField = `weight${weightUnit}` as keyof SetEntry;
+  const [repsText, setRepsText] = useState(String(set.reps));
+  const [weightText, setWeightText] = useState(String(set[weightField] ?? 0));
+
+  return (
+    <View style={styles.setRow}>
+      <Text style={[styles.setNumLabel, styles.setNumCol]}>{index + 1}</Text>
+      <TextInput
+        style={[styles.input, styles.setField]}
+        value={repsText}
+        onChangeText={(v) => {
+          setRepsText(v);
+          onUpdate(index, "reps", v);
+        }}
+        keyboardType="numeric"
+        placeholderTextColor="#999"
+      />
+      <TextInput
+        style={[styles.input, styles.setField]}
+        value={weightText}
+        onChangeText={(v) => {
+          setWeightText(v);
+          onUpdate(index, weightField, v);
+        }}
+        keyboardType="numeric"
+        placeholderTextColor="#999"
+      />
+      {editMode && (
+        <Pressable onPress={() => onRemove(index)} style={styles.removeButton}>
+          <Text style={styles.removeButtonText}>−</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -107,23 +161,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 8,
     marginVertical: 4,
-    gap: 6,
+    gap: 4,
   },
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-  },
-  fieldsRow: {
-    flexDirection: "row",
-    gap: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
-    fontSize: 12,
   },
   nameButton: {
     flex: 1,
@@ -143,9 +186,6 @@ const styles = StyleSheet.create({
   nameTextPlaceholder: {
     color: "#999",
   },
-  fieldGroup: { flex: 1, gap: 2 },
-  fieldLabel: { fontSize: 11, color: "#666", fontWeight: "600" },
-  numInput: { flex: 1 },
   closeButton: {
     justifyContent: "center",
     alignItems: "center",
@@ -153,4 +193,69 @@ const styles = StyleSheet.create({
     height: 24,
   },
   closeButtonText: { fontSize: 20, fontWeight: "bold", color: "#999" },
+  setHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  headerLabel: {
+    fontSize: 10,
+    color: "#666",
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  setNumCol: {
+    width: 20,
+    textAlign: "center",
+  },
+  setNumLabel: {
+    fontSize: 12,
+    color: "#888",
+    textAlign: "center",
+  },
+  setField: {
+    flex: 1,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 12,
+  },
+  removeButton: {
+    width: 24,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removeButtonText: {
+    fontSize: 18,
+    color: "#999",
+    fontWeight: "bold",
+  },
+  removeSpacer: {
+    width: 24,
+  },
+  addSetButton: {
+    marginTop: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  addSetText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
+  },
 });

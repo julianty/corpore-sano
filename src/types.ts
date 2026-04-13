@@ -1,14 +1,16 @@
 import { Timestamp } from "firebase/firestore";
 
+export interface SetEntry {
+  reps: number;
+  weightlbs: number;
+  weightkg: number;
+}
+
 export interface Exercise {
   order: number;
   name: string;
   variant: string;
-  sets: number;
-  reps: number;
-  // weight: number;
-  weightlbs: number;
-  weightkg: number;
+  sets: SetEntry[];
 }
 
 export interface Workout {
@@ -27,11 +29,7 @@ export interface WorkoutsObject {
 export interface ExerciseRowProps {
   exercise: Exercise;
   exerciseKey: string;
-  numberFieldChangeHandler: (
-    value: number,
-    key: string,
-    fieldName: keyof Exercise,
-  ) => void;
+  onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (key: string) => void;
   exerciseNameChangeHandler: (
     name: string,
@@ -43,11 +41,7 @@ export interface ExerciseRowProps {
 }
 export interface ExerciseFieldsProps {
   exercisesObject: ExerciseMap;
-  numberFieldChangeHandler: (
-    value: number,
-    key: string,
-    field: keyof Exercise,
-  ) => void;
+  onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (workoutId: string) => void;
   exerciseNameChangeHandler: (
     name: string,

@@ -1,4 +1,4 @@
-import { Workout, MuscleSummary } from "../../types";
+import { Workout, MuscleSummary, SetEntry } from "../../types";
 import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 import { getExerciseByName } from "../../utils/exerciseLookup";
 
@@ -41,11 +41,9 @@ export function buildMuscleSummary(
       if (key === "date" || !value || typeof value !== "object") return;
       const exerciseEntry = value as {
         name: string;
-        sets: number;
-        reps: number;
-        weightkg?: number;
-        weightlbs?: number;
+        sets: SetEntry[];
       };
+      if (!Array.isArray(exerciseEntry.sets)) return;
       const exercise = getExerciseByName(exerciseMap, exerciseEntry.name);
       if (!exercise) return;
 
@@ -62,11 +60,11 @@ export function buildMuscleSummary(
           const parentGroup = muscleGroups[muscleName].parentGroup;
           if (!parentGroupsSeen.has(parentGroup)) {
             parentGroupsSeen.add(parentGroup);
-            const weight =
-              exerciseEntry.weightkg ?? exerciseEntry.weightlbs ?? 0;
-            muscleGroups[muscleName].sets += exerciseEntry.sets;
-            muscleGroups[muscleName].weightTotal! +=
-              exerciseEntry.sets * exerciseEntry.reps * weight;
+            muscleGroups[muscleName].sets += exerciseEntry.sets.length;
+            muscleGroups[muscleName].weightTotal! += exerciseEntry.sets.reduce(
+              (acc, s) => acc + s.reps * (s.weightkg ?? s.weightlbs ?? 0),
+              0,
+            );
           }
         }
         muscleGroups[muscleName].lastWorked =

@@ -5,7 +5,10 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -31,6 +34,7 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
   const userId = useAppSelector((state) => state.auth.userId);
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Load workout on mount
   useEffect(() => {
@@ -87,6 +91,13 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
     saveWorkout({ ...workout!, ...updated });
   }
 
+  function handleDateChange(_event: unknown, selectedDate?: Date) {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (selectedDate) {
+      saveWorkout({ ...workout!, date: Timestamp.fromDate(selectedDate) });
+    }
+  }
+
   const dateLabel = workout.date
     ? workout.date.toDate().toLocaleDateString()
     : "No date";
@@ -94,10 +105,21 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{dateLabel}</Text>
+        {editMode ? (
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <Text style={[styles.cardTitle, styles.editableDate]}>
+              {dateLabel} ✎
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.cardTitle}>{dateLabel}</Text>
+        )}
         <View style={styles.cardActions}>
           <Pressable
-            onPress={() => setEditMode((e) => !e)}
+            onPress={() => {
+              setEditMode((e) => !e);
+              setShowDatePicker(false);
+            }}
             style={[styles.actionButton, editMode && styles.actionButtonActive]}
           >
             <Text style={editMode ? styles.actionButtonTextColored : styles.actionButtonText}>{editMode ? "Done" : "Edit"}</Text>
@@ -110,6 +132,24 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
           </Pressable>
         </View>
       </View>
+      {showDatePicker && (
+        <View style={styles.datePickerContainer}>
+          <DateTimePicker
+            value={workout.date ? workout.date.toDate() : new Date()}
+            mode="date"
+            display={Platform.OS === "ios" ? "inline" : "default"}
+            onChange={handleDateChange}
+          />
+          {Platform.OS === "ios" && (
+            <Pressable
+              onPress={() => setShowDatePicker(false)}
+              style={styles.datePickerDone}
+            >
+              <Text style={styles.actionButtonTextColored}>Done</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
       <View style={styles.cardContent}>
         <View>
           {Object.entries(exercisesObject).map(([key, exercise]) => (
@@ -153,6 +193,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ddd",
   },
   cardTitle: { fontSize: 16, fontWeight: "600" },
+  editableDate: { color: "#007AFF" },
   cardActions: { flexDirection: "row", gap: 8 },
   actionButton: {
     paddingVertical: 4,
@@ -169,6 +210,20 @@ const styles = StyleSheet.create({
   actionButtonText: { fontSize: 13, fontWeight: "600", color: "#333" },
   actionButtonTextColored: { fontSize: 13, fontWeight: "600", color: "#fff" },
   cardContent: { padding: 12 },
+  datePickerContainer: {
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    alignItems: "center",
+    paddingBottom: 8,
+  },
+  datePickerDone: {
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    backgroundColor: "#007AFF",
+    borderRadius: 6,
+  },
   addButton: {
     marginTop: 12,
     paddingVertical: 10,

@@ -57,30 +57,36 @@ export function ExerciseRow({
         )}
       </View>
       <View style={styles.fieldsRow}>
-        <TextInput
-          style={[styles.input, styles.numInput]}
-          placeholder="Sets"
-          placeholderTextColor="#999"
-          value={String(exercise.sets)}
-          onChangeText={(v) => handleNumber("sets", v)}
-          keyboardType="numeric"
-        />
-        <TextInput
-          style={[styles.input, styles.numInput]}
-          placeholder="Reps"
-          placeholderTextColor="#999"
-          value={String(exercise.reps)}
-          onChangeText={(v) => handleNumber("reps", v)}
-          keyboardType="numeric"
-        />
-        <TextInput
-          style={[styles.input, styles.numInput]}
-          placeholder={weightUnit}
-          placeholderTextColor="#999"
-          value={String(exercise[weightField] ?? 0)}
-          onChangeText={(v) => handleNumber(weightField, v)}
-          keyboardType="numeric"
-        />
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Sets</Text>
+          <TextInput
+            style={[styles.input, styles.numInput]}
+            placeholderTextColor="#999"
+            value={String(exercise.sets)}
+            onChangeText={(v) => handleNumber("sets", v)}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Reps</Text>
+          <TextInput
+            style={[styles.input, styles.numInput]}
+            placeholderTextColor="#999"
+            value={String(exercise.reps)}
+            onChangeText={(v) => handleNumber("reps", v)}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Weight ({weightUnit})</Text>
+          <TextInput
+            style={[styles.input, styles.numInput]}
+            placeholderTextColor="#999"
+            value={String(exercise[weightField] ?? 0)}
+            onChangeText={(v) => handleNumber(weightField, v)}
+            keyboardType="numeric"
+          />
+        </View>
       </View>
     </View>
   );
@@ -129,7 +135,9 @@ const styles = StyleSheet.create({
   nameTextPlaceholder: {
     color: "#999",
   },
-  numInput: { flex: 1, minWidth: 60 },
+  fieldGroup: { flex: 1, gap: 2 },
+  fieldLabel: { fontSize: 11, color: "#666", fontWeight: "600" },
+  numInput: { flex: 1 },
   closeButton: {
     justifyContent: "center",
     alignItems: "center",

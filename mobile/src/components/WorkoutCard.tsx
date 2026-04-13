@@ -93,9 +93,13 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
     }
   }
 
-  const dateLabel = workout.date
-    ? workout.date.toDate().toLocaleDateString()
-    : "No date";
+  const dateLabel = (() => {
+    if (!workout.date) return "No date";
+    const d = workout.date.toDate();
+    const month = d.toLocaleDateString(undefined, { month: "long" });
+    const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+    return `${month} ${d.getDate()}, ${weekday}`;
+  })();
 
   return (
     <View style={styles.card}>

@@ -26,68 +26,83 @@ export function ExerciseRow({
   const hasExercise = exercise.variant || exercise.name;
 
   return (
-    <View style={styles.row}>
-      <Pressable
-        style={[styles.nameButton, !hasExercise && styles.nameButtonEmpty]}
-        onPress={() => setPickerVisible(true)}
-      >
-        <Text
-          style={[styles.nameText, !hasExercise && styles.nameTextPlaceholder]}
-          numberOfLines={1}
-        >
-          {displayName}
-        </Text>
-      </Pressable>
-      <ExercisePickerModal
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        onSelect={(name, variant) => {
-          exerciseNameChangeHandler(name, variant, exerciseKey);
-          setPickerVisible(false);
-        }}
-      />
-      <TextInput
-        style={[styles.input, styles.numInput]}
-        placeholder="Sets"
-        placeholderTextColor="#999"
-        value={String(exercise.sets)}
-        onChangeText={(v) => handleNumber("sets", v)}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={[styles.input, styles.numInput]}
-        placeholder="Reps"
-        placeholderTextColor="#999"
-        value={String(exercise.reps)}
-        onChangeText={(v) => handleNumber("reps", v)}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={[styles.input, styles.numInput]}
-        placeholder={weightUnit}
-        placeholderTextColor="#999"
-        value={String(exercise[weightField] ?? 0)}
-        onChangeText={(v) => handleNumber(weightField, v)}
-        keyboardType="numeric"
-      />
-      {editMode && (
+    <View style={styles.card}>
+      <View style={styles.nameRow}>
         <Pressable
-          onPress={() => closeHandler(exerciseKey)}
-          style={styles.closeButton}
+          style={[styles.nameButton, !hasExercise && styles.nameButtonEmpty]}
+          onPress={() => setPickerVisible(true)}
         >
-          <Text style={styles.closeButtonText}>×</Text>
+          <Text
+            style={[styles.nameText, !hasExercise && styles.nameTextPlaceholder]}
+            numberOfLines={1}
+          >
+            {displayName}
+          </Text>
         </Pressable>
-      )}
+        <ExercisePickerModal
+          visible={pickerVisible}
+          onClose={() => setPickerVisible(false)}
+          onSelect={(name, variant) => {
+            exerciseNameChangeHandler(name, variant, exerciseKey);
+            setPickerVisible(false);
+          }}
+        />
+        {editMode && (
+          <Pressable
+            onPress={() => closeHandler(exerciseKey)}
+            style={styles.closeButton}
+          >
+            <Text style={styles.closeButtonText}>×</Text>
+          </Pressable>
+        )}
+      </View>
+      <View style={styles.fieldsRow}>
+        <TextInput
+          style={[styles.input, styles.numInput]}
+          placeholder="Sets"
+          placeholderTextColor="#999"
+          value={String(exercise.sets)}
+          onChangeText={(v) => handleNumber("sets", v)}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={[styles.input, styles.numInput]}
+          placeholder="Reps"
+          placeholderTextColor="#999"
+          value={String(exercise.reps)}
+          onChangeText={(v) => handleNumber("reps", v)}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={[styles.input, styles.numInput]}
+          placeholder={weightUnit}
+          placeholderTextColor="#999"
+          value={String(exercise[weightField] ?? 0)}
+          onChangeText={(v) => handleNumber(weightField, v)}
+          keyboardType="numeric"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
+  card: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    marginVertical: 4,
+    gap: 6,
+  },
+  nameRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginVertical: 4,
+  },
+  fieldsRow: {
+    flexDirection: "row",
+    gap: 4,
   },
   input: {
     borderWidth: 1,
@@ -97,7 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   nameButton: {
-    flex: 2,
+    flex: 1,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 4,

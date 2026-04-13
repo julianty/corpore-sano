@@ -98,15 +98,15 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
         <View style={styles.cardActions}>
           <Pressable
             onPress={() => setEditMode((e) => !e)}
-            style={styles.iconButton}
+            style={[styles.actionButton, editMode && styles.actionButtonActive]}
           >
-            <Text style={styles.iconButtonText}>{editMode ? "✓" : "✏"}</Text>
+            <Text style={editMode ? styles.actionButtonTextColored : styles.actionButtonText}>{editMode ? "Done" : "Edit"}</Text>
           </Pressable>
           <Pressable
             onPress={() => onDelete(workoutId)}
-            style={styles.iconButton}
+            style={[styles.actionButton, styles.actionButtonDanger]}
           >
-            <Text style={styles.iconButtonText}>🗑</Text>
+            <Text style={styles.actionButtonTextColored}>Delete</Text>
           </Pressable>
         </View>
       </View>
@@ -154,8 +154,20 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 16, fontWeight: "600" },
   cardActions: { flexDirection: "row", gap: 8 },
-  iconButton: { padding: 4 },
-  iconButtonText: { fontSize: 16 },
+  actionButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    backgroundColor: "#e0e0e0",
+  },
+  actionButtonActive: {
+    backgroundColor: "#4caf50",
+  },
+  actionButtonDanger: {
+    backgroundColor: "#f44336",
+  },
+  actionButtonText: { fontSize: 13, fontWeight: "600", color: "#333" },
+  actionButtonTextColored: { fontSize: 13, fontWeight: "600", color: "#fff" },
   cardContent: { padding: 12 },
   addButton: {
     marginTop: 12,

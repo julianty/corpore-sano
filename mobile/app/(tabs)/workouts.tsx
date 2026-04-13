@@ -3,6 +3,7 @@ import { FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
+import { Workout } from "@shared/types";
 import { WorkoutCard } from "../../src/components/WorkoutCard";
 
 export default function WorkoutsScreen() {
@@ -13,8 +14,9 @@ export default function WorkoutsScreen() {
     FirestoreActions.fetchWorkoutIds(userId).then(setWorkoutIds);
   }, [userId]);
 
-  function addWorkout() {
+  async function addWorkout() {
     const newDoc = FirestoreActions.createWorkout(userId);
+    await FirestoreActions.updateWorkoutById(userId, newDoc.id, {} as Workout);
     setWorkoutIds((ids) => [...ids, newDoc.id]);
   }
 

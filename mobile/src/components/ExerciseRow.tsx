@@ -1,7 +1,8 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { View, StyleSheet, TextInput, Pressable, Text } from "react-native";
 import { Exercise, ExerciseRowProps } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
+import { ExercisePickerModal } from "./ExercisePickerModal";
 
 export function ExerciseRow({
   exercise,
@@ -14,22 +15,36 @@ export function ExerciseRow({
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
   const weightField = `weight${weightUnit}` as keyof Exercise;
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   function handleNumber(field: keyof Exercise, raw: string) {
     const value = parseFloat(raw);
     if (!isNaN(value)) numberFieldChangeHandler(value, exerciseKey, field);
   }
 
+  const displayName = exercise.variant || exercise.name || "Select exercise";
+  const hasExercise = exercise.variant || exercise.name;
+
   return (
     <View style={styles.row}>
-      <TextInput
-        style={[styles.input, styles.nameInput]}
-        placeholder="Exercise"
-        placeholderTextColor="#999"
-        value={exercise.name}
-        onChangeText={(name) =>
-          exerciseNameChangeHandler(name, exercise.variant, exerciseKey)
-        }
+      <Pressable
+        style={[styles.nameButton, !hasExercise && styles.nameButtonEmpty]}
+        onPress={() => setPickerVisible(true)}
+      >
+        <Text
+          style={[styles.nameText, !hasExercise && styles.nameTextPlaceholder]}
+          numberOfLines={1}
+        >
+          {displayName}
+        </Text>
+      </Pressable>
+      <ExercisePickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={(name, variant) => {
+          exerciseNameChangeHandler(name, variant, exerciseKey);
+          setPickerVisible(false);
+        }}
       />
       <TextInput
         style={[styles.input, styles.numInput]}
@@ -81,7 +96,24 @@ const styles = StyleSheet.create({
     padding: 8,
     fontSize: 12,
   },
-  nameInput: { flex: 2 },
+  nameButton: {
+    flex: 2,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    backgroundColor: "#fff",
+  },
+  nameButtonEmpty: {
+    borderColor: "#ddd",
+  },
+  nameText: {
+    fontSize: 12,
+    color: "#222",
+  },
+  nameTextPlaceholder: {
+    color: "#999",
+  },
   numInput: { flex: 1, minWidth: 60 },
   closeButton: {
     justifyContent: "center",

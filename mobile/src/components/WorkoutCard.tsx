@@ -122,6 +122,7 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
               closeHandler={closeHandler}
               exerciseNameChangeHandler={exerciseNameChangeHandler}
               editMode={editMode}
+              isMobile={true}
             />
           ))}
         </ScrollView>

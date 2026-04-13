@@ -16,8 +16,16 @@ export function ExerciseRow({
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
   const weightField = `weight${weightUnit}` as keyof Exercise;
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [setsText, setSetsText] = useState(String(exercise.sets));
+  const [repsText, setRepsText] = useState(String(exercise.reps));
+  const [weightText, setWeightText] = useState(String(exercise[weightField] ?? 0));
 
-  function handleNumber(field: keyof Exercise, raw: string) {
+  function handleNumber(
+    field: keyof Exercise,
+    raw: string,
+    setText: (s: string) => void
+  ) {
+    setText(raw);
     const value = parseFloat(raw);
     if (!isNaN(value)) numberFieldChangeHandler(value, exerciseKey, field);
   }
@@ -62,8 +70,8 @@ export function ExerciseRow({
           <TextInput
             style={[styles.input, styles.numInput]}
             placeholderTextColor="#999"
-            value={String(exercise.sets)}
-            onChangeText={(v) => handleNumber("sets", v)}
+            value={setsText}
+            onChangeText={(v) => handleNumber("sets", v, setSetsText)}
             keyboardType="numeric"
           />
         </View>
@@ -72,8 +80,8 @@ export function ExerciseRow({
           <TextInput
             style={[styles.input, styles.numInput]}
             placeholderTextColor="#999"
-            value={String(exercise.reps)}
-            onChangeText={(v) => handleNumber("reps", v)}
+            value={repsText}
+            onChangeText={(v) => handleNumber("reps", v, setRepsText)}
             keyboardType="numeric"
           />
         </View>
@@ -82,8 +90,8 @@ export function ExerciseRow({
           <TextInput
             style={[styles.input, styles.numInput]}
             placeholderTextColor="#999"
-            value={String(exercise[weightField] ?? 0)}
-            onChangeText={(v) => handleNumber(weightField, v)}
+            value={weightText}
+            onChangeText={(v) => handleNumber(weightField, v, setWeightText)}
             keyboardType="numeric"
           />
         </View>

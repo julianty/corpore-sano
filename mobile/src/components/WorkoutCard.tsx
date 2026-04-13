@@ -21,8 +21,8 @@ const EMPTY_EXERCISE: Exercise = {
   order: 0,
   name: "",
   variant: "",
-  sets: 3,
-  reps: 10,
+  sets: 0,
+  reps: 0,
   weightlbs: 0,
   weightkg: 0,
 };

@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   ScrollView,
   View,
@@ -42,13 +43,16 @@ export function WeeklySummary() {
     [],
   );
 
-  useEffect(() => {
-    const targetDate = getByDaysElapsed(7);
-    FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then((data) => {
-      setWorkoutArray(data.map((w) => w.data));
-      setLoading(false);
-    });
-  }, [userId]);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      const targetDate = getByDaysElapsed(7);
+      FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then((data) => {
+        setWorkoutArray(data.map((w) => w.data));
+        setLoading(false);
+      });
+    }, [userId])
+  );
 
   useEffect(() => {
     const getDaysSince = (date: Date) =>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Timestamp } from "firebase/firestore";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { Workout } from "@shared/types";
@@ -16,7 +17,9 @@ export default function WorkoutsScreen() {
 
   async function addWorkout() {
     const newDoc = FirestoreActions.createWorkout(userId);
-    await FirestoreActions.updateWorkoutById(userId, newDoc.id, {} as Workout);
+    await FirestoreActions.updateWorkoutById(userId, newDoc.id, {
+      date: Timestamp.now(),
+    } as Workout);
     setWorkoutIds((ids) => [...ids, newDoc.id]);
   }
 

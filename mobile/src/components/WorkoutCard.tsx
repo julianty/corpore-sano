@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
-  ScrollView,
   Text,
   TouchableOpacity,
   Pressable,
@@ -112,7 +111,7 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
         </View>
       </View>
       <View style={styles.cardContent}>
-        <ScrollView>
+        <View>
           {Object.entries(exercisesObject).map(([key, exercise]) => (
             <ExerciseRow
               key={key}
@@ -125,7 +124,7 @@ export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
               isMobile={true}
             />
           ))}
-        </ScrollView>
+        </View>
         {editMode && (
           <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
             <Text style={styles.addButtonText}>+ Add Exercise</Text>

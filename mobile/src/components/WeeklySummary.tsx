@@ -45,7 +45,7 @@ export function WeeklySummary() {
   useEffect(() => {
     const targetDate = getByDaysElapsed(7);
     FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then((data) => {
-      setWorkoutArray(data.map((w) => w as Workout));
+      setWorkoutArray(data.map((w) => w.data));
       setLoading(false);
     });
   }, [userId]);

@@ -49,16 +49,25 @@ export function buildMuscleSummary(
       const exercise = getExerciseByName(exerciseMap, exerciseEntry.name);
       if (!exercise) return;
 
+      // Track parent groups already credited for this exercise so that exercises
+      // working multiple muscles in the same parent group (e.g. Squat → Legs)
+      // only count their sets once toward that parent group.
+      const parentGroupsSeen = new Set<string>();
+
       (exercise as { muscles: string[] }).muscles.forEach((muscleName) => {
         if (!muscleGroups[muscleName]) return;
         const withinSetsWindow =
           setsWindowDays === undefined || daysSinceWorkout <= setsWindowDays;
         if (withinSetsWindow) {
-          const weight =
-            exerciseEntry.weightkg ?? exerciseEntry.weightlbs ?? 0;
-          muscleGroups[muscleName].sets += exerciseEntry.sets;
-          muscleGroups[muscleName].weightTotal! +=
-            exerciseEntry.sets * exerciseEntry.reps * weight;
+          const parentGroup = muscleGroups[muscleName].parentGroup;
+          if (!parentGroupsSeen.has(parentGroup)) {
+            parentGroupsSeen.add(parentGroup);
+            const weight =
+              exerciseEntry.weightkg ?? exerciseEntry.weightlbs ?? 0;
+            muscleGroups[muscleName].sets += exerciseEntry.sets;
+            muscleGroups[muscleName].weightTotal! +=
+              exerciseEntry.sets * exerciseEntry.reps * weight;
+          }
         }
         muscleGroups[muscleName].lastWorked =
           muscleGroups[muscleName].lastWorked !== undefined

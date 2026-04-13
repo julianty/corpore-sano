@@ -213,6 +213,25 @@ describe("rollupToParentGroups", () => {
     expect(result["Shoulders"].sets).toBe(6);
   });
 
+  it("counts sets only once per parent group when one exercise works multiple muscles in the same group", () => {
+    // Squat works Quadriceps, Glutes, Hamstrings — all map to "Legs"
+    // 3 sets of Squat should contribute 3 sets to Legs, not 9
+    const muscleSummary = buildMuscleSummary(
+      [
+        {
+          date: ts(new Date()),
+          ex1: { name: "Squat", sets: 3, reps: 8, weightkg: 100 },
+        } as any,
+      ],
+      exerciseMap,
+      getDaysSince,
+    );
+
+    const result = rollupToParentGroups(muscleSummary);
+
+    expect(result["Legs"].sets).toBe(3);
+  });
+
   it("sets daysSinceLast to the minimum lastWorked across child muscles", () => {
     const muscleSummary = {
       Trapezius: {
@@ -417,7 +436,12 @@ describe("buildMuscleSummary with setsWindowDays", () => {
       } as any,
     ];
 
-    const result = buildMuscleSummary(workouts, exerciseMap, getDaysSinceSeq, 7);
+    const result = buildMuscleSummary(
+      workouts,
+      exerciseMap,
+      getDaysSinceSeq,
+      7,
+    );
 
     // Only the second workout (3 days ago) contributes sets
     expect(result["Pectorals"].sets).toBe(3);

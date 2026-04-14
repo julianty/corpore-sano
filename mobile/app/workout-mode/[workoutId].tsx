@@ -37,6 +37,7 @@ export default function WorkoutModeScreen() {
   const router = useRouter();
 
   const [workout, setWorkout] = useState<Workout | null>(null);
+  const [workoutLoaded, setWorkoutLoaded] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restSeconds, setRestSeconds] = useState(0);
   const [restRunning, setRestRunning] = useState(false);
@@ -46,19 +47,25 @@ export default function WorkoutModeScreen() {
 
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
-      if (data) setWorkout(data as Workout);
+      if (data) {
+        const w = data as Workout;
+        setWorkout(w);
+        setElapsedSeconds(w.durationSeconds ?? 0);
+        setWorkoutLoaded(true);
+      }
     });
   }, [userId, workoutId]);
 
-  // Start elapsed timer on mount
+  // Start elapsed timer once workout data is loaded (so we can resume from saved duration)
   useEffect(() => {
+    if (!workoutLoaded) return;
     elapsedRef.current = setInterval(() => {
       setElapsedSeconds((s) => s + 1);
     }, 1000);
     return () => {
       if (elapsedRef.current) clearInterval(elapsedRef.current);
     };
-  }, []);
+  }, [workoutLoaded]);
 
   // Rest stopwatch interval
   useEffect(() => {

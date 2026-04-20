@@ -25,20 +25,29 @@ export function ExerciseRow({
     if (isNaN(value)) return;
     const updated = exercise.sets.map((s, i) => {
       if (i !== index) return s;
-      if (field === "weightlbs") return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
-      if (field === "weightkg") return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
+      if (field === "weightlbs")
+        return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
+      if (field === "weightkg")
+        return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
       return { ...s, [field]: value };
     });
     onSetsChange(exerciseKey, updated);
   }
 
   function addSet() {
-    const lastSet = exercise.sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
+    const lastSet = exercise.sets.at(-1) ?? {
+      reps: 0,
+      weightlbs: 0,
+      weightkg: 0,
+    };
     onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
   }
 
   function removeSet(index: number) {
-    onSetsChange(exerciseKey, exercise.sets.filter((_, i) => i !== index));
+    onSetsChange(
+      exerciseKey,
+      exercise.sets.filter((_, i) => i !== index),
+    );
   }
 
   return (
@@ -49,7 +58,10 @@ export function ExerciseRow({
           onPress={() => setPickerVisible(true)}
         >
           <Text
-            style={[styles.nameText, !hasExercise && styles.nameTextPlaceholder]}
+            style={[
+              styles.nameText,
+              !hasExercise && styles.nameTextPlaceholder,
+            ]}
             numberOfLines={1}
           >
             {displayName}
@@ -139,6 +151,7 @@ function SetRow({
         }}
         keyboardType="numeric"
         placeholderTextColor="#999"
+        selectTextOnFocus
       />
       <TextInput
         style={[styles.input, styles.setField]}
@@ -150,6 +163,7 @@ function SetRow({
         }}
         keyboardType="numeric"
         placeholderTextColor="#999"
+        selectTextOnFocus
       />
       {editMode && (
         <Pressable onPress={() => onRemove(index)} style={styles.removeButton}>

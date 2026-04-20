@@ -5,9 +5,9 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
-  ScrollView,
   Platform,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -144,7 +144,11 @@ export default function WorkoutDetailScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.content}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+      >
         {Object.entries(exercisesObject)
           .sort(([, a], [, b]) => a.order - b.order)
           .map(([key, exercise]) => (
@@ -162,7 +166,7 @@ export default function WorkoutDetailScreen() {
         <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

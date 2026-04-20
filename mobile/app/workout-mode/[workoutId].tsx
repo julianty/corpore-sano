@@ -172,18 +172,20 @@ export default function WorkoutModeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {Object.entries(exercisesObject).map(([key, exercise]) => (
-          <ExerciseRow
-            key={key}
-            exercise={exercise}
-            exerciseKey={key}
-            onSetsChange={onSetsChange}
-            closeHandler={closeHandler}
-            exerciseNameChangeHandler={exerciseNameChangeHandler}
-            editMode={true}
-            isMobile={true}
-          />
-        ))}
+        {Object.entries(exercisesObject)
+          .sort(([, a], [, b]) => a.order - b.order)
+          .map(([key, exercise]) => (
+            <ExerciseRow
+              key={key}
+              exercise={exercise}
+              exerciseKey={key}
+              onSetsChange={onSetsChange}
+              closeHandler={closeHandler}
+              exerciseNameChangeHandler={exerciseNameChangeHandler}
+              editMode={true}
+              isMobile={true}
+            />
+          ))}
         <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>

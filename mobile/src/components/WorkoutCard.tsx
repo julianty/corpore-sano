@@ -10,7 +10,11 @@ interface WorkoutCardProps {
   onPress: () => void;
 }
 
-export function WorkoutCard({ workoutId, onDelete, onPress }: WorkoutCardProps) {
+export function WorkoutCard({
+  workoutId,
+  onDelete,
+  onPress,
+}: WorkoutCardProps) {
   const userId = useAppSelector((state) => state.auth.userId);
   const [workout, setWorkout] = useState<Workout | null>(null);
 
@@ -24,6 +28,7 @@ export function WorkoutCard({ workoutId, onDelete, onPress }: WorkoutCardProps) 
 
   const exerciseNames = Object.entries(workout)
     .filter(([k]) => k !== "date" && k !== "durationSeconds")
+    .sort(([, a], [, b]) => (a as Exercise).order - (b as Exercise).order)
     .map(([, v]) => (v as Exercise).name)
     .filter(Boolean);
 
@@ -44,7 +49,9 @@ export function WorkoutCard({ workoutId, onDelete, onPress }: WorkoutCardProps) 
       <View style={styles.cardHeader}>
         <View>
           <Text style={styles.cardTitle}>{dateLabel}</Text>
-          {durationLabel && <Text style={styles.durationLabel}>{durationLabel}</Text>}
+          {durationLabel && (
+            <Text style={styles.durationLabel}>{durationLabel}</Text>
+          )}
         </View>
         <Pressable
           onPress={(e) => {
@@ -61,7 +68,9 @@ export function WorkoutCard({ workoutId, onDelete, onPress }: WorkoutCardProps) 
           <Text style={styles.emptyText}>No exercises yet</Text>
         ) : (
           exerciseNames.map((name, i) => (
-            <Text key={i} style={styles.exerciseName}>{name}</Text>
+            <Text key={i} style={styles.exerciseName}>
+              {name}
+            </Text>
           ))
         )}
       </View>

@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { UserPreferences } from "../../src/components/UserPreferences";
+import { CustomExercises } from "../../src/components/CustomExercises";
 import { UserProfileContext } from "../_layout";
 import { useAppSelector } from "@shared/hooks";
 
@@ -24,6 +25,7 @@ export default function SettingsScreen() {
           {userId === "demoUser" ? "Demo Mode" : displayName}
         </Text>
         <UserPreferences />
+        <CustomExercises />
         <View style={styles.signOutContainer}>
           <TouchableOpacity
             style={styles.signOutButton}

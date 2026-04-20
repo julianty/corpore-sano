@@ -137,6 +137,16 @@ export const FirestoreActions = {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await updateDoc(docRef, { favoriteExercises: favoriteExercises });
   },
+  updateCustomExercises: async (
+    userId: string,
+    customExercises: Record<
+      string,
+      { name: string; muscleGroup: string | null }
+    >,
+  ) => {
+    const docRef = doc(db, "users", userId, "preferences", "userProfile");
+    await setDoc(docRef, { customExercises }, { merge: true });
+  },
   updateDemoData: async () => {
     // This is a function to update the demo data in the database
     // to demonstrate the functionality of the muscle summary

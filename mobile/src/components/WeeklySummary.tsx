@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useContext } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   ScrollView,
@@ -23,11 +23,14 @@ import {
   rollupToParentGroups,
   ParentGroupSummary,
 } from "@shared/core/services/muscleCalculations";
+import { UserProfileContext } from "../../app/_layout";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 
 export function WeeklySummary() {
   const userId = useAppSelector((state) => state.auth.userId);
+  const ctx = useContext(UserProfileContext);
+  const customExercises = ctx?.userProfile.customExercises;
   const [workoutArray, setWorkoutArray] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [parentGroups_, setParentGroups] = useState<ParentGroupSummary>({
@@ -60,9 +63,9 @@ export function WeeklySummary() {
   useEffect(() => {
     const getDaysSince = (date: Date) =>
       calculateDaysBetweenDates(date, new Date());
-    const summary = buildMuscleSummary(workoutArray, exerciseMap, getDaysSince);
+    const summary = buildMuscleSummary(workoutArray, exerciseMap, getDaysSince, undefined, customExercises);
     setParentGroups(rollupToParentGroups(summary));
-  }, [workoutArray, exerciseMap]);
+  }, [workoutArray, exerciseMap, customExercises]);
 
   if (loading)
     return <RNActivityIndicator size="large" style={{ marginTop: 24 }} />;

@@ -66,6 +66,7 @@ function AppProviders() {
         username: displayName,
         weightUnit: profile.weightUnit,
         colorScheme: profile.colorScheme,
+        customExercises: profile.customExercises ?? {},
       }));
     });
   }, [userId, displayName]);
@@ -93,7 +94,9 @@ function AppProviders() {
   }
 
   return (
-    <UserProfileContext.Provider value={{ userProfile, setUserProfile, handleSignOut }}>
+    <UserProfileContext.Provider
+      value={{ userProfile, setUserProfile, handleSignOut }}
+    >
       <Slot />
     </UserProfileContext.Provider>
   );

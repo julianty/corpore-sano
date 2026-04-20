@@ -1,35 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { View, StyleSheet, Text, Pressable } from "react-native";
 import { Workout, Exercise } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
+import { UserProfileContext } from "../../app/_layout";
 
 interface WorkoutCardProps {
   workoutId: string;
+  refreshKey?: number;
   onDelete: (id: string) => void;
   onPress: () => void;
 }
 
 export function WorkoutCard({
   workoutId,
+  refreshKey,
   onDelete,
   onPress,
 }: WorkoutCardProps) {
   const userId = useAppSelector((state) => state.auth.userId);
+  const ctx = useContext(UserProfileContext);
+  const customExercises = ctx?.userProfile.customExercises;
   const [workout, setWorkout] = useState<Workout | null>(null);
 
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
       if (data) setWorkout(data as Workout);
     });
-  }, [userId, workoutId]);
+  }, [userId, workoutId, refreshKey]);
 
   if (!workout) return null;
 
   const exerciseNames = Object.entries(workout)
     .filter(([k]) => k !== "date" && k !== "durationSeconds")
     .sort(([, a], [, b]) => (a as Exercise).order - (b as Exercise).order)
-    .map(([, v]) => (v as Exercise).name)
+    .map(([, v]) => {
+      const ex = v as Exercise;
+      if (ex.customExerciseId) {
+        return customExercises?.[ex.customExerciseId]?.name ?? ex.name;
+      }
+      return ex.name;
+    })
     .filter(Boolean);
 
   const durationLabel = workout.durationSeconds

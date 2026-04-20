@@ -15,10 +15,14 @@ export function ExerciseRow({
 }: ExerciseRowProps) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
+  const customExercises = ctx?.userProfile.customExercises;
   const [pickerVisible, setPickerVisible] = useState(false);
 
-  const displayName = exercise.variant || exercise.name || "Select exercise";
-  const hasExercise = exercise.variant || exercise.name;
+  const resolvedName = exercise.customExerciseId
+    ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.name)
+    : exercise.name;
+  const displayName = exercise.variant || resolvedName || "Select exercise";
+  const hasExercise = exercise.variant || resolvedName;
 
   function updateSet(index: number, field: keyof SetEntry, rawValue: string) {
     const value = parseFloat(rawValue);
@@ -70,8 +74,8 @@ export function ExerciseRow({
         <ExercisePickerModal
           visible={pickerVisible}
           onClose={() => setPickerVisible(false)}
-          onSelect={(name, variant) => {
-            exerciseNameChangeHandler(name, variant, exerciseKey);
+          onSelect={(name, variant, customExerciseId) => {
+            exerciseNameChangeHandler(name, variant, exerciseKey, customExerciseId);
             setPickerVisible(false);
           }}
         />

@@ -64,9 +64,10 @@ export default function WorkoutDetailScreen() {
     name: string,
     variant: string,
     key: string,
+    customExerciseId?: string,
   ) {
     const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], name, variant };
+    updated[key] = { ...updated[key], name, variant, customExerciseId };
     saveWorkout({ ...workout!, ...updated });
   }
 

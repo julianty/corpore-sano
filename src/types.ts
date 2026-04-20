@@ -11,6 +11,7 @@ export interface Exercise {
   name: string;
   variant: string;
   sets: SetEntry[];
+  customExerciseId?: string;
 }
 
 export interface Workout {
@@ -36,6 +37,7 @@ export interface ExerciseRowProps {
     name: string,
     variant: string,
     key: string,
+    customExerciseId?: string,
   ) => void;
   editMode: boolean;
   isMobile: boolean;
@@ -71,6 +73,10 @@ export interface UserProfile {
   colorScheme: "light" | "dark";
   exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
+  customExercises?: Record<
+    string,
+    { name: string; muscleGroup: string | null }
+  >;
 }
 
 export interface WorkoutEntry {

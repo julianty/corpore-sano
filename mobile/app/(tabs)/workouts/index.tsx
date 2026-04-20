@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   FlatList,
   TouchableOpacity,
@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { Workout } from "@shared/types";
@@ -20,11 +21,18 @@ export default function WorkoutsScreen() {
   const userId = useAppSelector((state) => state.auth.userId);
   const [workoutIds, setWorkoutIds] = useState<string[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     FirestoreActions.fetchWorkoutIds(userId).then(setWorkoutIds);
   }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshKey((k) => k + 1);
+    }, []),
+  );
 
   async function createWorkout(destination: "detail" | "workout-mode") {
     setMenuVisible(false);
@@ -53,6 +61,7 @@ export default function WorkoutsScreen() {
         renderItem={({ item }) => (
           <WorkoutCard
             workoutId={item}
+            refreshKey={refreshKey}
             onDelete={deleteWorkout}
             onPress={() => router.push(`/workouts/${item}`)}
           />

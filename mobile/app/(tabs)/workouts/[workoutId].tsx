@@ -29,7 +29,6 @@ export default function WorkoutDetailScreen() {
   const userId = useAppSelector((state) => state.auth.userId);
   const router = useRouter();
   const [workout, setWorkout] = useState<Workout | null>(null);
-  const [editMode, setEditMode] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
@@ -112,35 +111,14 @@ export default function WorkoutDetailScreen() {
     >
       <View style={styles.subHeader}>
         <View style={styles.dateRow}>
-          {editMode ? (
-            <Pressable onPress={() => setShowDatePicker(true)}>
-              <Text style={[styles.dateLabel, styles.editableDate]}>
-                {dateLabel} ✎
-              </Text>
-            </Pressable>
-          ) : (
-            <Text style={styles.dateLabel}>{dateLabel}</Text>
-          )}
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <Text style={[styles.dateLabel, styles.editableDate]}>
+              {dateLabel} ✎
+            </Text>
+          </Pressable>
         </View>
-        <Pressable
-          onPress={() => {
-            setEditMode((e) => !e);
-            setShowDatePicker(false);
-          }}
-          style={[styles.actionButton, editMode && styles.actionButtonActive]}
-        >
-          <Text
-            style={
-              editMode
-                ? styles.actionButtonTextColored
-                : styles.actionButtonText
-            }
-          >
-            {editMode ? "Done" : "Edit"}
-          </Text>
-        </Pressable>
         <Pressable onPress={startWorkoutMode} style={styles.workoutModeButton}>
-          <Text style={styles.actionButtonTextColored}>▶ Resume</Text>
+          <Text style={styles.actionButtonTextColored}>Enter Workout Mode</Text>
         </Pressable>
       </View>
 
@@ -174,15 +152,13 @@ export default function WorkoutDetailScreen() {
               onSetsChange={onSetsChange}
               closeHandler={closeHandler}
               exerciseNameChangeHandler={exerciseNameChangeHandler}
-              editMode={editMode}
+              editMode={true}
               isMobile={true}
             />
           ))}
-        {editMode && (
-          <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
-            <Text style={styles.addButtonText}>+ Add Exercise</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
+          <Text style={styles.addButtonText}>+ Add Exercise</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -201,14 +177,6 @@ const styles = StyleSheet.create({
   dateRow: { flex: 1 },
   dateLabel: { fontSize: 18, fontWeight: "600" },
   editableDate: { color: "#007AFF" },
-  actionButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    backgroundColor: "#e0e0e0",
-  },
-  actionButtonActive: { backgroundColor: "#4caf50" },
-  actionButtonText: { fontSize: 13, fontWeight: "600", color: "#333" },
   actionButtonTextColored: { fontSize: 13, fontWeight: "600", color: "#fff" },
   workoutModeButton: {
     paddingVertical: 4,

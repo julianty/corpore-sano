@@ -14,6 +14,7 @@ import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import {
   getByDaysElapsed,
   calculateDaysBetweenDates,
+  getLastWorkedText,
 } from "@shared/helperFunctions/DateHelper";
 import exerciseCatalogUpdated from "@shared/data/exerciseCatalogUpdated";
 import { createExerciseMap } from "@shared/utils/exerciseLookup";
@@ -47,11 +48,13 @@ export function WeeklySummary() {
     useCallback(() => {
       setLoading(true);
       const targetDate = getByDaysElapsed(7);
-      FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then((data) => {
-        setWorkoutArray(data.map((w) => w.data));
-        setLoading(false);
-      });
-    }, [userId])
+      FirestoreActions.fetchWorkoutsAfterDate(userId, targetDate).then(
+        (data) => {
+          setWorkoutArray(data.map((w) => w.data));
+          setLoading(false);
+        },
+      );
+    }, [userId]),
   );
 
   useEffect(() => {
@@ -133,11 +136,9 @@ export function WeeklySummary() {
           {parentGroups.map((group) => {
             const data = parentGroups_[group];
             const last =
-              data.daysSinceLast === undefined
+              data.daysSinceLast === undefined || data.daysSinceLast >= 7
                 ? "7+ days ago"
-                : data.daysSinceLast >= 7
-                  ? "7+ days ago"
-                  : `${data.daysSinceLast} days ago`;
+                : getLastWorkedText(data.daysSinceLast);
             return (
               <View
                 key={group}

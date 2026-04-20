@@ -66,7 +66,10 @@ export default function WorkoutDetailScreen() {
     customExerciseId?: string,
   ) {
     const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], name, variant, customExerciseId };
+    const patch: Partial<Exercise> = { name, variant };
+    if (customExerciseId !== undefined) patch.customExerciseId = customExerciseId;
+    else delete updated[key].customExerciseId;
+    updated[key] = { ...updated[key], ...patch };
     saveWorkout({ ...workout!, ...updated });
   }
 

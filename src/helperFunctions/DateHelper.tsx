@@ -33,4 +33,15 @@ function calculateDaysBetweenDates(date1: Date, date2: Date) {
   return Math.round(Math.abs(date1.getTime() - date2.getTime()) / mSecPerDay);
 }
 
-export { getMondayDate, getByDaysElapsed, calculateDaysBetweenDates };
+function getLastWorkedText(days: number): string {
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
+export {
+  getMondayDate,
+  getByDaysElapsed,
+  calculateDaysBetweenDates,
+  getLastWorkedText,
+};

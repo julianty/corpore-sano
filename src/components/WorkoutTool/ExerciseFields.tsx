@@ -4,7 +4,7 @@ import { ExerciseRow } from "./ExerciseRow";
 
 export function ExerciseFields({
   exercisesObject,
-  numberFieldChangeHandler,
+  onSetsChange,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
@@ -18,13 +18,12 @@ export function ExerciseFields({
       return orderA < orderB ? -1 : orderA > orderB ? 1 : 0;
     },
   );
-  // Generates an array of <NumberInputs> corresponding to
-  // exercisename - sets - reps - weight
+  // Generates an array of exercise cards
   const exerciseFields = exercisesArray.map(([key, exercise]) => {
     const exerciseRowProps: ExerciseRowProps = {
       exercise,
       exerciseKey: key,
-      numberFieldChangeHandler,
+      onSetsChange,
       closeHandler,
       exerciseNameChangeHandler,
       editMode,

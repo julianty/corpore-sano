@@ -4,12 +4,11 @@ The React Native / Expo companion app for [Corpore Sano](../README.md). Shares a
 
 ## Tech Stack
 
-- **Expo 54** with expo-router v5 (file-based routing, bottom tab navigation)
+- **Expo 54** with expo-router v6 (file-based routing, bottom tab navigation)
 - **React Native 0.81** / React 19
 - **React Native Paper** (Material Design 3) -- replaces Mantine from the web app
 - **Redux Toolkit** -- same store and slices as web, imported via `@shared`
 - **Firebase / Firestore** -- same backend, initialized with Expo env vars
-- **Google Sign-In** -- `@react-native-google-signin/google-signin` with Firebase `signInWithCredential`
 
 ## Project Structure
 
@@ -25,7 +24,6 @@ mobile/
   src/
     components/
       ExerciseRow.tsx             #   Exercise input row (name, sets, reps, weight)
-      GoogleSignIn.tsx            #   Google auth via signInWithCredential
       UserPreferences.tsx         #   Weight unit toggle, device color scheme display
       WeeklySummary.tsx           #   Paper DataTable of muscle group volume
       WorkoutCard.tsx             #   Workout card with inline editing
@@ -42,9 +40,9 @@ The mobile app reuses all business logic from the web app and only implements it
 | --------------------------------------------- | ---------------------------------------------- |
 | Redux store, slices, typed hooks              | Expo Router layouts and screens                |
 | Domain types (Exercise, Workout, UserProfile) | React Native Paper components                  |
-| Firestore CRUD (`FirestoreActions`)           | Google Sign-In flow (`signInWithCredential`)   |
-| Muscle calculation services                   | Bottom tab navigation                          |
-| Exercise catalog and muscle group data        | Platform-specific Firebase init (`.native.ts`) |
+| Firestore CRUD (`FirestoreActions`)           | Bottom tab navigation                          |
+| Muscle calculation services                   | Platform-specific Firebase init (`.native.ts`) |
+| Exercise catalog and muscle group data        |                                                |
 | Date helpers, unit conversion utilities       |                                                |
 | O(1) exercise lookup map                      |                                                |
 

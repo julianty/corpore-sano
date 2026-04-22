@@ -6,21 +6,18 @@ import {
   Modal,
   Paper,
   Stack,
-  Table,
   Text,
   Tooltip,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAppSelector } from "../../hooks";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { Exercise, ExerciseMap, Workout } from "../../types";
+import { useCallback, useState } from "react";
+import { Exercise, ExerciseMap, SetEntry, Workout } from "../../types";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
-import { UserProfileContext } from "../../App";
-import { kgToLbs, lbsToKg } from "../../lib/utils";
 import { responsiveDimensions } from "../../styles/responsive";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
@@ -30,10 +27,6 @@ export function WorkoutInstance(props: {
   workoutCloseHandler: (key: string) => void;
 }) {
   const { workoutId, initialData, workoutCloseHandler } = props;
-  const [weightUnits, setWeightUnits] = useState<"kg" | "lbs">("lbs");
-  const userProfileContext = useContext(UserProfileContext);
-  if (!userProfileContext) throw new Error("UserProfileContext undefined");
-  const { userProfile } = userProfileContext;
   const [workoutDate, setWorkoutDate] = useState<Timestamp>(() => {
     return initialData.date ?? Timestamp.now();
   });
@@ -56,39 +49,12 @@ export function WorkoutInstance(props: {
     [userId, workoutId],
   );
 
-  // Update based on user context
-  useEffect(() => setWeightUnits(userProfile.weightUnit), [userProfile]);
-
-  function numberFieldChangeHandler(
-    value: number,
-    key: string,
-    field: keyof Exercise,
-  ) {
-    // TODO: Update exercise history i.e. new Max, last weight lifted
-    // ChangeHandler callback function for uploading changes to the input fields
-    let nextState = {};
-    if (field == "weightlbs" || field == "weightkg") {
-      // update the other corresponding weight
-      const [otherField, otherValue] =
-        field == "weightlbs"
-          ? ["weightkg", lbsToKg(value)]
-          : ["weightlbs", kgToLbs(value)];
-      nextState = {
-        ...exercisesObject,
-        [key]: {
-          ...exercisesObject[key],
-          [field]: value,
-          [otherField]: otherValue,
-        },
-      };
-    } else {
-      nextState = {
-        ...exercisesObject,
-        [key]: { ...exercisesObject[key], [field]: value },
-      };
-    }
+  function onSetsChange(key: string, sets: SetEntry[]) {
+    const nextState = {
+      ...exercisesObject,
+      [key]: { ...exercisesObject[key], sets },
+    };
     setExercisesObject(nextState);
-    // Call for an update to firebase
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
 
@@ -122,10 +88,7 @@ export function WorkoutInstance(props: {
       order: newOrder,
       name: "",
       variant: "",
-      sets: 0,
-      reps: 0,
-      weightlbs: 0,
-      weightkg: 0,
+      sets: [],
     };
     const newExercise: ExerciseMap = {};
     newExercise[newExerciseName] = newExerciseObject;
@@ -183,72 +146,25 @@ export function WorkoutInstance(props: {
           </Group>
         </Group>
         <Divider />
-        {isMobile ? (
-          <Stack gap="xs">
-            <ExerciseFields
-              exercisesObject={exercisesObject}
-              numberFieldChangeHandler={numberFieldChangeHandler}
-              exerciseNameChangeHandler={exerciseNameChangeHandler}
-              closeHandler={closeHandler}
-              editMode={editMode}
-              isMobile
-            />
-            <Button
-              leftSection={<IconPlus size={14} />}
-              onClick={addNewExercise}
-              variant="light"
-              fullWidth
-              aria-label="Add a new exercise to this workout"
-            >
-              Add Exercise
-            </Button>
-          </Stack>
-        ) : (
-          <Table.ScrollContainer minWidth={400}>
-            <Table highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  {[
-                    "Exercise Name",
-                    "Sets",
-                    "Reps",
-                    `Weight (${weightUnits})`,
-                    "Delete",
-                  ]
-                    .filter((colName) => {
-                      if (colName !== "Delete") return true;
-                      if (editMode === true) return true;
-                    })
-                    .map((colName) => (
-                      <Table.Th key={colName}>{colName}</Table.Th>
-                    ))}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                <ExerciseFields
-                  exercisesObject={exercisesObject}
-                  numberFieldChangeHandler={numberFieldChangeHandler}
-                  exerciseNameChangeHandler={exerciseNameChangeHandler}
-                  closeHandler={closeHandler}
-                  editMode={editMode}
-                  isMobile={false}
-                />
-                <Table.Tr>
-                  <Table.Td>
-                    <Button
-                      leftSection={<IconPlus size={14} />}
-                      onClick={addNewExercise}
-                      variant="light"
-                      aria-label="Add a new exercise to this workout"
-                    >
-                      Add Exercise
-                    </Button>
-                  </Table.Td>
-                </Table.Tr>
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
-        )}
+        <Stack gap="xs">
+          <ExerciseFields
+            exercisesObject={exercisesObject}
+            onSetsChange={onSetsChange}
+            exerciseNameChangeHandler={exerciseNameChangeHandler}
+            closeHandler={closeHandler}
+            editMode={editMode}
+            isMobile={isMobile}
+          />
+          <Button
+            leftSection={<IconPlus size={14} />}
+            onClick={addNewExercise}
+            variant="light"
+            fullWidth
+            aria-label="Add a new exercise to this workout"
+          >
+            Add Exercise
+          </Button>
+        </Stack>
       </Stack>
       <Modal
         opened={deleteConfirmOpen}

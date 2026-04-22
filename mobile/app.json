@@ -2,12 +2,11 @@
   "expo": {
     "name": "Corpore Sano",
     "slug": "corpore-sano",
-    "scheme": "corporeSano",
+    "scheme": "corporesano",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -23,7 +22,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -33,6 +31,7 @@
       "eas": {
         "projectId": "dbb7f07b-0f25-4d6c-aab9-1c55b756dc59"
       }
-    }
+    },
+    "plugins": ["expo-router"]
   }
 }

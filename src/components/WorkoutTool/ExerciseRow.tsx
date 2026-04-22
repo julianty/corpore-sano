@@ -1,35 +1,33 @@
 import {
+  Button,
   CloseButton,
   Group,
+  NumberInput,
   Paper,
   Stack,
-  Table,
+  Text,
 } from "@mantine/core";
 import React, { useContext, useEffect, useMemo } from "react";
-import { Exercise } from "../../types";
+import { SetEntry } from "../../types";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
-import { StyledNumberInput } from "./StyledNumberInput";
 import { ExerciseRowProps } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
 import { UserProfileContext } from "../../App";
-import { responsiveDimensions } from "../../styles/responsive";
-
-// TODO: Add exerciseHistory as a prop
+import { kgToLbs, lbsToKg } from "../../lib/utils";
+import { IconPlus } from "@tabler/icons-react";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 
 function ExerciseRowComponent({
   exercise,
   exerciseKey,
-  numberFieldChangeHandler,
+  onSetsChange,
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
-  isMobile,
 }: ExerciseRowProps) {
-  // Redux state and dispatch
   const favoriteExercises = useAppSelector(
     (state) => state.exercises.favoriteExercises
   );
@@ -39,8 +37,8 @@ function ExerciseRowComponent({
   if (!userProfileContext)
     throw new Error("Could not retrieve userProfileContext in ExerciseRow");
   const weightUnit = userProfileContext.userProfile.weightUnit as "kg" | "lbs";
+  const weightField = `weight${weightUnit}` as keyof SetEntry;
 
-  // Debounce Firestore writes when favoriteExercises changes
   useEffect(() => {
     const timer = setTimeout(() => {
       FirestoreActions.updateFavoriteExercises(userId, favoriteExercises);
@@ -48,102 +46,104 @@ function ExerciseRowComponent({
     return () => clearTimeout(timer);
   }, [favoriteExercises, userId]);
 
-  // Event Handlers
   function favoriteClickHandler(exerciseName: string) {
-    console.log(
-      `favoriteExercises: ${favoriteExercises}, exerciseName: ${exerciseName}`
-    );
     if (favoriteExercises.includes(exerciseName)) {
-      dispatch({
-        type: "exercises/removeFavoriteExercise",
-        payload: exerciseName,
-      });
+      dispatch({ type: "exercises/removeFavoriteExercise", payload: exerciseName });
     } else {
-      dispatch({
-        type: "exercises/addFavoriteExercise",
-        payload: exerciseName,
-      });
+      dispatch({ type: "exercises/addFavoriteExercise", payload: exerciseName });
     }
   }
-  // Formats items for select node
+
   const exerciseCatalogArray = useMemo(
     () => exerciseCatalog.data.map((exerciseObj) => exerciseObj.name),
-    [] // Static data, no dependencies
+    []
   );
 
-  const combobox = (
-    <ExerciseCombobox
-      defaultValue={exercise.variant}
-      catalog={exerciseCatalogArray}
-      exerciseNameChangeHandler={(name, variant) =>
-        exerciseNameChangeHandler(name, variant, exerciseKey)
-      }
-      favoriteClickHandler={favoriteClickHandler}
-      favoriteExercises={favoriteExercises}
-    />
-  );
-
-  const numberFields = ["sets", "reps", `weight${weightUnit}`] as const;
-  const fieldLabels: Record<string, string> = {
-    sets: "Sets",
-    reps: "Reps",
-    weightlbs: "Weight (lbs)",
-    weightkg: "Weight (kg)",
-  };
-
-  if (isMobile) {
-    return (
-      <Paper p="xs" withBorder>
-        <Stack gap="xs">
-          <Group gap="xs">
-            <div style={{ flex: 1 }}>{combobox}</div>
-            {editMode && (
-              <CloseButton onClick={() => closeHandler(exerciseKey)} />
-            )}
-          </Group>
-          <Group grow gap="xs">
-            {numberFields.map((fieldName) => (
-              <StyledNumberInput
-                key={`${exerciseKey}${fieldName}`}
-                fieldName={fieldName as keyof Exercise}
-                exerciseKey={exerciseKey}
-                exercise={exercise}
-                numberFieldChangeHandler={numberFieldChangeHandler}
-                isMobile
-                label={fieldLabels[fieldName]}
-              />
-            ))}
-          </Group>
-        </Stack>
-      </Paper>
-    );
+  function updateSet(index: number, field: keyof SetEntry, value: number) {
+    const updated = exercise.sets.map((s, i) => {
+      if (i !== index) return s;
+      if (field === "weightlbs") return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
+      if (field === "weightkg") return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
+      return { ...s, [field]: value };
+    });
+    onSetsChange(exerciseKey, updated);
   }
 
-  // Desktop: table row layout
-  const uniqueId = `inputKey${exerciseKey}`;
+  function addSet() {
+    const lastSet = exercise.sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
+    onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
+  }
+
+  function removeSet(index: number) {
+    onSetsChange(exerciseKey, exercise.sets.filter((_, i) => i !== index));
+  }
+
   return (
-    <Table.Tr
-      key={`${uniqueId}${exercise.name}${exercise.sets}${exercise.reps}${exercise.weightkg}`}
-    >
-      <Table.Td style={{ width: responsiveDimensions.exerciseRowWidth.md }}>
-        {combobox}
-      </Table.Td>
-      {numberFields.map((fieldName) => (
-        <Table.Td key={`${uniqueId}${fieldName}`} ta="center">
-          <StyledNumberInput
-            fieldName={fieldName as keyof Exercise}
-            exerciseKey={exerciseKey}
-            exercise={exercise}
-            numberFieldChangeHandler={numberFieldChangeHandler}
-          />
-        </Table.Td>
-      ))}
-      {editMode && (
-        <Table.Td>
-          <CloseButton onClick={() => closeHandler(exerciseKey)} />
-        </Table.Td>
-      )}
-    </Table.Tr>
+    <Paper p="xs" withBorder>
+      <Stack gap="xs">
+        <Group gap="xs">
+          <div style={{ flex: 1 }}>
+            <ExerciseCombobox
+              defaultValue={exercise.variant}
+              catalog={exerciseCatalogArray}
+              exerciseNameChangeHandler={(name, variant) =>
+                exerciseNameChangeHandler(name, variant, exerciseKey)
+              }
+              favoriteClickHandler={favoriteClickHandler}
+              favoriteExercises={favoriteExercises}
+            />
+          </div>
+          {editMode && (
+            <CloseButton onClick={() => closeHandler(exerciseKey)} />
+          )}
+        </Group>
+
+        {exercise.sets.length > 0 && (
+          <Group gap="xs" px={4}>
+            <Text size="xs" c="dimmed" w={20} ta="center">#</Text>
+            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">Reps</Text>
+            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
+              Weight ({weightUnit})
+            </Text>
+            {editMode && <div style={{ width: 28 }} />}
+          </Group>
+        )}
+
+        {exercise.sets.map((set, index) => (
+          <Group key={index} gap="xs" align="center" px={4}>
+            <Text size="xs" c="dimmed" w={20} ta="center">{index + 1}</Text>
+            <NumberInput
+              value={set.reps}
+              onChange={(v) => updateSet(index, "reps", Number(v))}
+              onFocus={(e) => e.target.select()}
+              hideControls
+              style={{ flex: 1 }}
+              styles={{ input: { textAlign: "center" } }}
+            />
+            <NumberInput
+              value={set[weightField] as number}
+              onChange={(v) => updateSet(index, weightField, Number(v))}
+              onFocus={(e) => e.target.select()}
+              hideControls
+              style={{ flex: 1 }}
+              styles={{ input: { textAlign: "center" } }}
+            />
+            {editMode && (
+              <CloseButton size="sm" onClick={() => removeSet(index)} />
+            )}
+          </Group>
+        ))}
+
+        <Button
+          leftSection={<IconPlus size={12} />}
+          onClick={addSet}
+          variant="subtle"
+          size="xs"
+        >
+          Add Set
+        </Button>
+      </Stack>
+    </Paper>
   );
 }
 

@@ -1,136 +1,121 @@
-import { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Card, Button, IconButton } from "react-native-paper";
-import { Workout, Exercise, ExerciseMap } from "@shared/types";
+import { useState, useEffect, useContext } from "react";
+import { View, StyleSheet, Text, Pressable } from "react-native";
+import { Workout, Exercise } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
-import { lbsToKg, kgToLbs } from "@shared/lib/utils";
-import { ExerciseRow } from "./ExerciseRow";
+import { UserProfileContext } from "../../app/_layout";
 
 interface WorkoutCardProps {
   workoutId: string;
+  refreshKey?: number;
   onDelete: (id: string) => void;
+  onPress: () => void;
 }
 
-const EMPTY_EXERCISE: Exercise = {
-  order: 0,
-  name: "",
-  variant: "",
-  sets: 3,
-  reps: 10,
-  weightlbs: 0,
-  weightkg: 0,
-};
-
-export function WorkoutCard({ workoutId, onDelete }: WorkoutCardProps) {
+export function WorkoutCard({
+  workoutId,
+  refreshKey,
+  onDelete,
+  onPress,
+}: WorkoutCardProps) {
   const userId = useAppSelector((state) => state.auth.userId);
+  const ctx = useContext(UserProfileContext);
+  const customExercises = ctx?.userProfile.customExercises;
   const [workout, setWorkout] = useState<Workout | null>(null);
-  const [editMode, setEditMode] = useState(false);
 
-  // Load workout on mount
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
       if (data) setWorkout(data as Workout);
     });
-  }, [userId, workoutId]);
+  }, [userId, workoutId, refreshKey]);
 
   if (!workout) return null;
 
-  const exercisesObject: ExerciseMap = Object.fromEntries(
-    Object.entries(workout).filter(([k]) => k !== "date"),
-  ) as ExerciseMap;
+  const exerciseNames = Object.entries(workout)
+    .filter(([k]) => k !== "date" && k !== "durationSeconds")
+    .sort(([, a], [, b]) => (a as Exercise).order - (b as Exercise).order)
+    .map(([, v]) => {
+      const ex = v as Exercise;
+      if (ex.customExerciseId) {
+        return customExercises?.[ex.customExerciseId]?.name ?? ex.name;
+      }
+      return ex.name;
+    })
+    .filter(Boolean);
 
-  async function saveWorkout(updated: Workout) {
-    setWorkout(updated);
-    await FirestoreActions.updateWorkoutById(userId, workoutId, updated);
-  }
+  const durationLabel = workout.durationSeconds
+    ? `${Math.round(workout.durationSeconds / 60)} min`
+    : null;
 
-  function numberFieldChangeHandler(
-    value: number,
-    key: string,
-    field: keyof Exercise,
-  ) {
-    const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], [field]: value };
-    if (field === "weightlbs") updated[key].weightkg = lbsToKg(value);
-    if (field === "weightkg") updated[key].weightlbs = kgToLbs(value);
-    saveWorkout({ ...workout!, ...updated });
-  }
-
-  function exerciseNameChangeHandler(
-    name: string,
-    variant: string,
-    key: string,
-  ) {
-    const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], name, variant };
-    saveWorkout({ ...workout!, ...updated });
-  }
-
-  function closeHandler(key: string) {
-    const updated = { ...workout! };
-    delete (updated as Record<string, unknown>)[key];
-    saveWorkout(updated);
-  }
-
-  function addNewExercise() {
-    const key = `exercise_${Date.now()}`;
-    const updated: ExerciseMap = {
-      ...exercisesObject,
-      [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
-    };
-    saveWorkout({ ...workout!, ...updated });
-  }
-
-  const dateLabel = workout.date
-    ? workout.date.toDate().toLocaleDateString()
-    : "No date";
+  const dateLabel = (() => {
+    if (!workout.date) return "No date";
+    const d = workout.date.toDate();
+    const month = d.toLocaleDateString(undefined, { month: "long" });
+    const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+    return `${month} ${d.getDate()}, ${weekday}`;
+  })();
 
   return (
-    <Card style={styles.card}>
-      <Card.Title
-        title={dateLabel}
-        right={() => (
-          <View style={styles.cardActions}>
-            <IconButton
-              icon={editMode ? "check" : "pencil"}
-              onPress={() => setEditMode((e) => !e)}
-            />
-            <IconButton icon="delete" onPress={() => onDelete(workoutId)} />
-          </View>
+    <Pressable style={styles.card} onPress={onPress}>
+      <View style={styles.cardHeader}>
+        <View>
+          <Text style={styles.cardTitle}>{dateLabel}</Text>
+          {durationLabel && (
+            <Text style={styles.durationLabel}>{durationLabel}</Text>
+          )}
+        </View>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onDelete(workoutId);
+          }}
+          style={styles.deleteButton}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </Pressable>
+      </View>
+      <View style={styles.cardContent}>
+        {exerciseNames.length === 0 ? (
+          <Text style={styles.emptyText}>No exercises yet</Text>
+        ) : (
+          exerciseNames.map((name, i) => (
+            <Text key={i} style={styles.exerciseName}>
+              {name}
+            </Text>
+          ))
         )}
-      />
-      <Card.Content>
-        <ScrollView>
-          {Object.entries(exercisesObject).map(([key, exercise]) => (
-            <ExerciseRow
-              key={key}
-              exercise={exercise}
-              exerciseKey={key}
-              numberFieldChangeHandler={numberFieldChangeHandler}
-              closeHandler={closeHandler}
-              exerciseNameChangeHandler={exerciseNameChangeHandler}
-              editMode={editMode}
-            />
-          ))}
-        </ScrollView>
-        {editMode && (
-          <Button
-            mode="outlined"
-            icon="plus"
-            onPress={addNewExercise}
-            style={styles.addButton}
-          >
-            Add Exercise
-          </Button>
-        )}
-      </Card.Content>
-    </Card>
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, marginVertical: 8 },
-  cardActions: { flexDirection: "row" },
-  addButton: { marginTop: 8 },
+  card: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  cardTitle: { fontSize: 16, fontWeight: "600" },
+  durationLabel: { fontSize: 12, color: "#888", marginTop: 2 },
+  deleteButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    backgroundColor: "#f44336",
+  },
+  deleteButtonText: { fontSize: 13, fontWeight: "600", color: "#fff" },
+  cardContent: { padding: 12 },
+  emptyText: { fontSize: 14, color: "#999", fontStyle: "italic" },
+  exerciseName: { fontSize: 14, color: "#333", marginBottom: 2 },
 });

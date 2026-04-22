@@ -5,7 +5,6 @@ import {
   DocumentData,
   getDoc,
   getDocs,
-  getFirestore,
   limit,
   orderBy,
   query,
@@ -17,12 +16,11 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import app from "../initializeFirebase";
+import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
-const db = getFirestore(app);
 export const FirestoreActions = {
   createWorkout: (userId: string) => {
     const newWorkoutDoc = doc(collection(db, "users", userId, "workouts"));
@@ -136,6 +134,16 @@ export const FirestoreActions = {
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await updateDoc(docRef, { favoriteExercises: favoriteExercises });
+  },
+  updateCustomExercises: async (
+    userId: string,
+    customExercises: Record<
+      string,
+      { name: string; muscleGroup: string | null }
+    >,
+  ) => {
+    const docRef = doc(db, "users", userId, "preferences", "userProfile");
+    await setDoc(docRef, { customExercises }, { merge: true });
   },
   updateDemoData: async () => {
     // This is a function to update the demo data in the database

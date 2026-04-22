@@ -1,20 +1,24 @@
 import { Timestamp } from "firebase/firestore";
 
+export interface SetEntry {
+  reps: number;
+  weightlbs: number;
+  weightkg: number;
+}
+
 export interface Exercise {
   order: number;
   name: string;
   variant: string;
-  sets: number;
-  reps: number;
-  // weight: number;
-  weightlbs: number;
-  weightkg: number;
+  sets: SetEntry[];
+  customExerciseId?: string;
 }
 
 export interface Workout {
   // This should match the firestore workouts
   date: Timestamp | undefined;
   exercises?: ExerciseMap;
+  durationSeconds?: number;
 }
 
 export interface ExerciseMap {
@@ -27,27 +31,20 @@ export interface WorkoutsObject {
 export interface ExerciseRowProps {
   exercise: Exercise;
   exerciseKey: string;
-  numberFieldChangeHandler: (
-    value: number,
-    key: string,
-    fieldName: keyof Exercise,
-  ) => void;
+  onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (key: string) => void;
   exerciseNameChangeHandler: (
     name: string,
     variant: string,
     key: string,
+    customExerciseId?: string,
   ) => void;
   editMode: boolean;
   isMobile: boolean;
 }
 export interface ExerciseFieldsProps {
   exercisesObject: ExerciseMap;
-  numberFieldChangeHandler: (
-    value: number,
-    key: string,
-    field: keyof Exercise,
-  ) => void;
+  onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (workoutId: string) => void;
   exerciseNameChangeHandler: (
     name: string,
@@ -76,6 +73,10 @@ export interface UserProfile {
   colorScheme: "light" | "dark";
   exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
+  customExercises?: Record<
+    string,
+    { name: string; muscleGroup: string | null }
+  >;
 }
 
 export interface WorkoutEntry {

@@ -5,7 +5,6 @@ import {
   DocumentData,
   getDoc,
   getDocs,
-  getFirestore,
   limit,
   orderBy,
   query,
@@ -17,12 +16,11 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import app from "../initializeFirebase";
+import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
-const db = getFirestore(app);
 export const FirestoreActions = {
   createWorkout: (userId: string) => {
     const newWorkoutDoc = doc(collection(db, "users", userId, "workouts"));

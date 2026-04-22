@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_firebase_apiKey,
@@ -9,4 +10,5 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_firebase_appId,
 };
 const app = initializeApp(firebaseConfig);
-export default app;
+const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+export default db;

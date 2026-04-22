@@ -29,7 +29,7 @@ function ExerciseRowComponent({
   editMode,
 }: ExerciseRowProps) {
   const favoriteExercises = useAppSelector(
-    (state) => state.exercises.favoriteExercises
+    (state) => state.exercises.favoriteExercises,
   );
   const userId = useAppSelector((state) => state.auth.userId);
   const dispatch = useAppDispatch();
@@ -48,34 +48,49 @@ function ExerciseRowComponent({
 
   function favoriteClickHandler(exerciseName: string) {
     if (favoriteExercises.includes(exerciseName)) {
-      dispatch({ type: "exercises/removeFavoriteExercise", payload: exerciseName });
+      dispatch({
+        type: "exercises/removeFavoriteExercise",
+        payload: exerciseName,
+      });
     } else {
-      dispatch({ type: "exercises/addFavoriteExercise", payload: exerciseName });
+      dispatch({
+        type: "exercises/addFavoriteExercise",
+        payload: exerciseName,
+      });
     }
   }
 
   const exerciseCatalogArray = useMemo(
     () => exerciseCatalog.data.map((exerciseObj) => exerciseObj.name),
-    []
+    [],
   );
 
   function updateSet(index: number, field: keyof SetEntry, value: number) {
     const updated = exercise.sets.map((s, i) => {
       if (i !== index) return s;
-      if (field === "weightlbs") return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
-      if (field === "weightkg") return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
+      if (field === "weightlbs")
+        return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
+      if (field === "weightkg")
+        return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
       return { ...s, [field]: value };
     });
     onSetsChange(exerciseKey, updated);
   }
 
   function addSet() {
-    const lastSet = exercise.sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
+    const lastSet = exercise.sets.at(-1) ?? {
+      reps: 0,
+      weightlbs: 0,
+      weightkg: 0,
+    };
     onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
   }
 
   function removeSet(index: number) {
-    onSetsChange(exerciseKey, exercise.sets.filter((_, i) => i !== index));
+    onSetsChange(
+      exerciseKey,
+      exercise.sets.filter((_, i) => i !== index),
+    );
   }
 
   return (
@@ -100,8 +115,12 @@ function ExerciseRowComponent({
 
         {exercise.sets.length > 0 && (
           <Group gap="xs" px={4}>
-            <Text size="xs" c="dimmed" w={20} ta="center">#</Text>
-            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">Reps</Text>
+            <Text size="xs" c="dimmed" w={20} ta="center">
+              #
+            </Text>
+            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
+              Reps
+            </Text>
             <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
               Weight ({weightUnit})
             </Text>
@@ -111,7 +130,9 @@ function ExerciseRowComponent({
 
         {exercise.sets.map((set, index) => (
           <Group key={index} gap="xs" align="center" px={4}>
-            <Text size="xs" c="dimmed" w={20} ta="center">{index + 1}</Text>
+            <Text size="xs" c="dimmed" w={20} ta="center">
+              {index + 1}
+            </Text>
             <NumberInput
               value={set.reps}
               onChange={(v) => updateSet(index, "reps", Number(v))}

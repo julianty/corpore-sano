@@ -119,6 +119,24 @@ const exerciseCatalogUpdated = {
       muscles: ["Triceps", "Chest", "Shoulders"],
       variants: ["Machine Dips", "Bodyweight Dips"],
     },
+    {
+      name: "Lateral Pulldown",
+      muscles: ["Lattisimus Dorsi", "Biceps"],
+      variants: [
+        "Straight Bar Lat Pulldown",
+        "V-bar Lat Pulldown",
+        "Reverse-grip Lat Pulldown",
+      ],
+    },
+    {
+      name: "Rear Deltoid Fly",
+      muscles: ["Deltoids"],
+      variants: [
+        "Machine Rear Delt Fly",
+        "Dumbbell Rear Delt Fly",
+        "Cable Rear Delt Fly",
+      ],
+    },
   ],
 };
 

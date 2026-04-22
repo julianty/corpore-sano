@@ -50,7 +50,7 @@ export function ExercisePickerModal({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
 
-    const customNames = Object.keys(customExercises);
+    const customNames = Object.values(customExercises).map((e) => e.name);
     const filteredCustom = q
       ? customNames.filter((n) => n.toLowerCase().includes(q))
       : customNames;

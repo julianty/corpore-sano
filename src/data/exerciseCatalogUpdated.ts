@@ -79,6 +79,7 @@ const exerciseCatalogUpdated = {
     {
       name: "Leg Extension",
       muscles: ["Quadriceps"],
+      variants: ["Machine Leg Extension"],
     },
     {
       name: "Shoulder Press",

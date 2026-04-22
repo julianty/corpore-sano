@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
-  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -13,6 +12,7 @@ import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { ExerciseRow } from "../../src/components/ExerciseRow";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const EMPTY_EXERCISE: Exercise = {
   order: 0,
@@ -172,7 +172,7 @@ export default function WorkoutModeScreen() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.content}>
         {Object.entries(exercisesObject)
           .sort(([, a], [, b]) => a.order - b.order)
           .map(([key, exercise]) => (
@@ -190,7 +190,7 @@ export default function WorkoutModeScreen() {
         <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

@@ -22,7 +22,7 @@ const EXERCISE_OPTIONS_DATA = EXERCISE_NAMES.map((exerciseName) => ({
 function ExerciseComboboxComponent(props: ExerciseComboboxProps) {
   const combobox = useCombobox();
   const [value, setValue] = useState<string | null>(props.defaultValue);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(props.defaultValue ?? "");
 
   const { exerciseNameChangeHandler } = props;
   const searchText = search.toLowerCase().trim();
@@ -76,7 +76,7 @@ function ExerciseComboboxComponent(props: ExerciseComboboxProps) {
           onClick={() => combobox.openDropdown()}
           rightSectionPointerEvents="none"
           style={{ overflow: "hidden" }}
-          value={value ? value : search}
+          value={search}
           placeholder="Select an exercise"
           onBlur={() => {
             combobox.closeDropdown();

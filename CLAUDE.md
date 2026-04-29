@@ -105,6 +105,8 @@ mobile/app/
     [workoutId].tsx        # Active workout editing screen
 ```
 
+**Future update:** Plan to remove the `workout-mode/` route entirely — revisit this when ready to migrate or consolidate active workout editing.
+
 ## Design system
 
 - **Web**: Mantine v7, dark theme (`#0b0b0c` background, `#3de8a0` accent), Rajdhani + Barlow Condensed fonts
@@ -126,7 +128,7 @@ Document schema:
 }
 ```
 
-Write strategy: debounce 30s after last set logged per exercise, flushed immediately on `AppState` → `background`/`inactive`. On mid-workout history read, merge Firestore `allLifts` with current in-memory sets client-side before computing stats.
+Write strategy: writes are currently triggered directly (no debounce). **Future update:** re-add debounce (30s after last set logged per exercise, flushed immediately on `AppState` → `background`/`inactive`) — debounce code was removed during debugging and needs to be restored. On mid-workout history read, merge Firestore `allLifts` with current in-memory sets client-side before computing stats.
 
 Key utilities to build:
 - `normalizeExerciseKey(name)` — lowercase slug
@@ -135,5 +137,7 @@ Key utilities to build:
 - `mergeLifts(storedLifts, sessionLifts)` — merge for mid-workout reads
 
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
+
+**Known gap:** Removing an exercise card does not update exercise history — the `allLifts` data in Firestore is not cleaned up when an exercise is deleted from a workout. This needs to be addressed.
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.

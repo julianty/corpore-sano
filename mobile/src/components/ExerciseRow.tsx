@@ -12,6 +12,7 @@ export function ExerciseRow({
   closeHandler,
   exerciseNameChangeHandler,
   editMode,
+  onHistoryPress,
 }: ExerciseRowProps) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
@@ -19,8 +20,8 @@ export function ExerciseRow({
   const [pickerVisible, setPickerVisible] = useState(false);
 
   const resolvedName = exercise.customExerciseId
-    ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.name)
-    : exercise.name;
+    ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.variant)
+    : exercise.variant;
   const displayName = exercise.variant || resolvedName || "Select exercise";
   const hasExercise = exercise.variant || resolvedName;
 
@@ -75,10 +76,23 @@ export function ExerciseRow({
           visible={pickerVisible}
           onClose={() => setPickerVisible(false)}
           onSelect={(name, variant, customExerciseId) => {
-            exerciseNameChangeHandler(name, variant, exerciseKey, customExerciseId);
+            exerciseNameChangeHandler(
+              name,
+              variant,
+              exerciseKey,
+              customExerciseId,
+            );
             setPickerVisible(false);
           }}
         />
+        {onHistoryPress && hasExercise && (
+          <Pressable
+            onPress={() => onHistoryPress(exerciseKey)}
+            style={styles.historyButton}
+          >
+            <Text style={styles.historyButtonText}>↑</Text>
+          </Pressable>
+        )}
         {editMode && (
           <Pressable
             onPress={() => closeHandler(exerciseKey)}
@@ -210,6 +224,13 @@ const styles = StyleSheet.create({
   nameTextPlaceholder: {
     color: "#999",
   },
+  historyButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 24,
+    height: 24,
+  },
+  historyButtonText: { fontSize: 16, fontWeight: "bold", color: "#007AFF" },
   closeButton: {
     justifyContent: "center",
     alignItems: "center",

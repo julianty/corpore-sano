@@ -16,6 +16,9 @@ import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { ExerciseRow } from "../../../src/components/ExerciseRow";
+import { ExerciseHistorySheet } from "../../../components/ExerciseHistorySheet";
+import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
+import { useExerciseHistoryWriter } from "../../../hooks/useExerciseHistoryWriter";
 
 const EMPTY_EXERCISE: Exercise = {
   order: 0,
@@ -28,8 +31,14 @@ export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const userId = useAppSelector((state) => state.auth.userId);
   const router = useRouter();
+  const { scheduleWrite } = useExerciseHistoryWriter(userId);
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [historySheet, setHistorySheet] = useState<{
+    visible: boolean;
+    exerciseKey: string;
+    exerciseVariant: string;
+  }>({ visible: false, exerciseKey: "", exerciseVariant: "" });
 
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
@@ -57,6 +66,7 @@ export default function WorkoutDetailScreen() {
     const updated: ExerciseMap = { ...exercisesObject };
     updated[key] = { ...updated[key], sets };
     saveWorkout({ ...workout!, ...updated });
+    scheduleWrite(key, updated);
   }
 
   function exerciseNameChangeHandler(
@@ -103,6 +113,16 @@ export default function WorkoutDetailScreen() {
     const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
     return `${month} ${d.getDate()}, ${weekday}`;
   })();
+
+  function onHistoryPress(key: string) {
+    const exercise = exercisesObject[key];
+    if (!exercise) return;
+    setHistorySheet({
+      visible: true,
+      exerciseKey: normalizeExerciseKey(exercise.variant),
+      exerciseVariant: exercise.variant,
+    });
+  }
 
   function startWorkoutMode() {
     router.push(`/workout-mode/${workoutId}`);
@@ -162,12 +182,22 @@ export default function WorkoutDetailScreen() {
               exerciseNameChangeHandler={exerciseNameChangeHandler}
               editMode={true}
               isMobile={true}
+              onHistoryPress={onHistoryPress}
             />
           ))}
         <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
+
+      <ExerciseHistorySheet
+        visible={historySheet.visible}
+        onDismiss={() => setHistorySheet((s) => ({ ...s, visible: false }))}
+        exerciseKey={historySheet.exerciseKey}
+        exerciseVariant={historySheet.exerciseVariant}
+        userId={userId}
+        sessionSets={[]}
+      />
     </SafeAreaView>
   );
 }

@@ -41,6 +41,7 @@ export interface ExerciseRowProps {
   ) => void;
   editMode: boolean;
   isMobile: boolean;
+  onHistoryPress?: (key: string) => void;
 }
 export interface ExerciseFieldsProps {
   exercisesObject: ExerciseMap;

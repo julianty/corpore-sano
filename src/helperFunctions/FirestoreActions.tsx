@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
+import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -144,6 +145,22 @@ export const FirestoreActions = {
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
     await setDoc(docRef, { customExercises }, { merge: true });
+  },
+  fetchExerciseHistory: async (
+    userId: string,
+    exerciseKey: string,
+  ): Promise<ExerciseHistoryDoc | null> => {
+    const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
+    const snap = await getDoc(docRef);
+    return snap.exists() ? (snap.data() as ExerciseHistoryDoc) : null;
+  },
+  upsertExerciseHistory: async (
+    userId: string,
+    exerciseKey: string,
+    document: ExerciseHistoryDoc,
+  ): Promise<void> => {
+    const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
+    return await setDoc(docRef, document);
   },
   updateDemoData: async () => {
     // This is a function to update the demo data in the database

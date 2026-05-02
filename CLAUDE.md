@@ -128,16 +128,26 @@ Document schema:
 }
 ```
 
-Write strategy: writes are currently triggered directly (no debounce). **Future update:** re-add debounce (30s after last set logged per exercise, flushed immediately on `AppState` → `background`/`inactive`) — debounce code was removed during debugging and needs to be restored. On mid-workout history read, merge Firestore `allLifts` with current in-memory sets client-side before computing stats.
-
-Key utilities to build:
-- `normalizeExerciseKey(name)` — lowercase slug
-- `computeStats(lifts)` — derives max/min/median/setsThisWeek/setsWeekOf
-- `getCurrentWeekMonday()` — ISO date string for staleness check
-- `mergeLifts(storedLifts, sessionLifts)` — merge for mid-workout reads
-
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
 
-**Known gap:** Removing an exercise card does not update exercise history — the `allLifts` data in Firestore is not cleaned up when an exercise is deleted from a workout. This needs to be addressed.
+### What's implemented
+
+- All core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
+- Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
+- History UI: `mobile/components/ExerciseHistorySheet.tsx` — triggered by history icon on each exercise card, fetches and merges session sets on open
+- Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — currently writes immediately on every set change (no debounce)
+
+### Next: re-add debounce to `useExerciseHistoryWriter`
+
+Debounce logic lives entirely inside the hook. Rules:
+- **Per-exercise timers** — each exercise key has its own 30s timer; logging a set resets only that exercise's timer
+- **AppState flush** — on `AppState` → `background` or `inactive`, flush all pending timers immediately (fire all queued writes regardless of which exercise/workout)
+- **After flush, timer clears** — on foreground return, no timer is re-armed; next set log starts a fresh 30s timer
+
+On mid-workout history read, merge Firestore `allLifts` with current in-memory session sets client-side before computing stats.
+
+### Known gap: exercise deletion cleanup
+
+Removing an exercise card from a workout calls `closeHandler(key)` which deletes the exercise from the workout doc, but does not delete the corresponding `userStats/{userId}/exercises/{exerciseKey}` document. That Firestore doc must also be deleted when an exercise is removed.
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.

@@ -53,7 +53,7 @@ export default function WorkoutModeScreen() {
 
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { scheduleWrite } = useExerciseHistoryWriter(userId);
+  const { scheduleWrite, flushAll } = useExerciseHistoryWriter(userId);
 
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
@@ -103,10 +103,13 @@ export default function WorkoutModeScreen() {
 
   async function handleFinish() {
     if (elapsedRef.current) clearInterval(elapsedRef.current);
-    await FirestoreActions.updateWorkoutById(userId, workoutId, {
-      ...workout!,
-      durationSeconds: elapsedSeconds,
-    });
+    await Promise.all([
+      FirestoreActions.updateWorkoutById(userId, workoutId, {
+        ...workout!,
+        durationSeconds: elapsedSeconds,
+      }),
+      flushAll(),
+    ]);
     router.replace("/workouts");
   }
 

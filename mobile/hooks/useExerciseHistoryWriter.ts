@@ -6,13 +6,58 @@ import {
   computeStats,
 } from "@shared/core/services/exerciseHistory";
 import type { ExerciseHistoryDoc } from "@shared/core/services/exerciseHistory";
-import type { ExerciseMap } from "@shared/types";
+import type { Exercise, ExerciseMap } from "@shared/types";
+import { AppState } from "react-native";
 
 export function useExerciseHistoryWriter(userId: string | null) {
   const userIdRef = useRef(userId);
+  const timersRef = useRef<
+    Record<string, { timerId: number; write: () => Promise<void> }>
+  >({});
+
   useEffect(() => {
     userIdRef.current = userId;
   });
+
+  const updateFirestore = async (
+    exercises: ExerciseMap,
+    exercise: Exercise,
+    firestoreKey: string,
+  ) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const allSessionSets = Object.values(exercises)
+      .filter((ex) => normalizeExerciseKey(ex.variant) === firestoreKey)
+      .flatMap((ex) => ex.sets);
+
+    const liftsToWrite = allSessionSets
+      .filter((s) => s.weightkg > 0 && s.reps > 0)
+      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: todayStr }));
+
+    if (liftsToWrite.length === 0) return;
+
+    try {
+      const existing = await FirestoreActions.fetchExerciseHistory(
+        uid,
+        firestoreKey,
+      );
+      const storedLifts = existing?.allLifts ?? [];
+      const merged = mergeLifts(storedLifts, liftsToWrite, todayStr);
+      const computed = computeStats(merged);
+
+      const doc: ExerciseHistoryDoc = {
+        exerciseName: exercise.name,
+        allLifts: merged,
+        computed,
+      };
+
+      await FirestoreActions.upsertExerciseHistory(uid, firestoreKey, doc);
+    } catch (e) {
+      console.error("[useExerciseHistoryWriter] upsert failed:", e);
+    }
+  };
 
   const scheduleWrite = useCallback(
     async (exerciseUUID: string, exercises: ExerciseMap) => {
@@ -25,40 +70,46 @@ export function useExerciseHistoryWriter(userId: string | null) {
       const firestoreKey = normalizeExerciseKey(exercise.variant);
       if (!firestoreKey) return;
 
-      const todayStr = new Date().toISOString().slice(0, 10);
-
-      const allSessionSets = Object.values(exercises)
-        .filter((ex) => normalizeExerciseKey(ex.variant) === firestoreKey)
-        .flatMap((ex) => ex.sets);
-
-      const liftsToWrite = allSessionSets
-        .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({ weight: s.weightkg, reps: s.reps, date: todayStr }));
-
-      if (liftsToWrite.length === 0) return;
-
-      try {
-        const existing = await FirestoreActions.fetchExerciseHistory(
-          uid,
-          firestoreKey,
-        );
-        const storedLifts = existing?.allLifts ?? [];
-        const merged = mergeLifts(storedLifts, liftsToWrite, todayStr);
-        const computed = computeStats(merged);
-
-        const doc: ExerciseHistoryDoc = {
-          exerciseName: exercise.name,
-          allLifts: merged,
-          computed,
-        };
-
-        await FirestoreActions.upsertExerciseHistory(uid, firestoreKey, doc);
-      } catch (e) {
-        console.error("[useExerciseHistoryWriter] upsert failed:", e);
+      if (timersRef.current[firestoreKey]) {
+        // Cancel timers for this key
+        clearTimeout(timersRef.current[firestoreKey].timerId);
       }
+
+      // Create debounce timeout for 30s
+      timersRef.current[firestoreKey] = {
+        timerId: setTimeout(async () => {
+          delete timersRef.current[firestoreKey];
+          await updateFirestore(exercises, exercise, firestoreKey);
+        }, 30_000),
+        write: () => updateFirestore(exercises, exercise, firestoreKey),
+      };
     },
     [],
   );
 
-  return { scheduleWrite };
+  // Function to clear out pending writes
+  const flushAll = useCallback(() => {
+    Object.entries(timersRef.current).forEach(
+      async ([key, { timerId, write }]) => {
+        clearTimeout(timerId);
+        delete timersRef.current[key];
+        await write();
+      },
+    );
+  }, []);
+
+  // Add a subscription to App state to flush pending writes
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (["background", "inactive"].includes(state)) {
+        flushAll();
+      }
+    });
+    return () => {
+      // fire on unmount
+      subscription.remove();
+      flushAll();
+    };
+  }, [flushAll]);
+  return { scheduleWrite, flushAll };
 }

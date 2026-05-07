@@ -35,7 +35,7 @@ export default function WorkoutsScreen() {
     await FirestoreActions.updateWorkoutById(userId, newDoc.id, {
       date: Timestamp.now(),
     } as Workout);
-    setWorkoutIds((ids) => [...ids, newDoc.id]);
+    setWorkoutIds((ids) => [newDoc.id, ...ids]);
     router.push(`/workouts/${newDoc.id}`);
   }
 

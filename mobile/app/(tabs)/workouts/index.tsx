@@ -3,9 +3,6 @@ import {
   FlatList,
   TouchableOpacity,
   Text,
-  Modal,
-  View,
-  Pressable,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,7 +17,6 @@ import { WorkoutCard } from "../../../src/components/WorkoutCard";
 export default function WorkoutsScreen() {
   const userId = useAppSelector((state) => state.auth.userId);
   const [workoutIds, setWorkoutIds] = useState<string[]>([]);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
@@ -34,18 +30,13 @@ export default function WorkoutsScreen() {
     }, []),
   );
 
-  async function createWorkout(destination: "detail" | "workout-mode") {
-    setMenuVisible(false);
+  async function createWorkout() {
     const newDoc = FirestoreActions.createWorkout(userId);
     await FirestoreActions.updateWorkoutById(userId, newDoc.id, {
       date: Timestamp.now(),
     } as Workout);
     setWorkoutIds((ids) => [...ids, newDoc.id]);
-    if (destination === "detail") {
-      router.push(`/workouts/${newDoc.id}`);
-    } else {
-      router.push(`/workout-mode/${newDoc.id}`);
-    }
+    router.push(`/workouts/${newDoc.id}`);
   }
 
   function deleteWorkout(id: string) {
@@ -69,39 +60,9 @@ export default function WorkoutsScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.fab}>
+      <TouchableOpacity onPress={createWorkout} style={styles.fab}>
         <Text style={styles.fabText}>+ Add Workout</Text>
       </TouchableOpacity>
-
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <Pressable
-          style={styles.backdrop}
-          onPress={() => setMenuVisible(false)}
-        >
-          <View style={styles.menu}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => createWorkout("detail")}
-            >
-              <Text style={styles.menuItemText}>New Workout</Text>
-              <Text style={styles.menuItemSub}>Add and edit a workout log</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => createWorkout("workout-mode")}
-            >
-              <Text style={styles.menuItemText}>Start Workout Mode</Text>
-              <Text style={styles.menuItemSub}>Live entry with timers</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -117,20 +78,4 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   fabText: { color: "#fff", fontWeight: "600" },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-    paddingBottom: 100,
-    paddingHorizontal: 16,
-  },
-  menu: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  menuItem: { padding: 16 },
-  menuItemText: { fontSize: 16, fontWeight: "600", color: "#111" },
-  menuItemSub: { fontSize: 13, color: "#888", marginTop: 2 },
-  menuDivider: { height: 1, backgroundColor: "#eee" },
 });

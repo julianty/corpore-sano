@@ -10,7 +10,7 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
@@ -30,7 +30,6 @@ const EMPTY_EXERCISE: Exercise = {
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const userId = useAppSelector((state) => state.auth.userId);
-  const router = useRouter();
   const { scheduleWrite } = useExerciseHistoryWriter(userId);
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -124,10 +123,6 @@ export default function WorkoutDetailScreen() {
     });
   }
 
-  function startWorkoutMode() {
-    router.push(`/workout-mode/${workoutId}`);
-  }
-
   return (
     <SafeAreaView
       edges={["bottom"]}
@@ -141,9 +136,6 @@ export default function WorkoutDetailScreen() {
             </Text>
           </Pressable>
         </View>
-        <Pressable onPress={startWorkoutMode} style={styles.workoutModeButton}>
-          <Text style={styles.actionButtonTextColored}>Enter Workout Mode</Text>
-        </Pressable>
       </View>
 
       {showDatePicker && (
@@ -159,7 +151,7 @@ export default function WorkoutDetailScreen() {
               onPress={() => setShowDatePicker(false)}
               style={styles.datePickerDone}
             >
-              <Text style={styles.actionButtonTextColored}>Done</Text>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>Done</Text>
             </Pressable>
           )}
         </View>
@@ -215,13 +207,6 @@ const styles = StyleSheet.create({
   dateRow: { flex: 1 },
   dateLabel: { fontSize: 18, fontWeight: "600" },
   editableDate: { color: "#007AFF" },
-  actionButtonTextColored: { fontSize: 13, fontWeight: "600", color: "#fff" },
-  workoutModeButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    backgroundColor: "#007AFF",
-  },
   datePickerContainer: {
     backgroundColor: "#fff",
     borderBottomWidth: 1,

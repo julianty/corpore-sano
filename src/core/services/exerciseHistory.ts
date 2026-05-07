@@ -19,12 +19,11 @@ export interface ExerciseHistoryDoc {
 }
 
 export function normalizeExerciseKey(name: string): string {
-  const normalizedKey = name
+  return name
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
-  // console.log(name, normalizedKey);
-  return normalizedKey;
+    .replace(/[^a-z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
+    .replace(/[^a-z0-9]+$/, "");
 }
 
 export function getCurrentWeekMonday(): string {

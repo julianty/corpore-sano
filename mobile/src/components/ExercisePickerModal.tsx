@@ -80,21 +80,16 @@ export function ExercisePickerModal({
   const trimmed = search.trim();
   const showAddCustom =
     trimmed.length > 0 &&
-    !Object.keys(customExercises).some(
-      (n) => n.toLowerCase() === trimmed.toLowerCase(),
+    !Object.values(customExercises).some(
+      (e) => e.name.toLowerCase() === trimmed.toLowerCase(),
     ) &&
     !ALL_CATALOG_SECTIONS.some((s) =>
       s.data.some((v) => v.toLowerCase() === trimmed.toLowerCase()),
     );
 
-  function handleSelectCatalog(sectionTitle: string, variant: string) {
+  function handleSelect(name: string, variant: string) {
     reset();
-    onSelect(sectionTitle, variant);
-  }
-
-  function handleSelectCustom(name: string) {
-    reset();
-    onSelect(name, "");
+    onSelect(name, variant);
   }
 
   function handleAddCustom() {
@@ -109,7 +104,7 @@ export function ExercisePickerModal({
     ctx?.setUserProfile((prev) => ({ ...prev, customExercises: updated }));
     FirestoreActions.updateCustomExercises(userId, updated);
     reset();
-    onSelect(name, "", id);
+    onSelect(name, name, id);
   }
 
   function reset() {
@@ -206,7 +201,7 @@ export function ExercisePickerModal({
           renderItem={({ item, section }) =>
             section.isCustom ? (
               <Pressable
-                onPress={() => handleSelectCustom(item)}
+                onPress={() => handleSelect(item, item)}
                 style={({ pressed }) => [
                   styles.item,
                   pressed && styles.itemPressed,
@@ -216,7 +211,7 @@ export function ExercisePickerModal({
               </Pressable>
             ) : (
               <Pressable
-                onPress={() => handleSelectCatalog(section.title, item)}
+                onPress={() => handleSelect(section.title, item)}
                 style={({ pressed }) => [
                   styles.item,
                   pressed && styles.itemPressed,

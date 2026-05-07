@@ -25,20 +25,17 @@ No test suite exists for the mobile app yet.
 
 ## Architecture
 
-This is a monorepo with two apps sharing business logic. The web app's `src/` doubles as the shared code library — there is no separate `packages/shared` workspace.
+Monorepo with two apps sharing business logic. The web app's `src/` doubles as the shared library — no separate `packages/shared` workspace.
 
 ### Code sharing via `@shared`
 
-Mobile imports web source with `import { X } from "@shared/types"`. The alias is wired at three levels:
-- **TypeScript** — `paths` in `mobile/tsconfig.json`
-- **Babel** — `babel-plugin-module-resolver` in `mobile/babel.config.js`
-- **Metro** — `watchFolders` + `nodeModulesPaths` in `mobile/metro.config.js`
+Mobile imports web source with `import { X } from "@shared/types"`. Wired at three levels: TypeScript `paths` in `mobile/tsconfig.json`, `babel-plugin-module-resolver` in `mobile/babel.config.js`, and `watchFolders`/`nodeModulesPaths` in `mobile/metro.config.js`.
 
-Firebase initialization uses Metro's `.native.ts` extension convention: `src/initializeFirebase.native.ts` is auto-preferred over `src/initializeFirebase.tsx` in the RN build, giving each platform the correct env-var-based init.
+Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.native.ts` is auto-preferred over `src/initializeFirebase.tsx` in the RN build.
 
 ### Shared vs. platform-specific
 
-| Shared (`src/`, imported via `@shared`) | Web-only (`src/`) | Mobile-only (`mobile/`) |
+| Shared (`src/`, via `@shared`) | Web-only | Mobile-only (`mobile/`) |
 |---|---|---|
 | Redux store, slices, typed hooks | Mantine components | Expo Router layouts/screens |
 | Domain types (`types.ts`) | SVG muscle diagram | React Native Paper components |
@@ -51,7 +48,7 @@ Firebase initialization uses Metro's `.native.ts` extension convention: `src/ini
 
 Core types: `Exercise`, `SetEntry`, `Workout`, `ExerciseMap`, `Muscle`, `MuscleSummary`, `UserProfile`.
 
-`Workout.exercises` is an `ExerciseMap` (object keyed by UUID), not an array. Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
+`Workout.exercises` is an `ExerciseMap` (object keyed by UUID). Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
 
 ### Firestore data model
 
@@ -61,39 +58,26 @@ users/{userId}/
   preferences/userProfile       # UserProfile (weightUnit, colorScheme, customExercises, favoriteExercises)
 
 userStats/{userId}/
-  exercises/{exerciseKey}       # Per-exercise history (see exercise history feature)
+  exercises/{exerciseKey}       # Per-exercise history
 ```
 
 All `FirestoreActions` live in `src/helperFunctions/FirestoreActions.tsx`. Reads use server-side `where`/`orderBy` push-down; never filter client-side.
 
 ### Business logic (`src/core/`)
 
-Pure functions with no framework dependencies:
-- `buildMuscleSummary(workouts, exerciseMap)` — returns per-muscle set counts and recency data
-- `rollupToParentGroups(muscleSummary)` — aggregates fine-grained muscles into parent groups (Shoulders, Back, Chest, Arms, Core, Legs)
-
-These are consumed identically by both web (`WeeklySummary`, `MuscleDiagram`) and mobile (`WeeklySummary`).
+- `buildMuscleSummary(workouts, exerciseMap)` — per-muscle set counts and recency data
+- `rollupToParentGroups(muscleSummary)` — aggregates muscles into parent groups (Shoulders, Back, Chest, Arms, Core, Legs)
 
 ### Redux
 
-Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exercise catalog). The store is instantiated once in `src/store.ts` and imported via `@shared/store` on mobile. User profile state lives in React context (`UserProfileContext` in `mobile/app/_layout.tsx`), not Redux.
-
-### Performance patterns
-
-- `React.memo` on `ExerciseRow` and `ExerciseCombobox`
-- `useMemo` for exercise catalog array (static data)
-- `createExerciseMap` (`src/utils/exerciseLookup.ts`) for O(1) name lookups
-- Debounced writes via `setTimeout`/`clearTimeout` pattern
+Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exercise catalog). User profile state lives in React context (`UserProfileContext` in `mobile/app/_layout.tsx`), not Redux.
 
 ## Testing
 
-Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/` to keep tests fast.
-
-Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.
+Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.
 
 ## Mobile routing
 
-expo-router file-based routes:
 ```
 mobile/app/
   _layout.tsx              # Root: Redux Provider + auth gate + UserProfileContext
@@ -102,19 +86,17 @@ mobile/app/
     index.tsx              # Dashboard
     workouts/              # Workouts list + per-workout detail
   workout-mode/
-    [workoutId].tsx        # Active workout editing screen
+    [workoutId].tsx        # Active workout editing screen (to be replaced by drawer)
 ```
-
-**Future update:** Plan to remove the `workout-mode/` route entirely — revisit this when ready to migrate or consolidate active workout editing.
 
 ## Design system
 
 - **Web**: Mantine v7, dark theme (`#0b0b0c` background, `#3de8a0` accent), Rajdhani + Barlow Condensed fonts
 - **Mobile**: React Native Paper (Material Design 3), dark color scheme
 
-## Exercise History Feature (in progress)
+## Exercise History Feature
 
-New Firestore collection: `userStats/{userId}/exercises/{exerciseKey}` where `exerciseKey` is a normalized lowercase slug (e.g. `"bench-press"`).
+Firestore collection: `userStats/{userId}/exercises/{exerciseKey}` where `exerciseKey` is a normalized camelCase slug via `normalizeExerciseKey()` (e.g. `"benchPress"`).
 
 Document schema:
 ```json
@@ -130,24 +112,40 @@ Document schema:
 
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
 
-### What's implemented
+### Implemented
 
-- All core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
+- Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
-- History UI: `mobile/components/ExerciseHistorySheet.tsx` — triggered by history icon on each exercise card, fetches and merges session sets on open
-- Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — currently writes immediately on every set change (no debounce)
+- History UI: `mobile/components/ExerciseHistorySheet.tsx` — triggered by history icon on exercise card
+- Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount
+- Mid-workout history read merges Firestore `allLifts` with current in-memory session sets client-side before computing stats
 
-### Next: re-add debounce to `useExerciseHistoryWriter`
+### Known bugs (P1)
 
-Debounce logic lives entirely inside the hook. Rules:
-- **Per-exercise timers** — each exercise key has its own 30s timer; logging a set resets only that exercise's timer
-- **AppState flush** — on `AppState` → `background` or `inactive`, flush all pending timers immediately (fire all queued writes regardless of which exercise/workout)
-- **After flush, timer clears** — on foreground return, no timer is re-armed; next set log starts a fresh 30s timer
+**Custom exercise Firebase errors:** `normalizeExerciseKey` uses `.replace(/[^a-z0-9]+(.)/g, ...)` which can produce invalid Firestore document ID characters (e.g. trailing special chars like `)` in `"Row (Cable)"` are not captured and pass through). Fix: sanitize the output to strip any remaining non-alphanumeric characters after transformation.
 
-On mid-workout history read, merge Firestore `allLifts` with current in-memory session sets client-side before computing stats.
+**Exercise rename orphans history:** When a user swaps exercise name mid-workout, `exerciseNameChangeHandler` updates the workout doc but never triggers a history flush for the old key. Subsequent set-logs write to the new key, leaving the old key's sets unwritten. Fix: flush the old key's pending timer before applying the rename, then start a fresh timer under the new key.
 
-### Known gap: exercise deletion cleanup
-
-Removing an exercise card from a workout calls `closeHandler(key)` which deletes the exercise from the workout doc, but does not delete the corresponding `userStats/{userId}/exercises/{exerciseKey}` document. That Firestore doc must also be deleted when an exercise is removed.
+**Exercise deletion orphans history doc:** `closeHandler(key)` deletes the exercise from the workout doc but not the corresponding `userStats/{userId}/exercises/{exerciseKey}` Firestore document.
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.
+
+## Roadmap
+
+### P1 — Bugs
+- Fix custom exercise history Firebase errors (invalid Firestore key from special chars)
+- Fix exercise rename orphaning history (flush old key before rename, rekey timer)
+- Fix exercise deletion not cleaning up history doc
+
+### P2 — Next features
+- Workout list: sort by date descending
+- "Are you sure" dialogs for deletion (exercises and workouts)
+- Drawer replaces inline editing in workout mode — `workout-mode/[workoutId].tsx` is removed; exercise editing moves into a bottom drawer launched when an exercise is selected
+
+### P3
+- Workout list: split into time envelopes (this week / last week / older)
+- Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume
+
+### P4
+- RPE field on `SetEntry` data model (schema change, add to exercise logging UI)
+- History refinement: aggregate stats by parent muscle group (e.g. Preacher Curl rolls up into Biceps summary)

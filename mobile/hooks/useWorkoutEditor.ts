@@ -46,7 +46,9 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     if (!workout) return;
     const updated: ExerciseMap = { ...exercisesObject, [key]: { ...exercisesObject[key], sets } };
     saveWorkout({ ...workout, ...updated });
-    scheduleWrite(key, updated);
+    const workoutDateStr =
+      workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+    scheduleWrite(key, updated, workoutDateStr);
   }
 
   async function exerciseNameChangeHandler(
@@ -95,7 +97,9 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     );
 
     if (duplicateEntry) {
-      scheduleWrite(duplicateEntry[0], updatedExercises);
+      const workoutDateStr =
+        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+      scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr);
     } else {
       cancelKey(firestoreKey);
       await FirestoreActions.removeExerciseSetsFromHistory(userId, firestoreKey, sets);

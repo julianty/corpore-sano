@@ -23,10 +23,10 @@ export function useExerciseHistoryWriter(userId: string | null) {
     exercises: ExerciseMap,
     exercise: Exercise,
     firestoreKey: string,
+    workoutDateStr: string,
   ) => {
     const uid = userIdRef.current;
     if (!uid) return;
-    const todayStr = new Date().toISOString().slice(0, 10);
 
     const allSessionSets = Object.values(exercises)
       .filter((ex) => normalizeExerciseKey(ex.variant) === firestoreKey)
@@ -34,7 +34,7 @@ export function useExerciseHistoryWriter(userId: string | null) {
 
     const liftsToWrite = allSessionSets
       .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: todayStr }));
+      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
 
     if (liftsToWrite.length === 0) return;
 
@@ -44,7 +44,7 @@ export function useExerciseHistoryWriter(userId: string | null) {
         firestoreKey,
       );
       const storedLifts = existing?.allLifts ?? [];
-      const merged = mergeLifts(storedLifts, liftsToWrite, todayStr);
+      const merged = mergeLifts(storedLifts, liftsToWrite, workoutDateStr);
       const computed = computeStats(merged);
 
       const doc: ExerciseHistoryDoc = {
@@ -60,7 +60,7 @@ export function useExerciseHistoryWriter(userId: string | null) {
   };
 
   const scheduleWrite = useCallback(
-    async (exerciseUUID: string, exercises: ExerciseMap) => {
+    async (exerciseUUID: string, exercises: ExerciseMap, workoutDateStr: string) => {
       const uid = userIdRef.current;
       if (!uid) return;
 
@@ -71,17 +71,15 @@ export function useExerciseHistoryWriter(userId: string | null) {
       if (!firestoreKey) return;
 
       if (timersRef.current[firestoreKey]) {
-        // Cancel timers for this key
         clearTimeout(timersRef.current[firestoreKey].timerId);
       }
 
-      // Create debounce timeout for 30s
       timersRef.current[firestoreKey] = {
         timerId: setTimeout(async () => {
           delete timersRef.current[firestoreKey];
-          await updateFirestore(exercises, exercise, firestoreKey);
+          await updateFirestore(exercises, exercise, firestoreKey, workoutDateStr);
         }, 30_000),
-        write: () => updateFirestore(exercises, exercise, firestoreKey),
+        write: () => updateFirestore(exercises, exercise, firestoreKey, workoutDateStr),
       };
     },
     [],

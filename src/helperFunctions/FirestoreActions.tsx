@@ -19,6 +19,7 @@ import {
 import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
+import { computeStats } from "../core/services/exerciseHistory";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -161,6 +162,33 @@ export const FirestoreActions = {
   ): Promise<void> => {
     const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
     return await setDoc(docRef, document);
+  },
+  deleteExerciseHistory: async (
+    userId: string,
+    exerciseKey: string,
+  ): Promise<void> => {
+    const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
+    await deleteDoc(docRef);
+  },
+  migrateExerciseHistory: async (
+    userId: string,
+    oldKey: string,
+    newKey: string,
+    newExerciseName: string,
+  ): Promise<void> => {
+    const [oldDoc, newDoc] = await Promise.all([
+      FirestoreActions.fetchExerciseHistory(userId, oldKey),
+      FirestoreActions.fetchExerciseHistory(userId, newKey),
+    ]);
+    if (!oldDoc) return;
+    const mergedLifts = [...oldDoc.allLifts, ...(newDoc?.allLifts ?? [])];
+    const merged: ExerciseHistoryDoc = {
+      exerciseName: newExerciseName,
+      allLifts: mergedLifts,
+      computed: computeStats(mergedLifts),
+    };
+    await FirestoreActions.upsertExerciseHistory(userId, newKey, merged);
+    await FirestoreActions.deleteExerciseHistory(userId, oldKey);
   },
   updateDemoData: async () => {
     // This is a function to update the demo data in the database

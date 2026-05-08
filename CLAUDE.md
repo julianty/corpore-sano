@@ -117,24 +117,29 @@ Document schema:
 - Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
 - History UI: `mobile/components/ExerciseHistorySheet.tsx` — triggered by history icon on exercise card
-- Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount
+- Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount; exposes `flushKey(uuid, exercises)` for targeted single-key flush
 - Mid-workout history read merges Firestore `allLifts` with current in-memory session sets client-side before computing stats
+- Exercise rename handling: `exerciseNameChangeHandler` in `[workoutId].tsx` flushes the old key's pending timer, then calls `migrateExerciseHistory` which merges both keys' full `allLifts` arrays, writes to the new key, and deletes the old key — **needs manual testing** (see Testing section below)
 
 ### Known bugs (P1)
 
-**Custom exercise Firebase errors:** `normalizeExerciseKey` uses `.replace(/[^a-z0-9]+(.)/g, ...)` which can produce invalid Firestore document ID characters (e.g. trailing special chars like `)` in `"Row (Cable)"` are not captured and pass through). Fix: sanitize the output to strip any remaining non-alphanumeric characters after transformation.
-
-**Exercise rename orphans history:** When a user swaps exercise name mid-workout, `exerciseNameChangeHandler` updates the workout doc but never triggers a history flush for the old key. Subsequent set-logs write to the new key, leaving the old key's sets unwritten. Fix: flush the old key's pending timer before applying the rename, then start a fresh timer under the new key.
-
 **Exercise deletion orphans history doc:** `closeHandler(key)` deletes the exercise from the workout doc but not the corresponding `userStats/{userId}/exercises/{exerciseKey}` Firestore document.
+
+### Testing checklist
+
+**Exercise rename history (just fixed):**
+1. Log sets under exercise "A" across multiple past workouts so `exerciseA` has historical data in Firestore.
+2. In a new workout, add exercise "A", log 2+ sets (<30s so timer is still pending).
+3. Rename to "B" — verify immediately: `userStats/{userId}/exercises/exerciseA` is deleted, `exerciseB` exists and contains both today's sets AND all prior historical lifts.
+4. Open the history sheet for "B" — should show full history with no missing data.
+5. Edge case: "B" already had its own history from a prior workout — verify both histories are merged (all lifts from both docs present in `exerciseB`).
+6. Edge case: rename to same normalized key (e.g. "curl a" → "Curl A") — no flush or migration fires.
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.
 
 ## Roadmap
 
 ### P1 — Bugs
-- Fix custom exercise history Firebase errors (invalid Firestore key from special chars)
-- Fix exercise rename orphaning history (flush old key before rename, rekey timer)
 - Fix exercise deletion not cleaning up history doc
 
 ### P2 — Next features

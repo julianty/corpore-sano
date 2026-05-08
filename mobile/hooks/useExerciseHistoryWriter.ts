@@ -87,6 +87,23 @@ export function useExerciseHistoryWriter(userId: string | null) {
     [],
   );
 
+  // Flush a single pending write for a specific exercise UUID.
+  // Used before renaming an exercise so the old key's history is committed first.
+  const flushKey = useCallback(
+    async (exerciseUUID: string, exercises: ExerciseMap) => {
+      const exercise = exercises[exerciseUUID];
+      if (!exercise) return;
+      const firestoreKey = normalizeExerciseKey(exercise.variant);
+      if (!firestoreKey) return;
+      const pending = timersRef.current[firestoreKey];
+      if (!pending) return;
+      clearTimeout(pending.timerId);
+      delete timersRef.current[firestoreKey];
+      await pending.write();
+    },
+    [],
+  );
+
   // Function to clear out pending writes
   const flushAll = useCallback(() => {
     Object.entries(timersRef.current).forEach(
@@ -111,5 +128,5 @@ export function useExerciseHistoryWriter(userId: string | null) {
       flushAll();
     };
   }, [flushAll]);
-  return { scheduleWrite, flushAll };
+  return { scheduleWrite, flushKey, flushAll };
 }

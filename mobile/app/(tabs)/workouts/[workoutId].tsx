@@ -30,7 +30,7 @@ const EMPTY_EXERCISE: Exercise = {
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const userId = useAppSelector((state) => state.auth.userId);
-  const { scheduleWrite } = useExerciseHistoryWriter(userId);
+  const { scheduleWrite, flushKey } = useExerciseHistoryWriter(userId);
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [historySheet, setHistorySheet] = useState<{
@@ -68,12 +68,17 @@ export default function WorkoutDetailScreen() {
     scheduleWrite(key, updated);
   }
 
-  function exerciseNameChangeHandler(
+  async function exerciseNameChangeHandler(
     name: string,
     variant: string,
     key: string,
     customExerciseId?: string,
   ) {
+    const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
+    const newKey = normalizeExerciseKey(variant);
+    if (oldKey && oldKey !== newKey) {
+      await flushKey(key, exercisesObject);
+    }
     const updated: ExerciseMap = { ...exercisesObject };
     const patch: Partial<Exercise> = { name, variant };
     if (customExerciseId !== undefined)
@@ -81,6 +86,9 @@ export default function WorkoutDetailScreen() {
     else delete updated[key].customExerciseId;
     updated[key] = { ...updated[key], ...patch };
     saveWorkout({ ...workout!, ...updated });
+    if (newKey && oldKey !== newKey) {
+      await FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, name);
+    }
   }
 
   function closeHandler(key: string) {

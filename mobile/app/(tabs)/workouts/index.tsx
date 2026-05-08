@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  FlatList,
+  SectionList,
   TouchableOpacity,
   Text,
   StyleSheet,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Timestamp } from "firebase/firestore";
@@ -14,14 +15,46 @@ import { useAppSelector } from "@shared/hooks";
 import { Workout } from "@shared/types";
 import { WorkoutCard } from "../../../src/components/WorkoutCard";
 
+type WorkoutSummary = { id: string; date: Timestamp };
+type Section = { title: string; data: WorkoutSummary[] };
+
+function groupIntoSections(workouts: WorkoutSummary[]): Section[] {
+  const now = new Date();
+  const daysFromMonday = (now.getDay() + 6) % 7;
+
+  const thisMonday = new Date(now);
+  thisMonday.setDate(now.getDate() - daysFromMonday);
+  thisMonday.setHours(0, 0, 0, 0);
+
+  const lastMonday = new Date(thisMonday);
+  lastMonday.setDate(thisMonday.getDate() - 7);
+
+  const thisWeek: WorkoutSummary[] = [];
+  const lastWeek: WorkoutSummary[] = [];
+  const older: WorkoutSummary[] = [];
+
+  for (const w of workouts) {
+    const d = w.date?.toDate() ?? new Date(0);
+    if (d >= thisMonday) thisWeek.push(w);
+    else if (d >= lastMonday) lastWeek.push(w);
+    else older.push(w);
+  }
+
+  const sections: Section[] = [];
+  if (thisWeek.length) sections.push({ title: "This Week", data: thisWeek });
+  if (lastWeek.length) sections.push({ title: "Last Week", data: lastWeek });
+  if (older.length) sections.push({ title: "Older", data: older });
+  return sections;
+}
+
 export default function WorkoutsScreen() {
   const userId = useAppSelector((state) => state.auth.userId);
-  const [workoutIds, setWorkoutIds] = useState<string[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    FirestoreActions.fetchWorkoutIds(userId).then(setWorkoutIds);
+    FirestoreActions.fetchWorkoutSummaries(userId).then(setWorkouts);
   }, [userId]);
 
   useFocusEffect(
@@ -32,30 +65,38 @@ export default function WorkoutsScreen() {
 
   async function createWorkout() {
     const newDoc = FirestoreActions.createWorkout(userId);
+    const now = Timestamp.now();
     await FirestoreActions.updateWorkoutById(userId, newDoc.id, {
-      date: Timestamp.now(),
+      date: now,
     } as Workout);
-    setWorkoutIds((ids) => [newDoc.id, ...ids]);
+    setWorkouts((ws) => [{ id: newDoc.id, date: now }, ...ws]);
     router.push(`/workouts/${newDoc.id}`);
   }
 
   function deleteWorkout(id: string) {
     FirestoreActions.deleteWorkoutWithHistory(userId, id);
-    setWorkoutIds((ids) => ids.filter((wid) => wid !== id));
+    setWorkouts((ws) => ws.filter((w) => w.id !== id));
   }
+
+  const sections = groupIntoSections(workouts);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <FlatList
-        data={workoutIds}
-        keyExtractor={(id) => id}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <WorkoutCard
-            workoutId={item}
+            workoutId={item.id}
             refreshKey={refreshKey}
             onDelete={deleteWorkout}
-            onPress={() => router.push(`/workouts/${item}`)}
+            onPress={() => router.push(`/workouts/${item.id}`)}
           />
+        )}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>{section.title}</Text>
+          </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
@@ -68,6 +109,19 @@ export default function WorkoutsScreen() {
 }
 
 const styles = StyleSheet.create({
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 6,
+    backgroundColor: "#fff",
+  },
+  sectionHeaderText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   fab: {
     position: "absolute",
     right: 16,

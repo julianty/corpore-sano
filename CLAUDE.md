@@ -150,7 +150,7 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 ### P3
 
-- Workout list: split into time envelopes (this week / last week / older)
+- ~~Workout list: split into time envelopes (this week / last week / older)~~ ✓ done
 - Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume
 
 ### P4

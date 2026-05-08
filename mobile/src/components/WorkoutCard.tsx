@@ -1,9 +1,14 @@
 import { useState, useEffect, useContext } from "react";
 import { Alert, View, StyleSheet, Text, Pressable } from "react-native";
-import { Workout, Exercise } from "@shared/types";
+import { Workout } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { UserProfileContext } from "../../app/_layout";
+import exerciseCatalogUpdated from "@shared/data/exerciseCatalogUpdated";
+import { createExerciseMap } from "@shared/utils/exerciseLookup";
+import { buildMuscleSummary, rollupToParentGroups } from "@shared/core/services/muscleCalculations";
+
+const exerciseMap = createExerciseMap(exerciseCatalogUpdated.data);
 
 interface WorkoutCardProps {
   workoutId: string;
@@ -31,17 +36,15 @@ export function WorkoutCard({
 
   if (!workout) return null;
 
-  const exerciseNames = Object.entries(workout)
-    .filter(([k]) => k !== "date" && k !== "durationSeconds")
-    .sort(([, a], [, b]) => (a as Exercise).order - (b as Exercise).order)
-    .map(([, v]) => {
-      const ex = v as Exercise;
-      if (ex.customExerciseId) {
-        return customExercises?.[ex.customExerciseId]?.name ?? ex.name;
-      }
-      return ex.name;
-    })
-    .filter(Boolean);
+  const muscleGroupLabel = (() => {
+    const summary = buildMuscleSummary([workout], exerciseMap, () => 0, undefined, customExercises);
+    const rolled = rollupToParentGroups(summary);
+    return Object.entries(rolled)
+      .filter(([, v]) => v.sets > 0)
+      .sort(([, a], [, b]) => b.sets - a.sets)
+      .map(([group]) => group)
+      .join(", ");
+  })();
 
   const durationLabel = workout.durationSeconds
     ? `${Math.round(workout.durationSeconds / 60)} min`
@@ -78,14 +81,10 @@ export function WorkoutCard({
         </Pressable>
       </View>
       <View style={styles.cardContent}>
-        {exerciseNames.length === 0 ? (
-          <Text style={styles.emptyText}>No exercises yet</Text>
+        {muscleGroupLabel ? (
+          <Text style={styles.muscleGroupLabel}>{muscleGroupLabel}</Text>
         ) : (
-          exerciseNames.map((name, i) => (
-            <Text key={i} style={styles.exerciseName}>
-              {name}
-            </Text>
-          ))
+          <Text style={styles.emptyText}>No exercises yet</Text>
         )}
       </View>
     </Pressable>
@@ -120,5 +119,5 @@ const styles = StyleSheet.create({
   deleteButtonText: { fontSize: 13, fontWeight: "600", color: "#fff" },
   cardContent: { padding: 12 },
   emptyText: { fontSize: 14, color: "#999", fontStyle: "italic" },
-  exerciseName: { fontSize: 14, color: "#333", marginBottom: 2 },
+  muscleGroupLabel: { fontSize: 14, color: "#555" },
 });

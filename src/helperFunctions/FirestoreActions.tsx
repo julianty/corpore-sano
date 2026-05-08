@@ -86,6 +86,17 @@ export const FirestoreActions = {
     const querySnapshot = await getDocs(workoutsQuery);
     return querySnapshot.docs.map((docSnapshot) => docSnapshot.id);
   },
+  fetchWorkoutSummaries: async (userId: string): Promise<{ id: string; date: Timestamp }[]> => {
+    const workoutsQuery = query(
+      collection(db, "users", userId, "workouts"),
+      orderBy("date", "desc"),
+    );
+    const querySnapshot = await getDocs(workoutsQuery);
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      date: doc.data().date as Timestamp,
+    }));
+  },
   fetchWorkoutsAfterDate: async (userId: string, date: Date) => {
     const dateTimestamp = Timestamp.fromDate(date);
     const workoutsQuery = query(

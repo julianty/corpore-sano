@@ -1,125 +1,35 @@
-import { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Pressable,
-  Platform,
-} from "react-native";
+import { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams } from "expo-router";
-import { Timestamp } from "firebase/firestore";
-import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
-import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { ExerciseRow } from "../../../src/components/ExerciseRow";
 import { ExerciseHistorySheet } from "../../../components/ExerciseHistorySheet";
+import { WorkoutDatePicker } from "../../../components/WorkoutDatePicker";
 import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
-import { useExerciseHistoryWriter } from "../../../hooks/useExerciseHistoryWriter";
-
-const EMPTY_EXERCISE: Exercise = {
-  order: 0,
-  name: "",
-  variant: "",
-  sets: [],
-};
+import { useWorkoutEditor } from "../../../hooks/useWorkoutEditor";
 
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const userId = useAppSelector((state) => state.auth.userId);
-  const { scheduleWrite, flushKey } = useExerciseHistoryWriter(userId);
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const {
+    workout,
+    exercisesObject,
+    onSetsChange,
+    exerciseNameChangeHandler,
+    closeHandler,
+    addNewExercise,
+    onDateChange,
+  } = useWorkoutEditor(userId, workoutId);
+
   const [historySheet, setHistorySheet] = useState<{
     visible: boolean;
     exerciseKey: string;
     exerciseVariant: string;
   }>({ visible: false, exerciseKey: "", exerciseVariant: "" });
 
-  useEffect(() => {
-    FirestoreActions.fetchData(userId, workoutId).then((data) => {
-      if (data) setWorkout(data as Workout);
-    });
-  }, [userId, workoutId]);
-
   if (!workout) return null;
-
-  const exercisesObject: ExerciseMap = Object.fromEntries(
-    Object.entries(workout)
-      .filter(([k]) => k !== "date")
-      .map(([k, v]) => {
-        const ex = v as Exercise;
-        return [k, Array.isArray(ex.sets) ? ex : { ...ex, sets: [] }];
-      }),
-  ) as ExerciseMap;
-
-  async function saveWorkout(updated: Workout) {
-    setWorkout(updated);
-    await FirestoreActions.updateWorkoutById(userId, workoutId, updated);
-  }
-
-  function onSetsChange(key: string, sets: SetEntry[]) {
-    const updated: ExerciseMap = { ...exercisesObject };
-    updated[key] = { ...updated[key], sets };
-    saveWorkout({ ...workout!, ...updated });
-    scheduleWrite(key, updated);
-  }
-
-  async function exerciseNameChangeHandler(
-    name: string,
-    variant: string,
-    key: string,
-    customExerciseId?: string,
-  ) {
-    const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
-    const newKey = normalizeExerciseKey(variant);
-    if (oldKey && oldKey !== newKey) {
-      await flushKey(key, exercisesObject);
-    }
-    const updated: ExerciseMap = { ...exercisesObject };
-    const patch: Partial<Exercise> = { name, variant };
-    if (customExerciseId !== undefined)
-      patch.customExerciseId = customExerciseId;
-    else delete updated[key].customExerciseId;
-    updated[key] = { ...updated[key], ...patch };
-    saveWorkout({ ...workout!, ...updated });
-    if (newKey && oldKey !== newKey) {
-      await FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, name);
-    }
-  }
-
-  function closeHandler(key: string) {
-    const updated = { ...workout! };
-    delete (updated as Record<string, unknown>)[key];
-    saveWorkout(updated);
-  }
-
-  function addNewExercise() {
-    const key = `exercise_${Date.now()}`;
-    const updated: ExerciseMap = {
-      ...exercisesObject,
-      [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
-    };
-    saveWorkout({ ...workout!, ...updated });
-  }
-
-  function handleDateChange(_event: unknown, selectedDate?: Date) {
-    if (Platform.OS === "android") setShowDatePicker(false);
-    if (selectedDate) {
-      saveWorkout({ ...workout!, date: Timestamp.fromDate(selectedDate) });
-    }
-  }
-
-  const dateLabel = (() => {
-    if (!workout.date) return "No date";
-    const d = workout.date.toDate();
-    const month = d.toLocaleDateString(undefined, { month: "long" });
-    const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-    return `${month} ${d.getDate()}, ${weekday}`;
-  })();
 
   function onHistoryPress(key: string) {
     const exercise = exercisesObject[key];
@@ -132,38 +42,8 @@ export default function WorkoutDetailScreen() {
   }
 
   return (
-    <SafeAreaView
-      edges={["bottom"]}
-      style={{ flex: 1, backgroundColor: "#fff" }}
-    >
-      <View style={styles.subHeader}>
-        <View style={styles.dateRow}>
-          <Pressable onPress={() => setShowDatePicker(true)}>
-            <Text style={[styles.dateLabel, styles.editableDate]}>
-              {dateLabel} ✎
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {showDatePicker && (
-        <View style={styles.datePickerContainer}>
-          <DateTimePicker
-            value={workout.date ? workout.date.toDate() : new Date()}
-            mode="date"
-            display={Platform.OS === "ios" ? "inline" : "default"}
-            onChange={handleDateChange}
-          />
-          {Platform.OS === "ios" && (
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              style={styles.datePickerDone}
-            >
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>Done</Text>
-            </Pressable>
-          )}
-        </View>
-      )}
+    <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: "#fff" }}>
+      <WorkoutDatePicker date={workout.date} onDateChange={onDateChange} />
 
       <KeyboardAwareScrollView
         contentContainerStyle={styles.content}
@@ -203,32 +83,6 @@ export default function WorkoutDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  subHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-  },
-  dateRow: { flex: 1 },
-  dateLabel: { fontSize: 18, fontWeight: "600" },
-  editableDate: { color: "#007AFF" },
-  datePickerContainer: {
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    alignItems: "center",
-    paddingBottom: 8,
-  },
-  datePickerDone: {
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    backgroundColor: "#007AFF",
-    borderRadius: 6,
-  },
   content: { padding: 12, paddingBottom: 40 },
   addButton: {
     marginTop: 12,

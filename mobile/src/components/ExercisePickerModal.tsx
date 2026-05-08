@@ -1,4 +1,4 @@
-import { useState, useMemo, useContext } from "react";
+import { useState, useContext } from "react";
 import {
   Modal,
   View,
@@ -8,10 +8,11 @@ import {
   SectionList,
   StyleSheet,
 } from "react-native";
-import exerciseCatalogUpdated from "@shared/data/exerciseCatalogUpdated";
 import { UserProfileContext } from "../../app/_layout";
 import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
+import { MuscleTagStep } from "./MuscleTagStep";
+import { useExerciseSearch } from "../../hooks/useExerciseSearch";
 
 interface ExercisePickerModalProps {
   visible: boolean;
@@ -19,26 +20,7 @@ interface ExercisePickerModalProps {
   onClose: () => void;
 }
 
-interface Section {
-  title: string;
-  data: string[];
-  isCustom?: boolean;
-}
-
-const PARENT_GROUPS = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
-
-const ALL_CATALOG_SECTIONS: Section[] = exerciseCatalogUpdated.data.map(
-  (e) => ({
-    title: e.name,
-    data: e.variants ?? [],
-  }),
-);
-
-export function ExercisePickerModal({
-  visible,
-  onSelect,
-  onClose,
-}: ExercisePickerModalProps) {
+export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePickerModalProps) {
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<"search" | "tagMuscle">("search");
   const [pendingName, setPendingName] = useState("");
@@ -47,45 +29,7 @@ export function ExercisePickerModal({
   const userId = useAppSelector((state) => state.auth.userId);
   const customExercises = ctx?.userProfile.customExercises ?? {};
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-
-    const customNames = Object.values(customExercises).map((e) => e.name);
-    const filteredCustom = q
-      ? customNames.filter((n) => n.toLowerCase().includes(q))
-      : customNames;
-
-    const filteredCatalog = q
-      ? ALL_CATALOG_SECTIONS.map((section) => ({
-          ...section,
-          data: section.data.filter(
-            (v) =>
-              v.toLowerCase().includes(q) ||
-              section.title.toLowerCase().includes(q),
-          ),
-        })).filter((s) => s.data.length > 0)
-      : ALL_CATALOG_SECTIONS;
-
-    const sections: Section[] = [];
-    if (filteredCustom.length > 0) {
-      sections.push({
-        title: "My Exercises",
-        data: filteredCustom,
-        isCustom: true,
-      });
-    }
-    return [...sections, ...filteredCatalog];
-  }, [search, customExercises]);
-
-  const trimmed = search.trim();
-  const showAddCustom =
-    trimmed.length > 0 &&
-    !Object.values(customExercises).some(
-      (e) => e.name.toLowerCase() === trimmed.toLowerCase(),
-    ) &&
-    !ALL_CATALOG_SECTIONS.some((s) =>
-      s.data.some((v) => v.toLowerCase() === trimmed.toLowerCase()),
-    );
+  const { filtered, trimmed, showAddCustom } = useExerciseSearch(search, customExercises);
 
   function handleSelect(name: string, variant: string) {
     reset();
@@ -120,46 +64,12 @@ export function ExercisePickerModal({
 
   if (step === "tagMuscle") {
     return (
-      <Modal
+      <MuscleTagStep
         visible={visible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleClose}
-      >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>"{pendingName}"</Text>
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>Cancel</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.tagPrompt}>
-            Which muscle group does this target?
-          </Text>
-          {PARENT_GROUPS.map((group) => (
-            <Pressable
-              key={group}
-              onPress={() => handleTagAndSelect(group)}
-              style={({ pressed }) => [
-                styles.item,
-                pressed && styles.itemPressed,
-              ]}
-            >
-              <Text style={styles.itemText}>{group}</Text>
-            </Pressable>
-          ))}
-          <Pressable
-            onPress={() => handleTagAndSelect(null)}
-            style={({ pressed }) => [
-              styles.item,
-              styles.skipItem,
-              pressed && styles.itemPressed,
-            ]}
-          >
-            <Text style={[styles.itemText, styles.skipText]}>Skip</Text>
-          </Pressable>
-        </View>
-      </Modal>
+        exerciseName={pendingName}
+        onSelect={handleTagAndSelect}
+        onClose={handleClose}
+      />
     );
   }
 
@@ -202,20 +112,14 @@ export function ExercisePickerModal({
             section.isCustom ? (
               <Pressable
                 onPress={() => handleSelect(item, item)}
-                style={({ pressed }) => [
-                  styles.item,
-                  pressed && styles.itemPressed,
-                ]}
+                style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
               >
                 <Text style={styles.itemText}>{item}</Text>
               </Pressable>
             ) : (
               <Pressable
                 onPress={() => handleSelect(section.title, item)}
-                style={({ pressed }) => [
-                  styles.item,
-                  pressed && styles.itemPressed,
-                ]}
+                style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
               >
                 <Text style={styles.itemText}>{item}</Text>
               </Pressable>
@@ -227,11 +131,7 @@ export function ExercisePickerModal({
             showAddCustom ? (
               <Pressable
                 onPress={handleAddCustom}
-                style={({ pressed }) => [
-                  styles.item,
-                  styles.addCustomItem,
-                  pressed && styles.itemPressed,
-                ]}
+                style={({ pressed }) => [styles.item, styles.addCustomItem, pressed && styles.itemPressed]}
               >
                 <Text style={styles.addCustomText}>
                   Add "{trimmed}" as custom exercise
@@ -296,19 +196,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
-  },
-  tagPrompt: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#555",
-  },
-  skipItem: {
-    marginTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#eee",
-  },
-  skipText: {
-    color: "#999",
   },
 });

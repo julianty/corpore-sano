@@ -152,6 +152,11 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 ## Roadmap
 
+### P2
+
+- Fix dark mode — device setting not being read correctly; wire up a manual override toggle in settings
+- UI update — mock up and implement UI improvements across the app
+
 ### P3
 
 - ~~Workout list: split into time envelopes (this week / last week / older)~~ ✓ done

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { View, StyleSheet, Text, Pressable } from "react-native";
+import { Alert, View, StyleSheet, Text, Pressable } from "react-native";
 import { Workout, Exercise } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
@@ -67,7 +67,10 @@ export function WorkoutCard({
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
-            onDelete(workoutId);
+            Alert.alert("Delete Workout", "Delete this workout? This cannot be undone.", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Delete", style: "destructive", onPress: () => onDelete(workoutId) },
+            ]);
           }}
           style={styles.deleteButton}
         >

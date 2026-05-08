@@ -1,118 +1,52 @@
-import { useContext, useState } from "react";
-import { View, StyleSheet, Pressable, Text } from "react-native";
-import { ExerciseRowProps, SetEntry } from "@shared/types";
+import { useContext } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import type { Exercise } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
-import { ExercisePickerModal } from "./ExercisePickerModal";
-import { SetRow } from "./SetRow";
-import { lbsToKg, kgToLbs } from "@shared/lib/utils";
 
-export function ExerciseRow({
-  exercise,
-  exerciseKey,
-  onSetsChange,
-  closeHandler,
-  exerciseNameChangeHandler,
-  editMode,
-  onHistoryPress,
-}: ExerciseRowProps) {
+interface Props {
+  exercise: Exercise;
+  onPress: () => void;
+}
+
+export function ExerciseRow({ exercise, onPress }: Props) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
   const customExercises = ctx?.userProfile.customExercises;
-  const [pickerVisible, setPickerVisible] = useState(false);
 
   const resolvedName = exercise.customExerciseId
     ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.variant)
     : exercise.variant;
   const displayName = exercise.variant || resolvedName || "Select exercise";
-  const hasExercise = exercise.variant || resolvedName;
+  const hasExercise = !!(exercise.variant || resolvedName);
 
-  function updateSet(index: number, field: keyof SetEntry, rawValue: string) {
-    const value = parseFloat(rawValue);
-    if (isNaN(value)) return;
-    const updated = exercise.sets.map((s, i) => {
-      if (i !== index) return s;
-      if (field === "weightlbs")
-        return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
-      if (field === "weightkg")
-        return { ...s, weightkg: value, weightlbs: kgToLbs(value) };
-      return { ...s, [field]: value };
-    });
-    onSetsChange(exerciseKey, updated);
-  }
+  const validSets = exercise.sets.filter((s) => s.reps > 0 || s.weightlbs > 0 || s.weightkg > 0);
 
-  function addSet() {
-    const lastSet = exercise.sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
-    onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
-  }
-
-  function removeSet(index: number) {
-    onSetsChange(
-      exerciseKey,
-      exercise.sets.filter((_, i) => i !== index),
-    );
+  function formatSet(s: (typeof validSets)[number]) {
+    const weight = weightUnit === "lbs" ? s.weightlbs : Math.round(s.weightkg * 10) / 10;
+    return `${s.reps} × ${weight}`;
   }
 
   return (
-    <View style={styles.card}>
-      <View style={styles.nameRow}>
-        <Pressable
-          style={[styles.nameButton, !hasExercise && styles.nameButtonEmpty]}
-          onPress={() => setPickerVisible(true)}
-        >
-          <Text
-            style={[styles.nameText, !hasExercise && styles.nameTextPlaceholder]}
-            numberOfLines={1}
-          >
-            {displayName}
-          </Text>
-        </Pressable>
-        <ExercisePickerModal
-          visible={pickerVisible}
-          onClose={() => setPickerVisible(false)}
-          onSelect={(name, variant, customExerciseId) => {
-            exerciseNameChangeHandler(name, variant, exerciseKey, customExerciseId);
-            setPickerVisible(false);
-          }}
-        />
-        {onHistoryPress && hasExercise && (
-          <Pressable onPress={() => onHistoryPress(exerciseKey)} style={styles.historyButton}>
-            <Text style={styles.historyButtonText}>↑</Text>
-          </Pressable>
-        )}
-        {editMode && (
-          <Pressable onPress={() => closeHandler(exerciseKey)} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>×</Text>
-          </Pressable>
-        )}
-      </View>
-
-      {exercise.sets.length > 0 && (
-        <View style={styles.setHeader}>
-          <Text style={[styles.headerLabel, styles.setNumCol]}>#</Text>
-          <Text style={[styles.headerLabel, styles.setField]}>Reps</Text>
-          <Text style={[styles.headerLabel, styles.setField]}>
-            Weight ({weightUnit})
-          </Text>
-          {editMode && <View style={styles.removeSpacer} />}
+    <Pressable style={styles.card} onPress={onPress}>
+      <Text
+        style={[styles.name, !hasExercise && styles.namePlaceholder]}
+        numberOfLines={1}
+      >
+        {displayName}
+      </Text>
+      {validSets.length === 0 ? (
+        <Text style={styles.empty}>Tap to add sets</Text>
+      ) : (
+        <View style={styles.setsRow}>
+          {validSets.map((s, i) => (
+            <View key={i} style={styles.setBadge}>
+              <Text style={styles.setBadgeText}>{formatSet(s)}</Text>
+            </View>
+          ))}
+          <Text style={styles.unit}>{weightUnit}</Text>
         </View>
       )}
-
-      {exercise.sets.map((set, index) => (
-        <SetRow
-          key={index}
-          index={index}
-          set={set}
-          weightUnit={weightUnit}
-          editMode={editMode}
-          onUpdate={updateSet}
-          onRemove={removeSet}
-        />
-      ))}
-
-      <Pressable onPress={addSet} style={styles.addSetButton}>
-        <Text style={styles.addSetText}>+ Add Set</Text>
-      </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -121,67 +55,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 4,
-    padding: 8,
+    padding: 12,
     marginVertical: 4,
-    gap: 4,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  nameButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
     backgroundColor: "#fff",
+    gap: 6,
   },
-  nameButtonEmpty: { borderColor: "#ddd" },
-  nameText: { fontSize: 12, color: "#222" },
-  nameTextPlaceholder: { color: "#999" },
-  historyButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 24,
-    height: 24,
-  },
-  historyButtonText: { fontSize: 16, fontWeight: "bold", color: "#007AFF" },
-  closeButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 24,
-    height: 24,
-  },
-  closeButtonText: { fontSize: 20, fontWeight: "bold", color: "#999" },
-  setHeader: {
+  name: { fontSize: 14, fontWeight: "600", color: "#222" },
+  namePlaceholder: { color: "#999" },
+  empty: { fontSize: 12, color: "#aaa" },
+  setsRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
-    gap: 4,
-    marginTop: 2,
+    gap: 6,
   },
-  headerLabel: {
-    fontSize: 10,
-    color: "#666",
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  setNumCol: {
-    width: 20,
-    textAlign: "center",
-  },
-  setField: { flex: 1 },
-  removeSpacer: { width: 24 },
-  addSetButton: {
-    marginTop: 2,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+  setBadge: {
     backgroundColor: "#f0f0f0",
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 7,
   },
-  addSetText: { fontSize: 12, fontWeight: "600", color: "#333" },
+  setBadgeText: { fontSize: 12, color: "#444" },
+  unit: { fontSize: 11, color: "#999" },
 });

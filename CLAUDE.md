@@ -86,10 +86,16 @@ mobile/app/
   (tabs)/
     _layout.tsx            # Bottom tab navigator
     index.tsx              # Dashboard
-    workouts/              # Workouts list + per-workout detail
-  workout-mode/
-    [workoutId].tsx        # Active workout editing screen (to be replaced by drawer)
+    workouts/
+      index.tsx            # Workout list (paginated, date desc)
+      [workoutId].tsx      # Workout detail — exercise summary cards + ExerciseEditDrawer
 ```
+
+Key mobile-only components:
+
+- `mobile/components/ExerciseEditDrawer.tsx` — bottom sheet for set editing; auto-fetches and displays exercise history stats (max, median, sets this week) on open
+- `mobile/src/components/ExerciseRow.tsx` — summary card showing exercise name + per-set badges (`reps × weight`); tapping opens the drawer
+- `mobile/src/components/WorkoutCard.tsx` — workout list card with date, duration, exercise names; deletion requires Alert confirmation
 
 ## Design system
 
@@ -122,14 +128,10 @@ Document schema:
 
 - Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
-- History UI: `mobile/components/ExerciseHistorySheet.tsx` — triggered by history icon on exercise card
+- History UI: embedded in `ExerciseEditDrawer` — fetched from Firestore when drawer opens; displays max, median, and sets-this-week chips inline above the set list
 - Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount; exposes `flushKey(uuid, exercises)` for targeted single-key flush
 - Mid-workout history read merges Firestore `allLifts` with current in-memory session sets client-side before computing stats
 - Exercise rename handling: `exerciseNameChangeHandler` in `[workoutId].tsx` flushes the old key's pending timer, then calls `migrateExerciseHistory` which merges both keys' full `allLifts` arrays, writes to the new key, and deletes the old key — **needs manual testing** (see Testing section below)
-
-### Known bugs (P1)
-
-**Exercise deletion orphans history doc:** `closeHandler(key)` deletes the exercise from the workout doc but not the corresponding `userStats/{userId}/exercises/{exerciseKey}` Firestore document.
 
 ### Testing checklist
 
@@ -145,16 +147,6 @@ Document schema:
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.
 
 ## Roadmap
-
-### P1 — Bugs
-
-- Fix exercise deletion not cleaning up history doc
-
-### P2 — Next features
-
-- Workout list: sort by date descending
-- "Are you sure" dialogs for deletion (exercises and workouts)
-- Drawer replaces inline editing in workout mode — `workout-mode/[workoutId].tsx` is removed; exercise editing moves into a bottom drawer launched when an exercise is selected
 
 ### P3
 

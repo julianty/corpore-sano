@@ -5,9 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useAppSelector } from "@shared/hooks";
 import { ExerciseRow } from "../../../src/components/ExerciseRow";
-import { ExerciseHistorySheet } from "../../../components/ExerciseHistorySheet";
+import { ExerciseEditDrawer } from "../../../components/ExerciseEditDrawer";
 import { WorkoutDatePicker } from "../../../components/WorkoutDatePicker";
-import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
 import { useWorkoutEditor } from "../../../hooks/useWorkoutEditor";
 
 export default function WorkoutDetailScreen() {
@@ -23,23 +22,11 @@ export default function WorkoutDetailScreen() {
     onDateChange,
   } = useWorkoutEditor(userId, workoutId);
 
-  const [historySheet, setHistorySheet] = useState<{
-    visible: boolean;
-    exerciseKey: string;
-    exerciseVariant: string;
-  }>({ visible: false, exerciseKey: "", exerciseVariant: "" });
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   if (!workout) return null;
 
-  function onHistoryPress(key: string) {
-    const exercise = exercisesObject[key];
-    if (!exercise) return;
-    setHistorySheet({
-      visible: true,
-      exerciseKey: normalizeExerciseKey(exercise.variant),
-      exerciseVariant: exercise.variant,
-    });
-  }
+  const activeExercise = activeKey ? exercisesObject[activeKey] : null;
 
   return (
     <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -52,17 +39,11 @@ export default function WorkoutDetailScreen() {
       >
         {Object.entries(exercisesObject)
           .sort(([, a], [, b]) => a.order - b.order)
-          .map(([key, exercise]) => (
+          .map(([key]) => (
             <ExerciseRow
               key={key}
-              exercise={exercise}
-              exerciseKey={key}
-              onSetsChange={onSetsChange}
-              closeHandler={closeHandler}
-              exerciseNameChangeHandler={exerciseNameChangeHandler}
-              editMode={true}
-              isMobile={true}
-              onHistoryPress={onHistoryPress}
+              exercise={exercisesObject[key]}
+              onPress={() => setActiveKey(key)}
             />
           ))}
         <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
@@ -70,14 +51,21 @@ export default function WorkoutDetailScreen() {
         </TouchableOpacity>
       </KeyboardAwareScrollView>
 
-      <ExerciseHistorySheet
-        visible={historySheet.visible}
-        onDismiss={() => setHistorySheet((s) => ({ ...s, visible: false }))}
-        exerciseKey={historySheet.exerciseKey}
-        exerciseVariant={historySheet.exerciseVariant}
-        userId={userId}
-        sessionSets={[]}
-      />
+      {activeKey && activeExercise && (
+        <ExerciseEditDrawer
+          visible={true}
+          onDismiss={() => setActiveKey(null)}
+          exercise={activeExercise}
+          exerciseKey={activeKey}
+          userId={userId}
+          onSetsChange={onSetsChange}
+          exerciseNameChangeHandler={exerciseNameChangeHandler}
+          closeHandler={(key) => {
+            setActiveKey(null);
+            closeHandler(key);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

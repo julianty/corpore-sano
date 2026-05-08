@@ -40,7 +40,7 @@ export default function WorkoutsScreen() {
   }
 
   function deleteWorkout(id: string) {
-    FirestoreActions.deleteWorkoutById(userId, id);
+    FirestoreActions.deleteWorkoutWithHistory(userId, id);
     setWorkoutIds((ids) => ids.filter((wid) => wid !== id));
   }
 

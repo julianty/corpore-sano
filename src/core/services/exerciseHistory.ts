@@ -61,6 +61,23 @@ export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
   };
 }
 
+// Removes lifts matching the given set signatures using one-to-one consumption,
+// so duplicate weights/reps only remove the exact count present in `sets`.
+export function removeMatchingLifts(
+  allLifts: Lift[],
+  sets: { weight: number; reps: number }[],
+): Lift[] {
+  const pool = [...sets];
+  return allLifts.filter((lift) => {
+    const idx = pool.findIndex((s) => s.weight === lift.weight && s.reps === lift.reps);
+    if (idx !== -1) {
+      pool.splice(idx, 1);
+      return false;
+    }
+    return true;
+  });
+}
+
 // Replaces any stored lifts from `today` with `sessionLifts`, preserving all other dates.
 export function mergeLifts(
   storedLifts: Lift[],

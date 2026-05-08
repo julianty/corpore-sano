@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Web app (root)
+
 ```bash
 npm run dev        # Vite dev server
 npm run build      # tsc + vite build
@@ -14,6 +15,7 @@ npx jest path/to/file.test.ts  # Single test file
 ```
 
 ### Mobile app (`mobile/`)
+
 ```bash
 cd mobile
 npm run start      # Expo dev server (Expo Go)
@@ -35,14 +37,14 @@ Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.nativ
 
 ### Shared vs. platform-specific
 
-| Shared (`src/`, via `@shared`) | Web-only | Mobile-only (`mobile/`) |
-|---|---|---|
-| Redux store, slices, typed hooks | Mantine components | Expo Router layouts/screens |
-| Domain types (`types.ts`) | SVG muscle diagram | React Native Paper components |
-| `FirestoreActions` CRUD | Design tokens / Mantine theme | Bottom tab navigation |
-| Muscle calculation services | | `.native.ts` Firebase init |
-| Exercise catalog + muscle group data | | |
-| Date helpers, unit conversion | | |
+| Shared (`src/`, via `@shared`)       | Web-only                      | Mobile-only (`mobile/`)       |
+| ------------------------------------ | ----------------------------- | ----------------------------- |
+| Redux store, slices, typed hooks     | Mantine components            | Expo Router layouts/screens   |
+| Domain types (`types.ts`)            | SVG muscle diagram            | React Native Paper components |
+| `FirestoreActions` CRUD              | Design tokens / Mantine theme | Bottom tab navigation         |
+| Muscle calculation services          |                               | `.native.ts` Firebase init    |
+| Exercise catalog + muscle group data |                               |                               |
+| Date helpers, unit conversion        |                               |                               |
 
 ### Domain types (`src/types.ts`)
 
@@ -99,13 +101,17 @@ mobile/app/
 Firestore collection: `userStats/{userId}/exercises/{exerciseKey}` where `exerciseKey` is a normalized camelCase slug via `normalizeExerciseKey()` (e.g. `"benchPress"`).
 
 Document schema:
+
 ```json
 {
   "exerciseName": "Bench Press",
   "allLifts": [{ "weight": 225, "reps": 8, "date": "2026-04-08" }],
   "computed": {
-    "maxWeight": 245, "minWeight": 135, "medianWeight": 185,
-    "setsThisWeek": 9, "setsWeekOf": "2026-04-28"
+    "maxWeight": 245,
+    "minWeight": 135,
+    "medianWeight": 185,
+    "setsThisWeek": 9,
+    "setsWeekOf": "2026-04-28"
   }
 }
 ```
@@ -128,6 +134,7 @@ Document schema:
 ### Testing checklist
 
 **Exercise rename history (just fixed):**
+
 1. Log sets under exercise "A" across multiple past workouts so `exerciseA` has historical data in Firestore.
 2. In a new workout, add exercise "A", log 2+ sets (<30s so timer is still pending).
 3. Rename to "B" — verify immediately: `userStats/{userId}/exercises/exerciseA` is deleted, `exerciseB` exists and contains both today's sets AND all prior historical lifts.
@@ -140,17 +147,21 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 ## Roadmap
 
 ### P1 — Bugs
+
 - Fix exercise deletion not cleaning up history doc
 
 ### P2 — Next features
+
 - Workout list: sort by date descending
 - "Are you sure" dialogs for deletion (exercises and workouts)
 - Drawer replaces inline editing in workout mode — `workout-mode/[workoutId].tsx` is removed; exercise editing moves into a bottom drawer launched when an exercise is selected
 
 ### P3
+
 - Workout list: split into time envelopes (this week / last week / older)
 - Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume
 
 ### P4
+
 - RPE field on `SetEntry` data model (schema change, add to exercise logging UI)
 - History refinement: aggregate stats by parent muscle group (e.g. Preacher Curl rolls up into Biceps summary)

@@ -104,6 +104,13 @@ export function useExerciseHistoryWriter(userId: string | null) {
     [],
   );
 
+  const cancelKey = useCallback((firestoreKey: string) => {
+    const pending = timersRef.current[firestoreKey];
+    if (!pending) return;
+    clearTimeout(pending.timerId);
+    delete timersRef.current[firestoreKey];
+  }, []);
+
   // Function to clear out pending writes
   const flushAll = useCallback(() => {
     Object.entries(timersRef.current).forEach(
@@ -128,5 +135,5 @@ export function useExerciseHistoryWriter(userId: string | null) {
       flushAll();
     };
   }, [flushAll]);
-  return { scheduleWrite, flushKey, flushAll };
+  return { scheduleWrite, flushKey, cancelKey, flushAll };
 }

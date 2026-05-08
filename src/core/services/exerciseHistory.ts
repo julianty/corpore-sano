@@ -10,6 +10,8 @@ export interface ComputedStats {
   medianWeight: number;
   setsThisWeek: number;
   setsWeekOf: string; // ISO date of current week's Monday
+  bestSetWeight: number; // weight of the highest-volume set ever, in kg
+  bestSetReps: number; // reps of the highest-volume set ever
 }
 
 export interface ExerciseHistoryDoc {
@@ -27,16 +29,7 @@ export function normalizeExerciseKey(name: string): string {
 }
 
 export function getCurrentWeekMonday(): string {
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-  const daysFromMonday = (dayOfWeek + 6) % 7;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - daysFromMonday);
-  // Use local date parts to avoid UTC-offset shifting the date string
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, "0");
-  const d = String(monday.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return getMondayOf(new Date());
 }
 
 function median(sorted: number[]): number {
@@ -46,18 +39,36 @@ function median(sorted: number[]): number {
     : sorted[mid];
 }
 
+function getMondayOf(date: Date): string {
+  const dayOfWeek = date.getDay();
+  const daysFromMonday = (dayOfWeek + 6) % 7;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - daysFromMonday);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, "0");
+  const d = String(monday.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 // mondayStr is injectable for testing; defaults to current week's Monday
 export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
   const weekMonday = mondayStr ?? getCurrentWeekMonday();
   const weights = lifts.map((l) => l.weight).sort((a, b) => a - b);
-  const setsThisWeek = lifts.filter((l) => l.date >= weekMonday).length;
+  const thisWeekLifts = lifts.filter((l) => l.date >= weekMonday);
+
+  const bestSet = lifts.reduce<Lift | null>(
+    (best, l) => (!best || l.weight * l.reps > best.weight * best.reps ? l : best),
+    null,
+  );
 
   return {
     maxWeight: weights.length ? weights[weights.length - 1] : 0,
     minWeight: weights.length ? weights[0] : 0,
     medianWeight: weights.length ? median(weights) : 0,
-    setsThisWeek,
+    setsThisWeek: thisWeekLifts.length,
     setsWeekOf: weekMonday,
+    bestSetWeight: bestSet?.weight ?? 0,
+    bestSetReps: bestSet?.reps ?? 0,
   };
 }
 

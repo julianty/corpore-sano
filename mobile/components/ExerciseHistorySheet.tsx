@@ -70,6 +70,7 @@ export function ExerciseHistorySheet({
     return `${Math.round(val * 10) / 10} ${weightUnit}`;
   }
 
+
   return (
     <Modal
       visible={visible}
@@ -91,12 +92,15 @@ export function ExerciseHistorySheet({
           ) : stats ? (
             <View style={styles.grid}>
               <StatRow label="All-time max" value={fmt(stats.maxWeight)} />
-              <StatRow
-                label="Sets this week"
-                value={String(stats.setsThisWeek)}
-              />
-              <StatRow label="Min weight" value={fmt(stats.minWeight)} />
               <StatRow label="Median weight" value={fmt(stats.medianWeight)} />
+              <StatRow label="Min weight" value={fmt(stats.minWeight)} />
+              <StatRow label="Sets this week" value={String(stats.setsThisWeek)} />
+              {stats.bestSetReps > 0 && (
+                <StatRow
+                  label="Max volume"
+                  value={`${stats.bestSetReps} × ${fmt(stats.bestSetWeight)}`}
+                />
+              )}
             </View>
           ) : null}
 

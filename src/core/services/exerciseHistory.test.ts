@@ -94,6 +94,15 @@ describe("computeStats", () => {
     expect(stats.minWeight).toBe(0);
     expect(stats.medianWeight).toBe(0);
     expect(stats.setsThisWeek).toBe(0);
+    expect(stats.bestSetWeight).toBe(0);
+    expect(stats.bestSetReps).toBe(0);
+  });
+
+  it("picks the set with the highest weight*reps as the best set", () => {
+    const stats = computeStats([...LAST_WEEK, ...THIS_WEEK], MONDAY);
+    // LAST_WEEK: 90*8=720, 95*8=760 ← winner; THIS_WEEK: 100*5=500, 110*5=550, 120*3=360
+    expect(stats.bestSetWeight).toBe(95);
+    expect(stats.bestSetReps).toBe(8);
   });
 
   it("computes median for an even-length array as the average of two middle values", () => {

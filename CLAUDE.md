@@ -93,7 +93,7 @@ mobile/app/
 
 Key mobile-only components:
 
-- `mobile/components/ExerciseEditDrawer.tsx` — bottom sheet for set editing; auto-fetches and displays exercise history stats (max, median, sets this week) on open
+- `mobile/components/ExerciseEditDrawer.tsx` — bottom sheet for set editing; auto-fetches and displays exercise history stats (max, median, sets this week, max volume set) on open
 - `mobile/src/components/ExerciseRow.tsx` — summary card showing exercise name + per-set badges (`reps × weight`); tapping opens the drawer
 - `mobile/src/components/WorkoutCard.tsx` — workout list card with date, duration, exercise names; deletion requires Alert confirmation
 
@@ -117,10 +117,14 @@ Document schema:
     "minWeight": 135,
     "medianWeight": 185,
     "setsThisWeek": 9,
-    "setsWeekOf": "2026-04-28"
+    "setsWeekOf": "2026-04-28",
+    "bestSetWeight": 102,
+    "bestSetReps": 8
   }
 }
 ```
+
+`bestSetWeight`/`bestSetReps` represent the single set with the highest `weight × reps` ever. Displayed as "Max Volume" chip in `ExerciseEditDrawer` and `ExerciseHistorySheet` as `reps × weight` (no unit label in the chip).
 
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
 
@@ -128,7 +132,7 @@ Document schema:
 
 - Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
-- History UI: embedded in `ExerciseEditDrawer` — fetched from Firestore when drawer opens; displays max, median, and sets-this-week chips inline above the set list
+- History UI: embedded in `ExerciseEditDrawer` — fetched from Firestore when drawer opens; displays max, median, sets-this-week, and max-volume chips inline above the set list. `ExerciseHistorySheet` shows the same stats in a full-screen list view.
 - Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount; exposes `flushKey(uuid, exercises)` for targeted single-key flush
 - Mid-workout history read merges Firestore `allLifts` with current in-memory session sets client-side before computing stats
 - Exercise rename handling: `exerciseNameChangeHandler` in `[workoutId].tsx` flushes the old key's pending timer, then calls `migrateExerciseHistory` which merges both keys' full `allLifts` arrays, writes to the new key, and deletes the old key — **needs manual testing** (see Testing section below)
@@ -151,7 +155,7 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 ### P3
 
 - ~~Workout list: split into time envelopes (this week / last week / older)~~ ✓ done
-- Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume
+- ~~Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume~~ ✓ done (max-volume set only: `bestSetWeight` + `bestSetReps`)
 
 ### P4
 

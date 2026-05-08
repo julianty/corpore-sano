@@ -78,6 +78,7 @@ export function ExerciseEditDrawer({
     return `${Math.round(val * 10) / 10} ${weightUnit}`;
   }
 
+
   function updateSet(index: number, field: keyof SetEntry, rawValue: string) {
     const value = parseFloat(rawValue);
     if (isNaN(value)) return;
@@ -156,6 +157,12 @@ export function ExerciseEditDrawer({
               <StatChip label="Max" value={fmt(stats.maxWeight)} />
               <StatChip label="Median" value={fmt(stats.medianWeight)} />
               <StatChip label="This week" value={`${stats.setsThisWeek} sets`} />
+              {stats.bestSetReps > 0 && (
+                <StatChip
+                  label="Max Volume"
+                  value={`${stats.bestSetReps} × ${Math.round((weightUnit === "lbs" ? kgToLbs(stats.bestSetWeight) : stats.bestSetWeight) * 10) / 10}`}
+                />
+              )}
             </View>
           ) : (
             hasExercise && (

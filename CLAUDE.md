@@ -184,8 +184,17 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 - ~~Workout list: split into time envelopes (this week / last week / older)~~ ✓ done
 - ~~Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume~~ ✓ done (max-volume set only: `bestSetWeight` + `bestSetReps`)
+- Today indicator on workout list — badge on `WorkoutCard` when `workout.date` is today
+- Exercise picker shortcut — `+ Add Exercise` opens `ExercisePickerModal` directly; dismissing without selecting creates no exercise (no intermediate empty card)
 
 ### P4
 
+- Weighted volume on dashboard — replace set counts with volume weighted by muscle activation; build a lookup table mapping ~20-30 compound lifts to primary/secondary movers (simple hand-curated splits, not full EMG percentages); update `buildMuscleSummary` / `rollupToParentGroups` to output weighted volume
+- 2-week activity feed on dashboard — new component below `WeeklySummary` showing last 2 weeks of workouts (date, duration, exercise names); new Firestore fetch, no schema change
+- Set types on `SetEntry` — add optional `type?: 'normal' | 'warmup' | 'amrap'` field; warm-up sets excluded from history stats (max weight, median, volume); AMRAP counted normally; UI in `ExerciseEditDrawer` set rows; non-breaking schema change (backfill as 'normal')
+- Muscle group history — inline "last week" column added to `WeeklySummary` table; rows become tappable, opening a detail screen with 4-week sets-per-week breakdown + last worked date; requires expanding Firestore query window beyond current 7-day limit
 - RPE field on `SetEntry` data model (schema change, add to exercise logging UI)
-- History refinement: aggregate stats by parent muscle group (e.g. Preacher Curl rolls up into Biceps summary)
+
+### P5
+
+- Google OAuth sign-in — alongside existing email/password flow; low priority, not blocking App Store submission

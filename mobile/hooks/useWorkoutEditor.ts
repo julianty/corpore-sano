@@ -106,14 +106,15 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     }
   }
 
-  function addNewExercise() {
-    if (!workout) return;
+  function addNewExercise(): string | null {
+    if (!workout) return null;
     const key = `exercise_${Date.now()}`;
     const updated: ExerciseMap = {
       ...exercisesObject,
       [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
     };
     saveWorkout({ ...workout, ...updated });
+    return key;
   }
 
   function onDateChange(date: Date) {

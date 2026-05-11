@@ -66,6 +66,10 @@ export function ExerciseEditDrawer({
   const hasExercise = !!(exercise.variant || resolvedName);
 
   useEffect(() => {
+    if (visible && !exercise.variant) setPickerVisible(true);
+  }, [visible]);
+
+  useEffect(() => {
     if (!visible || !exercise.variant) return;
     const key = normalizeExerciseKey(exercise.variant);
     if (!key) return;
@@ -145,7 +149,13 @@ export function ExerciseEditDrawer({
 
           <ExercisePickerModal
             visible={pickerVisible}
-            onClose={() => setPickerVisible(false)}
+            onClose={() => {
+              setPickerVisible(false);
+              if (!exercise.variant) {
+                closeHandler(exerciseKey);
+                onDismiss();
+              }
+            }}
             onSelect={(name, variant, customExerciseId) => {
               exerciseNameChangeHandler(name, variant, exerciseKey, customExerciseId);
               setPickerVisible(false);

@@ -49,7 +49,7 @@ export default function WorkoutDetailScreen() {
               onPress={() => setActiveKey(key)}
             />
           ))}
-        <TouchableOpacity onPress={addNewExercise} style={styles.addButton}>
+        <TouchableOpacity onPress={() => { const key = addNewExercise(); if (key) setActiveKey(key); }} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Exercise</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>

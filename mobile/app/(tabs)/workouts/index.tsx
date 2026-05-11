@@ -14,6 +14,7 @@ import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { Workout } from "@shared/types";
 import { WorkoutCard } from "../../../src/components/WorkoutCard";
+import { useAppTheme, type AppColors } from "../../../hooks/useAppTheme";
 
 type WorkoutSummary = { id: string; date: Timestamp };
 type Section = { title: string; data: WorkoutSummary[] };
@@ -52,6 +53,8 @@ export default function WorkoutsScreen() {
   const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   useEffect(() => {
     FirestoreActions.fetchWorkoutSummaries(userId).then(setWorkouts);
@@ -81,7 +84,7 @@ export default function WorkoutsScreen() {
   const sections = groupIntoSections(workouts);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
@@ -108,28 +111,30 @@ export default function WorkoutsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 6,
-    backgroundColor: "#fff",
-  },
-  sectionHeaderText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#888",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  fab: {
-    position: "absolute",
-    right: 16,
-    bottom: 24,
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  fabText: { color: "#fff", fontWeight: "600" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    sectionHeader: {
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 6,
+      backgroundColor: c.background,
+    },
+    sectionHeaderText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: c.textSecondary,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    fab: {
+      position: "absolute",
+      right: 16,
+      bottom: 24,
+      backgroundColor: c.accent,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    fabText: { color: c.textInverse, fontWeight: "600" },
+  });
+}

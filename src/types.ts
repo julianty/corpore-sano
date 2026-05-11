@@ -71,7 +71,7 @@ export interface MuscleSummary {
 export interface UserProfile {
   username?: string | undefined;
   weightUnit: "lbs" | "kg";
-  colorScheme: "light" | "dark";
+  colorScheme: "light" | "dark" | "system";
   exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
   customExercises?: Record<

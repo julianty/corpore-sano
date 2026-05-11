@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import { UserProfileContext } from "../../app/_layout";
 import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 const PARENT_GROUPS = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
 
@@ -11,6 +12,8 @@ export function CustomExercises() {
   const userId = useAppSelector((state) => state.auth.userId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   if (!ctx) return null;
   const { userProfile, setUserProfile } = ctx;
@@ -91,6 +94,8 @@ export function CustomExercises() {
                     onSubmitEditing={() => saveRename(id)}
                     returnKeyType="done"
                     selectTextOnFocus
+                    placeholderTextColor={colors.textMuted}
+                    color={colors.textPrimary}
                   />
                   <Pressable
                     onPress={() => saveRename(id)}
@@ -156,65 +161,68 @@ export function CustomExercises() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 8 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  empty: { fontSize: 14, color: "#999", fontStyle: "italic" },
-  item: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  itemHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#fafafa",
-  },
-  itemHeaderLeft: { flex: 1 },
-  itemName: { fontSize: 15, fontWeight: "500", color: "#111" },
-  itemGroup: { fontSize: 12, color: "#888", marginTop: 2 },
-  chevron: { fontSize: 12, color: "#aaa" },
-  editBody: {
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    gap: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 15,
-  },
-  renameButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 6,
-    paddingVertical: 8,
-    alignItems: "center",
-  },
-  renameButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
-  groupLabel: { fontSize: 12, fontWeight: "600", color: "#555" },
-  groupGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  groupChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    backgroundColor: "#f5f5f5",
-  },
-  groupChipActive: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
-  groupChipText: { fontSize: 13, color: "#333" },
-  groupChipTextActive: { color: "#fff" },
-  deleteButton: {
-    paddingVertical: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#cc3300",
-    borderRadius: 6,
-  },
-  deleteButtonText: { color: "#cc3300", fontWeight: "500", fontSize: 14 },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { padding: 16, gap: 8 },
+    label: { fontSize: 14, fontWeight: "600", marginBottom: 4, color: c.textPrimary },
+    empty: { fontSize: 14, color: c.textMuted, fontStyle: "italic" },
+    item: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      overflow: "hidden",
+    },
+    itemHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 12,
+      backgroundColor: c.surface,
+    },
+    itemHeaderLeft: { flex: 1 },
+    itemName: { fontSize: 15, fontWeight: "500", color: c.textPrimary },
+    itemGroup: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    chevron: { fontSize: 12, color: c.textMuted },
+    editBody: {
+      padding: 12,
+      borderTopWidth: 1,
+      borderTopColor: c.borderSubtle,
+      gap: 10,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      borderRadius: 6,
+      padding: 10,
+      fontSize: 15,
+      color: c.textPrimary,
+    },
+    renameButton: {
+      backgroundColor: c.accent,
+      borderRadius: 6,
+      paddingVertical: 8,
+      alignItems: "center",
+    },
+    renameButtonText: { color: c.textInverse, fontWeight: "600", fontSize: 14 },
+    groupLabel: { fontSize: 12, fontWeight: "600", color: c.textSecondary },
+    groupGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    groupChip: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      backgroundColor: c.surface,
+    },
+    groupChipActive: { backgroundColor: c.accent, borderColor: c.accent },
+    groupChipText: { fontSize: 13, color: c.textPrimary },
+    groupChipTextActive: { color: c.textInverse },
+    deleteButton: {
+      paddingVertical: 8,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: c.danger,
+      borderRadius: 6,
+    },
+    deleteButtonText: { color: c.danger, fontWeight: "500", fontSize: 14 },
+  });
+}

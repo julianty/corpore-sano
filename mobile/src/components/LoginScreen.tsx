@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { signIn, signUp } from "../lib/auth";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface LoginScreenProps {
   onDemoMode: () => void;
@@ -21,6 +22,8 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
@@ -57,7 +60,7 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
       <TextInput
         style={styles.input}
         placeholder="Email"
-        placeholderTextColor="#999"
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         keyboardType="email-address"
         returnKeyType="next"
@@ -67,7 +70,7 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
       <TextInput
         style={styles.input}
         placeholder="Password"
-        placeholderTextColor="#999"
+        placeholderTextColor={colors.textMuted}
         secureTextEntry
         returnKeyType="done"
         onSubmitEditing={handleSubmit}
@@ -83,7 +86,7 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.textInverse} />
         ) : (
           <Text style={styles.primaryButtonText}>
             {mode === "signin" ? "Sign In" : "Sign Up"}
@@ -113,74 +116,76 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 32,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 4,
-    color: "#000",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 32,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    marginBottom: 12,
-    color: "#000",
-  },
-  error: {
-    color: "#cc3300",
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  toggleText: {
-    color: "#007AFF",
-    fontSize: 14,
-    textAlign: "center",
-  },
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    marginVertical: 24,
-  },
-  demoButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-  },
-  demoButtonText: {
-    color: "#555",
-    fontSize: 15,
-  },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 32,
+      backgroundColor: c.background,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: c.textPrimary,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: c.textSecondary,
+      marginBottom: 32,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      marginBottom: 12,
+      color: c.textPrimary,
+    },
+    error: {
+      color: c.danger,
+      fontSize: 13,
+      marginBottom: 12,
+    },
+    primaryButton: {
+      backgroundColor: c.accent,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: "center",
+      marginTop: 4,
+      marginBottom: 16,
+    },
+    primaryButtonDisabled: {
+      opacity: 0.6,
+    },
+    primaryButtonText: {
+      color: c.textInverse,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    toggleText: {
+      color: c.accent,
+      fontSize: 14,
+      textAlign: "center",
+    },
+    divider: {
+      borderTopWidth: 1,
+      borderTopColor: c.borderSubtle,
+      marginVertical: 24,
+    },
+    demoButton: {
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      alignItems: "center",
+    },
+    demoButtonText: {
+      color: c.textSecondary,
+      fontSize: 15,
+    },
+  });
+}

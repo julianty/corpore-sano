@@ -8,6 +8,7 @@ import { ExerciseRow } from "../../../src/components/ExerciseRow";
 import { ExerciseEditDrawer } from "../../../components/ExerciseEditDrawer";
 import { WorkoutDatePicker } from "../../../components/WorkoutDatePicker";
 import { useWorkoutEditor } from "../../../hooks/useWorkoutEditor";
+import { useAppTheme, type AppColors } from "../../../hooks/useAppTheme";
 
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -23,13 +24,15 @@ export default function WorkoutDetailScreen() {
   } = useWorkoutEditor(userId, workoutId);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   if (!workout) return null;
 
   const activeExercise = activeKey ? exercisesObject[activeKey] : null;
 
   return (
-    <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: colors.background }}>
       <WorkoutDatePicker date={workout.date} onDateChange={onDateChange} />
 
       <KeyboardAwareScrollView
@@ -70,17 +73,19 @@ export default function WorkoutDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: 12, paddingBottom: 40 },
-  addButton: {
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-  },
-  addButtonText: { fontSize: 14, fontWeight: "600", color: "#333" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    content: { padding: 12, paddingBottom: 40 },
+    addButton: {
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      backgroundColor: c.surfaceVariant,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+    },
+    addButtonText: { fontSize: 14, fontWeight: "600", color: c.textPrimary },
+  });
+}

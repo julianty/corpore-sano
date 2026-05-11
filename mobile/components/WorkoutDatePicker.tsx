@@ -2,6 +2,7 @@ import { useState } from "react";
 import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
+import { useAppTheme, type AppColors } from "../hooks/useAppTheme";
 
 interface Props {
   date: Timestamp | undefined;
@@ -10,6 +11,8 @@ interface Props {
 
 export function WorkoutDatePicker({ date, onDateChange }: Props) {
   const [showPicker, setShowPicker] = useState(false);
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const dateLabel = (() => {
     if (!date) return "No date";
@@ -50,28 +53,30 @@ export function WorkoutDatePicker({ date, onDateChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  subHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-  },
-  dateLabel: { fontSize: 18, fontWeight: "600" },
-  editableDate: { color: "#007AFF" },
-  datePickerContainer: {
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    alignItems: "center",
-    paddingBottom: 8,
-  },
-  datePickerDone: {
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    backgroundColor: "#007AFF",
-    borderRadius: 6,
-  },
-  datePickerDoneText: { fontSize: 13, fontWeight: "600", color: "#fff" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    subHeader: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    dateLabel: { fontSize: 18, fontWeight: "600", color: c.textPrimary },
+    editableDate: { color: c.accent },
+    datePickerContainer: {
+      backgroundColor: c.background,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      alignItems: "center",
+      paddingBottom: 8,
+    },
+    datePickerDone: {
+      marginTop: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 20,
+      backgroundColor: c.accent,
+      borderRadius: 6,
+    },
+    datePickerDoneText: { fontSize: 13, fontWeight: "600", color: c.textInverse },
+  });
+}

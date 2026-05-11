@@ -1,5 +1,5 @@
 import { useEffect, useState, createContext } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, useColorScheme } from "react-native";
 import { Slot } from "expo-router";
 import { Provider } from "react-redux";
 import { store } from "@shared/store";
@@ -14,6 +14,7 @@ export type UserProfileContextType = {
   userProfile: UserProfile;
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
   handleSignOut: () => void;
+  resolvedColorScheme: "light" | "dark";
 };
 
 export const UserProfileContext = createContext<
@@ -28,10 +29,12 @@ function AppProviders() {
   const [authChecked, setAuthChecked] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
 
+  const deviceScheme = useColorScheme() ?? "dark";
+
   const [userProfile, setUserProfile] = useState<UserProfile>({
     username: displayName,
     weightUnit: "lbs",
-    colorScheme: "dark",
+    colorScheme: "system",
   });
 
   // Listen for Firebase auth state changes
@@ -65,7 +68,7 @@ function AppProviders() {
         ...prev,
         username: displayName,
         weightUnit: profile.weightUnit,
-        colorScheme: profile.colorScheme,
+        colorScheme: profile.colorScheme ?? "system",
         customExercises: profile.customExercises ?? {},
       }));
     });
@@ -89,13 +92,16 @@ function AppProviders() {
     });
   }
 
+  const resolvedColorScheme: "light" | "dark" =
+    userProfile.colorScheme === "system" ? deviceScheme : userProfile.colorScheme;
+
   if (!isAuthenticated) {
     return <LoginScreen onDemoMode={() => setDemoMode(true)} />;
   }
 
   return (
     <UserProfileContext.Provider
-      value={{ userProfile, setUserProfile, handleSignOut }}
+      value={{ userProfile, setUserProfile, handleSignOut, resolvedColorScheme }}
     >
       <Slot />
     </UserProfileContext.Provider>

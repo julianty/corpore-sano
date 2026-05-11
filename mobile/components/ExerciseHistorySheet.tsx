@@ -16,11 +16,12 @@ import type {
 import type { SetEntry } from "@shared/types";
 import { kgToLbs } from "@shared/lib/utils";
 import { UserProfileContext } from "../app/_layout";
+import { useAppTheme, type AppColors } from "../hooks/useAppTheme";
 
 interface Props {
   visible: boolean;
   onDismiss: () => void;
-  exerciseKey: string; // normalized slug, e.g. "bench-press"
+  exerciseKey: string;
   exerciseVariant: string;
   userId: string;
   sessionSets: SetEntry[];
@@ -36,15 +37,15 @@ export function ExerciseHistorySheet({
 }: Props) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const [stats, setStats] = useState<ComputedStats | null>(null);
   const [hasHistory, setHasHistory] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  // Cache fetched Firestore lifts so stats can recompute without re-fetching
   const storedLiftsRef = useRef<Lift[]>([]);
 
-  // Fetch from Firestore only when the sheet opens or the exercise changes
   useEffect(() => {
     if (!visible) return;
     setFetchLoading(true);
@@ -57,7 +58,6 @@ export function ExerciseHistorySheet({
       .finally(() => setFetchLoading(false));
   }, [visible, exerciseKey, userId]);
 
-  // Recompute stats whenever stored lifts finish loading or session sets change
   useEffect(() => {
     if (!visible || fetchLoading) return;
 
@@ -69,7 +69,6 @@ export function ExerciseHistorySheet({
     const val = weightUnit === "lbs" ? kgToLbs(kg) : kg;
     return `${Math.round(val * 10) / 10} ${weightUnit}`;
   }
-
 
   return (
     <Modal
@@ -91,14 +90,15 @@ export function ExerciseHistorySheet({
             </Text>
           ) : stats ? (
             <View style={styles.grid}>
-              <StatRow label="All-time max" value={fmt(stats.maxWeight)} />
-              <StatRow label="Median weight" value={fmt(stats.medianWeight)} />
-              <StatRow label="Min weight" value={fmt(stats.minWeight)} />
-              <StatRow label="Sets this week" value={String(stats.setsThisWeek)} />
+              <StatRow label="All-time max" value={fmt(stats.maxWeight)} colors={colors} />
+              <StatRow label="Median weight" value={fmt(stats.medianWeight)} colors={colors} />
+              <StatRow label="Min weight" value={fmt(stats.minWeight)} colors={colors} />
+              <StatRow label="Sets this week" value={String(stats.setsThisWeek)} colors={colors} />
               {stats.bestSetReps > 0 && (
                 <StatRow
                   label="Max volume"
                   value={`${stats.bestSetReps} × ${fmt(stats.bestSetWeight)}`}
+                  colors={colors}
                 />
               )}
             </View>
@@ -113,7 +113,8 @@ export function ExerciseHistorySheet({
   );
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
+function StatRow({ label, value, colors }: { label: string; value: string; colors: AppColors }) {
+  const styles = makeStyles(colors);
   return (
     <View style={styles.statRow}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -122,57 +123,59 @@ function StatRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 24,
-    paddingBottom: 40,
-    gap: 16,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    backgroundColor: "#ddd",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111",
-  },
-  spinner: { marginVertical: 24 },
-  empty: {
-    fontSize: 14,
-    color: "#888",
-    textAlign: "center",
-    marginVertical: 24,
-  },
-  grid: { gap: 12 },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    paddingBottom: 8,
-  },
-  statLabel: { fontSize: 14, color: "#555" },
-  statValue: { fontSize: 16, fontWeight: "700", color: "#111" },
-  closeBtn: {
-    marginTop: 8,
-    paddingVertical: 12,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  closeBtnText: { fontSize: 15, fontWeight: "600", color: "#333" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: "flex-end",
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 24,
+      paddingBottom: 40,
+      gap: 16,
+    },
+    handle: {
+      width: 36,
+      height: 4,
+      backgroundColor: c.handle,
+      borderRadius: 2,
+      alignSelf: "center",
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: c.textPrimary,
+    },
+    spinner: { marginVertical: 24 },
+    empty: {
+      fontSize: 14,
+      color: c.textSecondary,
+      textAlign: "center",
+      marginVertical: 24,
+    },
+    grid: { gap: 12 },
+    statRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderSubtle,
+      paddingBottom: 8,
+    },
+    statLabel: { fontSize: 14, color: c.textSecondary },
+    statValue: { fontSize: 16, fontWeight: "700", color: c.textPrimary },
+    closeBtn: {
+      marginTop: 8,
+      paddingVertical: 12,
+      backgroundColor: c.surfaceVariant,
+      borderRadius: 8,
+      alignItems: "center",
+    },
+    closeBtnText: { fontSize: 15, fontWeight: "600", color: c.textPrimary },
+  });
+}

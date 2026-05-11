@@ -1,25 +1,36 @@
 import { useContext } from "react";
-import {
-  View,
-  StyleSheet,
-  useColorScheme,
-  Text,
-  Pressable,
-} from "react-native";
+import { View, StyleSheet, Text, Pressable } from "react-native";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
 import { UserProfileContext } from "../../app/_layout";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
+import type { UserProfile } from "@shared/types";
+
+type ColorSchemeOption = UserProfile["colorScheme"];
+
+const COLOR_SCHEME_OPTIONS: { value: ColorSchemeOption; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
 
 export function UserPreferences() {
   const ctx = useContext(UserProfileContext);
   const userId = useAppSelector((state) => state.auth.userId);
-  const colorScheme = useColorScheme();
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   if (!ctx) return null;
   const { userProfile, setUserProfile } = ctx;
 
   function updateWeightUnit(unit: "lbs" | "kg") {
     const updated = { ...userProfile, weightUnit: unit };
+    setUserProfile(updated);
+    FirestoreActions.updateUserProfile(userId, updated);
+  }
+
+  function updateColorScheme(scheme: ColorSchemeOption) {
+    const updated = { ...userProfile, colorScheme: scheme };
     setUserProfile(updated);
     FirestoreActions.updateUserProfile(userId, updated);
   }
@@ -62,27 +73,47 @@ export function UserPreferences() {
         </Pressable>
       </View>
 
-      <Text style={styles.note}>
-        Color scheme follows your device setting ({colorScheme ?? "unknown"})
-      </Text>
+      <Text style={styles.label}>Color Scheme</Text>
+      <View style={styles.buttonGroup}>
+        {COLOR_SCHEME_OPTIONS.map(({ value, label }) => (
+          <Pressable
+            key={value}
+            onPress={() => updateColorScheme(value)}
+            style={[
+              styles.button,
+              userProfile.colorScheme === value && styles.buttonActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.buttonText,
+                userProfile.colorScheme === value && styles.buttonTextActive,
+              ]}
+            >
+              {label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  buttonGroup: { flexDirection: "row", gap: 8 },
-  button: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-  },
-  buttonActive: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
-  buttonText: { color: "#333", fontWeight: "500" },
-  buttonTextActive: { color: "#fff" },
-  note: { marginTop: 16, opacity: 0.6, fontSize: 12 },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { padding: 16, gap: 12 },
+    label: { fontSize: 14, fontWeight: "600", marginBottom: 4, color: c.textPrimary },
+    buttonGroup: { flexDirection: "row", gap: 8 },
+    button: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      alignItems: "center",
+    },
+    buttonActive: { backgroundColor: c.accent, borderColor: c.accent },
+    buttonText: { color: c.textPrimary, fontWeight: "500" },
+    buttonTextActive: { color: c.textInverse },
+  });
+}

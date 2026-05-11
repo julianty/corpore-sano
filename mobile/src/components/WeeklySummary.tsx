@@ -4,6 +4,7 @@ import {
   ScrollView,
   View,
   Text,
+  StyleSheet,
   ActivityIndicator as RNActivityIndicator,
 } from "react-native";
 
@@ -24,6 +25,7 @@ import {
   ParentGroupSummary,
 } from "@shared/core/services/muscleCalculations";
 import { UserProfileContext } from "../../app/_layout";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 
@@ -41,6 +43,8 @@ export function WeeklySummary() {
     Core: { sets: 0 },
     Legs: { sets: 0 },
   });
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const exerciseMap = useMemo(
     () => createExerciseMap(exerciseCatalog.data),
@@ -71,71 +75,23 @@ export function WeeklySummary() {
     return <RNActivityIndicator size="large" style={{ marginTop: 24 }} />;
 
   return (
-    <View
-      style={{
-        margin: 16,
-        backgroundColor: "#f5f5f5",
-        borderRadius: 8,
-        overflow: "hidden",
-      }}
-    >
-      <View
-        style={{
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: "#ddd",
-        }}
-      >
-        <Text style={{ fontSize: 16, fontWeight: "600" }}>
-          Muscle Groups This Week
-        </Text>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>Muscle Groups This Week</Text>
       </View>
       <ScrollView horizontal>
         <View>
-          {/* Header row */}
-          <View
-            style={{
-              flexDirection: "row",
-              borderBottomWidth: 1,
-              borderBottomColor: "#ddd",
-            }}
-          >
-            <View
-              style={{
-                width: 110,
-                paddingVertical: 8,
-                paddingHorizontal: 8,
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontWeight: "600", fontSize: 12 }}>Group</Text>
+          <View style={styles.tableHeaderRow}>
+            <View style={styles.colGroup}>
+              <Text style={styles.tableHeaderText}>Group</Text>
             </View>
-            <View
-              style={{
-                width: 110,
-                paddingVertical: 8,
-                paddingHorizontal: 8,
-                justifyContent: "center",
-                alignItems: "flex-end",
-              }}
-            >
-              <Text style={{ fontWeight: "600", fontSize: 12 }}>Sets</Text>
+            <View style={styles.colSets}>
+              <Text style={styles.tableHeaderText}>Sets</Text>
             </View>
-            <View
-              style={{
-                width: 130,
-                paddingVertical: 8,
-                paddingHorizontal: 8,
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontWeight: "600", fontSize: 12 }}>
-                Last Worked
-              </Text>
+            <View style={styles.colLast}>
+              <Text style={styles.tableHeaderText}>Last Worked</Text>
             </View>
           </View>
-          {/* Data rows */}
           {parentGroups.map((group) => {
             const data = parentGroups_[group];
             const last =
@@ -143,44 +99,15 @@ export function WeeklySummary() {
                 ? "7+ days ago"
                 : getLastWorkedText(data.daysSinceLast);
             return (
-              <View
-                key={group}
-                style={{
-                  flexDirection: "row",
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#eee",
-                }}
-              >
-                <View
-                  style={{
-                    width: 110,
-                    paddingVertical: 8,
-                    paddingHorizontal: 8,
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 12 }}>{group}</Text>
+              <View key={group} style={styles.tableRow}>
+                <View style={styles.colGroup}>
+                  <Text style={styles.cellText}>{group}</Text>
                 </View>
-                <View
-                  style={{
-                    width: 110,
-                    paddingVertical: 8,
-                    paddingHorizontal: 8,
-                    justifyContent: "center",
-                    alignItems: "flex-end",
-                  }}
-                >
-                  <Text style={{ fontSize: 12 }}>{data.sets}</Text>
+                <View style={styles.colSets}>
+                  <Text style={styles.cellText}>{data.sets}</Text>
                 </View>
-                <View
-                  style={{
-                    width: 130,
-                    paddingVertical: 8,
-                    paddingHorizontal: 8,
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 11 }}>{last}</Text>
+                <View style={styles.colLast}>
+                  <Text style={styles.cellText}>{last}</Text>
                 </View>
               </View>
             );
@@ -189,4 +116,37 @@ export function WeeklySummary() {
       </ScrollView>
     </View>
   );
+}
+
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    card: {
+      margin: 16,
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      overflow: "hidden",
+    },
+    cardHeader: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    cardTitle: { fontSize: 16, fontWeight: "600", color: c.textPrimary },
+    tableHeaderRow: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    tableHeaderText: { fontWeight: "600", fontSize: 12, color: c.textPrimary },
+    tableRow: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderSubtle,
+    },
+    cellText: { fontSize: 12, color: c.textPrimary },
+    colGroup: { width: 110, paddingVertical: 8, paddingHorizontal: 8, justifyContent: "center" },
+    colSets: { width: 110, paddingVertical: 8, paddingHorizontal: 8, justifyContent: "center", alignItems: "flex-end" },
+    colLast: { width: 130, paddingVertical: 8, paddingHorizontal: 8, justifyContent: "center" },
+  });
 }

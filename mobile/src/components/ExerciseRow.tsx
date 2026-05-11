@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Exercise } from "@shared/types";
 import { UserProfileContext } from "../../app/_layout";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface Props {
   exercise: Exercise;
@@ -12,6 +13,8 @@ export function ExerciseRow({ exercise, onPress }: Props) {
   const ctx = useContext(UserProfileContext);
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
   const customExercises = ctx?.userProfile.customExercises;
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const resolvedName = exercise.customExerciseId
     ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.variant)
@@ -50,31 +53,33 @@ export function ExerciseRow({ exercise, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 12,
-    marginVertical: 4,
-    backgroundColor: "#fff",
-    gap: 6,
-  },
-  name: { fontSize: 14, fontWeight: "600", color: "#222" },
-  namePlaceholder: { color: "#999" },
-  empty: { fontSize: 12, color: "#aaa" },
-  setsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 6,
-  },
-  setBadge: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-  },
-  setBadgeText: { fontSize: 12, color: "#444" },
-  unit: { fontSize: 11, color: "#999" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    card: {
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      borderRadius: 4,
+      padding: 12,
+      marginVertical: 4,
+      backgroundColor: c.background,
+      gap: 6,
+    },
+    name: { fontSize: 14, fontWeight: "600", color: c.textPrimary },
+    namePlaceholder: { color: c.textMuted },
+    empty: { fontSize: 12, color: c.textMuted },
+    setsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 6,
+    },
+    setBadge: {
+      backgroundColor: c.surfaceVariant,
+      borderRadius: 4,
+      paddingVertical: 3,
+      paddingHorizontal: 7,
+    },
+    setBadgeText: { fontSize: 12, color: c.textPrimary },
+    unit: { fontSize: 11, color: c.textMuted },
+  });
+}

@@ -13,6 +13,7 @@ import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { MuscleTagStep } from "./MuscleTagStep";
 import { useExerciseSearch } from "../../hooks/useExerciseSearch";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface ExercisePickerModalProps {
   visible: boolean;
@@ -24,6 +25,8 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<"search" | "tagMuscle">("search");
   const [pendingName, setPendingName] = useState("");
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const ctx = useContext(UserProfileContext);
   const userId = useAppSelector((state) => state.auth.userId);
@@ -90,10 +93,11 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
         <TextInput
           style={styles.searchInput}
           placeholder="Search exercises..."
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
           autoFocus
+          color={colors.textPrimary}
         />
         <SectionList
           sections={filtered}
@@ -145,56 +149,59 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  title: { fontSize: 18, fontWeight: "700" },
-  closeButton: { padding: 8 },
-  closeText: { fontSize: 16, color: "#007AFF" },
-  searchInput: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    fontSize: 16,
-    backgroundColor: "#f8f8f8",
-  },
-  sectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#555",
-    backgroundColor: "#f0f0f0",
-  },
-  sectionHeaderCustom: {
-    color: "#007AFF",
-    backgroundColor: "#eef4ff",
-  },
-  item: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#eee",
-  },
-  itemPressed: { backgroundColor: "#e8f0fe" },
-  itemText: { fontSize: 16, color: "#222" },
-  addCustomItem: {
-    marginTop: 8,
-    borderBottomWidth: 0,
-  },
-  addCustomText: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    title: { fontSize: 18, fontWeight: "700", color: c.textPrimary },
+    closeButton: { padding: 8 },
+    closeText: { fontSize: 16, color: c.accent },
+    searchInput: {
+      marginHorizontal: 16,
+      marginBottom: 8,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      fontSize: 16,
+      backgroundColor: c.surfaceVariant,
+      color: c.textPrimary,
+    },
+    sectionHeader: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      fontSize: 14,
+      fontWeight: "700",
+      color: c.textSecondary,
+      backgroundColor: c.surfaceVariant,
+    },
+    sectionHeaderCustom: {
+      color: c.accent,
+      backgroundColor: c.accentSubtle,
+    },
+    item: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.borderSubtle,
+    },
+    itemPressed: { backgroundColor: c.accentSubtle },
+    itemText: { fontSize: 16, color: c.textPrimary },
+    addCustomItem: {
+      marginTop: 8,
+      borderBottomWidth: 0,
+    },
+    addCustomText: {
+      fontSize: 16,
+      color: c.accent,
+      fontWeight: "600",
+    },
+  });
+}

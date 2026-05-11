@@ -1,4 +1,5 @@
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 const PARENT_GROUPS = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
 
@@ -10,6 +11,9 @@ interface Props {
 }
 
 export function MuscleTagStep({ visible, exerciseName, onSelect, onClose }: Props) {
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
+
   return (
     <Modal
       visible={visible}
@@ -47,37 +51,39 @@ export function MuscleTagStep({ visible, exerciseName, onSelect, onClose }: Prop
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  title: { fontSize: 18, fontWeight: "700" },
-  closeButton: { padding: 8 },
-  closeText: { fontSize: 16, color: "#007AFF" },
-  tagPrompt: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#555",
-  },
-  item: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#eee",
-  },
-  itemPressed: { backgroundColor: "#e8f0fe" },
-  itemText: { fontSize: 16, color: "#222" },
-  skipItem: {
-    marginTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#eee",
-  },
-  skipText: { color: "#999" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    title: { fontSize: 18, fontWeight: "700", color: c.textPrimary },
+    closeButton: { padding: 8 },
+    closeText: { fontSize: 16, color: c.accent },
+    tagPrompt: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: c.textSecondary,
+    },
+    item: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.borderSubtle,
+    },
+    itemPressed: { backgroundColor: c.accentSubtle },
+    itemText: { fontSize: 16, color: c.textPrimary },
+    skipItem: {
+      marginTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.borderSubtle,
+    },
+    skipText: { color: c.textMuted },
+  });
+}

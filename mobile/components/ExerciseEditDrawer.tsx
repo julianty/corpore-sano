@@ -22,6 +22,7 @@ import {
   computeStats,
 } from "@shared/core/services/exerciseHistory";
 import type { ComputedStats } from "@shared/core/services/exerciseHistory";
+import { useAppTheme, type AppColors } from "../hooks/useAppTheme";
 
 interface Props {
   visible: boolean;
@@ -55,6 +56,8 @@ export function ExerciseEditDrawer({
   const [pickerVisible, setPickerVisible] = useState(false);
   const [stats, setStats] = useState<ComputedStats | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   const resolvedName = exercise.customExerciseId
     ? (customExercises?.[exercise.customExerciseId]?.name ?? exercise.variant)
@@ -77,7 +80,6 @@ export function ExerciseEditDrawer({
     const val = weightUnit === "lbs" ? kgToLbs(kg) : kg;
     return `${Math.round(val * 10) / 10} ${weightUnit}`;
   }
-
 
   function updateSet(index: number, field: keyof SetEntry, rawValue: string) {
     const value = parseFloat(rawValue);
@@ -154,13 +156,14 @@ export function ExerciseEditDrawer({
             <ActivityIndicator style={styles.historySpinner} />
           ) : stats ? (
             <View style={styles.statsRow}>
-              <StatChip label="Max" value={fmt(stats.maxWeight)} />
-              <StatChip label="Median" value={fmt(stats.medianWeight)} />
-              <StatChip label="This week" value={`${stats.setsThisWeek} sets`} />
+              <StatChip label="Max" value={fmt(stats.maxWeight)} colors={colors} />
+              <StatChip label="Median" value={fmt(stats.medianWeight)} colors={colors} />
+              <StatChip label="This week" value={`${stats.setsThisWeek} sets`} colors={colors} />
               {stats.bestSetReps > 0 && (
                 <StatChip
                   label="Max Volume"
                   value={`${stats.bestSetReps} × ${Math.round((weightUnit === "lbs" ? kgToLbs(stats.bestSetWeight) : stats.bestSetWeight) * 10) / 10}`}
+                  colors={colors}
                 />
               )}
             </View>
@@ -204,7 +207,8 @@ export function ExerciseEditDrawer({
   );
 }
 
-function StatChip({ label, value }: { label: string; value: string }) {
+function StatChip({ label, value, colors }: { label: string; value: string; colors: AppColors }) {
+  const styles = makeStyles(colors);
   return (
     <View style={styles.statChip}>
       <Text style={styles.statValue}>{value}</Text>
@@ -213,105 +217,107 @@ function StatChip({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 60,
-    minHeight: "50%",
-    maxHeight: "85%",
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    backgroundColor: "#ddd",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginVertical: 12,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  nameButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: "#fff",
-  },
-  nameButtonEmpty: { borderColor: "#ddd" },
-  nameText: { fontSize: 14, fontWeight: "600", color: "#222" },
-  nameTextPlaceholder: { color: "#999" },
-  iconButton: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  removeText: { fontSize: 24, fontWeight: "bold", color: "#999" },
-  historySpinner: { marginVertical: 8 },
-  statsRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
-  },
-  statChip: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    gap: 2,
-  },
-  statValue: { fontSize: 14, fontWeight: "700", color: "#111" },
-  statLabel: { fontSize: 10, color: "#888", textTransform: "uppercase" },
-  noHistory: { fontSize: 12, color: "#aaa", marginBottom: 12 },
-  setsScroll: { flexGrow: 0 },
-  setHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 4,
-  },
-  headerLabel: {
-    fontSize: 10,
-    color: "#666",
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  setNumCol: { width: 20, textAlign: "center" },
-  setField: { flex: 1 },
-  removeSpacer: { width: 24 },
-  addSetButton: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-  },
-  addSetText: { fontSize: 13, fontWeight: "600", color: "#333" },
-  doneButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  doneButtonText: { fontSize: 15, fontWeight: "600", color: "#fff" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: c.overlay,
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingHorizontal: 16,
+      paddingBottom: 60,
+      minHeight: "50%",
+      maxHeight: "85%",
+    },
+    handle: {
+      width: 36,
+      height: 4,
+      backgroundColor: c.handle,
+      borderRadius: 2,
+      alignSelf: "center",
+      marginVertical: 12,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 12,
+    },
+    nameButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      borderRadius: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      backgroundColor: c.surfaceVariant,
+    },
+    nameButtonEmpty: { borderColor: c.border },
+    nameText: { fontSize: 14, fontWeight: "600", color: c.textPrimary },
+    nameTextPlaceholder: { color: c.textMuted },
+    iconButton: {
+      width: 32,
+      height: 32,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    removeText: { fontSize: 24, fontWeight: "bold", color: c.textMuted },
+    historySpinner: { marginVertical: 8 },
+    statsRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 12,
+    },
+    statChip: {
+      flex: 1,
+      backgroundColor: c.surfaceVariant,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 6,
+      alignItems: "center",
+      gap: 2,
+    },
+    statValue: { fontSize: 14, fontWeight: "700", color: c.textPrimary },
+    statLabel: { fontSize: 10, color: c.textSecondary, textTransform: "uppercase" },
+    noHistory: { fontSize: 12, color: c.textMuted, marginBottom: 12 },
+    setsScroll: { flexGrow: 0 },
+    setHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      marginBottom: 4,
+    },
+    headerLabel: {
+      fontSize: 10,
+      color: c.textSecondary,
+      fontWeight: "600",
+      textTransform: "uppercase",
+    },
+    setNumCol: { width: 20, textAlign: "center" },
+    setField: { flex: 1 },
+    removeSpacer: { width: 24 },
+    addSetButton: {
+      marginTop: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      backgroundColor: c.surfaceVariant,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+    },
+    addSetText: { fontSize: 13, fontWeight: "600", color: c.textPrimary },
+    doneButton: {
+      marginTop: 16,
+      paddingVertical: 12,
+      backgroundColor: c.accent,
+      borderRadius: 8,
+      alignItems: "center",
+    },
+    doneButtonText: { fontSize: 15, fontWeight: "600", color: c.textInverse },
+  });
+}

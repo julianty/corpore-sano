@@ -7,6 +7,7 @@ import { UserProfileContext } from "../../app/_layout";
 import exerciseCatalogUpdated from "@shared/data/exerciseCatalogUpdated";
 import { createExerciseMap } from "@shared/utils/exerciseLookup";
 import { buildMuscleSummary, rollupToParentGroups } from "@shared/core/services/muscleCalculations";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 const exerciseMap = createExerciseMap(exerciseCatalogUpdated.data);
 
@@ -27,6 +28,8 @@ export function WorkoutCard({
   const ctx = useContext(UserProfileContext);
   const customExercises = ctx?.userProfile.customExercises;
   const [workout, setWorkout] = useState<Workout | null>(null);
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   useEffect(() => {
     FirestoreActions.fetchData(userId, workoutId).then((data) => {
@@ -91,33 +94,35 @@ export function WorkoutCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
-    overflow: "hidden",
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-  },
-  cardTitle: { fontSize: 16, fontWeight: "600" },
-  durationLabel: { fontSize: 12, color: "#888", marginTop: 2 },
-  deleteButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    backgroundColor: "#f44336",
-  },
-  deleteButtonText: { fontSize: 13, fontWeight: "600", color: "#fff" },
-  cardContent: { padding: 12 },
-  emptyText: { fontSize: 14, color: "#999", fontStyle: "italic" },
-  muscleGroupLabel: { fontSize: 14, color: "#555" },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    card: {
+      marginHorizontal: 16,
+      marginVertical: 8,
+      borderRadius: 8,
+      backgroundColor: c.surface,
+      overflow: "hidden",
+    },
+    cardHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    cardTitle: { fontSize: 16, fontWeight: "600", color: c.textPrimary },
+    durationLabel: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+    deleteButton: {
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      borderRadius: 4,
+      backgroundColor: c.dangerBg,
+    },
+    deleteButtonText: { fontSize: 13, fontWeight: "600", color: c.textInverse },
+    cardContent: { padding: 12 },
+    emptyText: { fontSize: 14, color: c.textMuted, fontStyle: "italic" },
+    muscleGroupLabel: { fontSize: 14, color: c.textSecondary },
+  });
+}

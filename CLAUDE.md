@@ -100,7 +100,30 @@ Key mobile-only components:
 ## Design system
 
 - **Web**: Mantine v7, dark theme (`#0b0b0c` background, `#3de8a0` accent), Rajdhani + Barlow Condensed fonts
-- **Mobile**: React Native Paper (Material Design 3), dark color scheme
+- **Mobile**: Custom theme via `useAppTheme()` hook (`mobile/hooks/useAppTheme.ts`). Supports light, dark, and system color schemes. The resolved scheme is exposed as `resolvedColorScheme` on `UserProfileContext` and persisted to Firestore as `UserProfile.colorScheme` (`"light" | "dark" | "system"`).
+
+### Mobile theme tokens (`AppColors`)
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `background` | `#fff` | `#111114` | Screen backgrounds |
+| `surface` | `#f5f5f5` | `#1c1c20` | Cards, bottom sheets, tab bar |
+| `surfaceVariant` | `#f0f0f0` | `#252528` | Chips, badges, secondary buttons |
+| `border` | `#ddd` | `#2e2e34` | Card/sheet borders, dividers |
+| `borderSubtle` | `#eee` | `#222226` | Hairline separators |
+| `borderInput` | `#ccc` | `#3a3a40` | Text inputs, toggle buttons |
+| `handle` | `#ddd` | `#3a3a40` | Drawer drag handles |
+| `overlay` | `rgba(0,0,0,0.4)` | `rgba(0,0,0,0.6)` | Modal backdrops |
+| `textPrimary` | `#111` | `#ebebeb` | Main content text |
+| `textSecondary` | `#555` | `#aaa` | Labels, subdued text |
+| `textMuted` | `#999` | `#666` | Placeholders, hints |
+| `textInverse` | `#fff` | `#fff` | Text on accent/colored backgrounds |
+| `accent` | `#007AFF` | `#007AFF` | Interactive primary (buttons, links) |
+| `accentSubtle` | `#eef4ff` | `#1a2a3a` | Pressed states, tinted backgrounds |
+| `danger` | `#cc3300` | `#ff4422` | Destructive text/borders |
+| `dangerBg` | `#f44336` | `#f44336` | Destructive button backgrounds |
+
+All mobile components consume `useAppTheme()` — never use hardcoded hex colors. Tab bar and stack header are themed via `screenOptions` in their respective `_layout.tsx` files.
 
 ## Exercise History Feature
 
@@ -154,7 +177,7 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 ### P2
 
-- Fix dark mode — device setting not being read correctly; wire up a manual override toggle in settings
+- ~~Fix dark mode — device setting not being read correctly; wire up a manual override toggle in settings~~ ✓ done
 - UI update — mock up and implement UI improvements across the app
 
 ### P3

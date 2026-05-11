@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, TextInput, Pressable, Text, StyleSheet } from "react-native";
 import type { SetEntry } from "@shared/types";
+import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface Props {
   index: number;
@@ -15,6 +16,8 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
   const weightField = `weight${weightUnit}` as keyof SetEntry;
   const [repsText, setRepsText] = useState(String(set.reps));
   const [weightText, setWeightText] = useState(String(set[weightField] ?? 0));
+  const colors = useAppTheme();
+  const styles = makeStyles(colors);
 
   function stripLeadingZero(v: string) {
     return v.replace(/^0+(\d)/, "$1");
@@ -32,7 +35,7 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
           onUpdate(index, "reps", stripped);
         }}
         keyboardType="numeric"
-        placeholderTextColor="#999"
+        placeholderTextColor={colors.textMuted}
         selectTextOnFocus
       />
       <TextInput
@@ -44,7 +47,7 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
           onUpdate(index, weightField, stripped);
         }}
         keyboardType="numeric"
-        placeholderTextColor="#999"
+        placeholderTextColor={colors.textMuted}
         selectTextOnFocus
       />
       {editMode && (
@@ -56,39 +59,42 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
   );
 }
 
-const styles = StyleSheet.create({
-  setRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  setNumCol: {
-    width: 20,
-    textAlign: "center",
-  },
-  setNumLabel: {
-    fontSize: 12,
-    color: "#888",
-  },
-  setField: {
-    flex: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
-    fontSize: 12,
-  },
-  removeButton: {
-    width: 24,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  removeButtonText: {
-    fontSize: 18,
-    color: "#999",
-    fontWeight: "bold",
-  },
-});
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    setRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    setNumCol: {
+      width: 20,
+      textAlign: "center",
+    },
+    setNumLabel: {
+      fontSize: 12,
+      color: c.textSecondary,
+    },
+    setField: {
+      flex: 1,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      borderRadius: 4,
+      padding: 8,
+      fontSize: 12,
+      color: c.textPrimary,
+    },
+    removeButton: {
+      width: 24,
+      height: 32,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    removeButtonText: {
+      fontSize: 18,
+      color: c.textMuted,
+      fontWeight: "bold",
+    },
+  });
+}

@@ -184,7 +184,7 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 - ~~Workout list: split into time envelopes (this week / last week / older)~~ ✓ done
 - ~~Volume history (free tier): track best set volume (reps×weight), total volume, volume this week, best week volume~~ ✓ done (max-volume set only: `bestSetWeight` + `bestSetReps`)
-- Today indicator on workout list — badge on `WorkoutCard` when `workout.date` is today
+- ~~Today indicator on workout list — badge on `WorkoutCard` when `workout.date` is today~~ ✓ done
 - Exercise picker shortcut — `+ Add Exercise` opens `ExercisePickerModal` directly; dismissing without selecting creates no exercise (no intermediate empty card)
 
 ### P4

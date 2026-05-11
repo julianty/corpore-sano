@@ -53,19 +53,31 @@ export function WorkoutCard({
     ? `${Math.round(workout.durationSeconds / 60)} min`
     : null;
 
-  const dateLabel = (() => {
-    if (!workout.date) return "No date";
+  const { dateLabel, isToday } = (() => {
+    if (!workout.date) return { dateLabel: "No date", isToday: false };
     const d = workout.date.toDate();
+    const now = new Date();
+    const today =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
     const month = d.toLocaleDateString(undefined, { month: "long" });
     const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-    return `${month} ${d.getDate()}, ${weekday}`;
+    return { dateLabel: `${month} ${d.getDate()}, ${weekday}`, isToday: today };
   })();
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.cardHeader}>
         <View>
-          <Text style={styles.cardTitle}>{dateLabel}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.cardTitle}>{dateLabel}</Text>
+            {isToday && (
+              <View style={styles.todayBadge}>
+                <Text style={styles.todayBadgeText}>Today</Text>
+              </View>
+            )}
+          </View>
           {durationLabel && (
             <Text style={styles.durationLabel}>{durationLabel}</Text>
           )}
@@ -112,7 +124,15 @@ function makeStyles(c: AppColors) {
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
+    titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     cardTitle: { fontSize: 16, fontWeight: "600", color: c.textPrimary },
+    todayBadge: {
+      backgroundColor: c.accentSubtle,
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    todayBadgeText: { fontSize: 11, fontWeight: "600", color: c.accent },
     durationLabel: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
     deleteButton: {
       paddingVertical: 4,

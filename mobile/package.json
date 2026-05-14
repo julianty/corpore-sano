@@ -5,7 +5,7 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios --device --configuration Release"
   },
   "dependencies": {
     "@expo/ngrok": "^4.0.0",

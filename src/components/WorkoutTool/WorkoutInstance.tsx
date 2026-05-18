@@ -62,12 +62,18 @@ export function WorkoutInstance(props: {
     name: string,
     variant: string,
     key: string,
+    customExerciseId?: string,
   ) {
     // ChangeHandler for the exercise name
     const nextState = {
       ...exercisesObject,
       [key]: { ...exercisesObject[key], name: name, variant: variant },
     };
+    if (customExerciseId !== undefined) {
+      nextState[key].customExerciseId = customExerciseId;
+    } else {
+      delete nextState[key].customExerciseId;
+    }
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
   }
@@ -177,10 +183,7 @@ export function WorkoutInstance(props: {
           undone.
         </Text>
         <Group justify="flex-end">
-          <Button
-            variant="default"
-            onClick={() => setDeleteConfirmOpen(false)}
-          >
+          <Button variant="default" onClick={() => setDeleteConfirmOpen(false)}>
             Cancel
           </Button>
           <Button

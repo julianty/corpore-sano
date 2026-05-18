@@ -50,13 +50,13 @@ Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.nativ
 
 Core types: `Exercise`, `SetEntry`, `Workout`, `ExerciseMap`, `Muscle`, `MuscleSummary`, `UserProfile`.
 
-`Workout.exercises` is an `ExerciseMap` (object keyed by UUID). Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
+`Workout` stores exercises as **flat top-level keys** on the Firestore document alongside `date` — there is no nested `exercises` field. Both apps read by stripping `date` and treating remaining keys as `ExerciseMap`. Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
 
 ### Firestore data model
 
 ```
 users/{userId}/
-  workouts/{workoutId}          # Workout docs (date, exercises, durationSeconds)
+  workouts/{workoutId}          # Workout docs (date, [exerciseKey]: Exercise, durationSeconds?)
   preferences/userProfile       # UserProfile (weightUnit, colorScheme, customExercises, favoriteExercises)
 
 userStats/{userId}/
@@ -173,7 +173,7 @@ Document schema:
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.
 
-## Roadmap
+## Roadmap (Mobile)
 
 ### P2
 
@@ -198,3 +198,34 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 ### P5
 
 - Google OAuth sign-in — alongside existing email/password flow; low priority, not blocking App Store submission
+
+---
+
+## Roadmap (Web)
+
+The mobile app has outpaced the web app on several fronts. The items below bring the web up to parity, plus fix a schema bug introduced during mobile development.
+
+### Critical (data model bugs)
+
+- ~~**Fix `WorkoutInstance` exercises schema**~~ ✓ done — confirmed flat schema is canonical on both apps; removed misleading `exercises?: ExerciseMap` field from `Workout` type.
+- ~~**Remove legacy `ExerciseHistory` type**~~ ✓ done — deleted `ExerciseHistory` interface and `UserProfile.exerciseHistory` from `src/types.ts`.
+- ~~**Fix `ExerciseFieldsProps.exerciseNameChangeHandler` signature**~~ ✓ done — added `customExerciseId?: string` parameter; fixed `undefined` vs `null` guard and added delete-if-absent branch in `WorkoutInstance`.
+
+### P2 (feature parity — port from mobile)
+
+- **Exercise history writes** — port `mobile/hooks/useExerciseHistoryWriter.ts` to `src/hooks/useExerciseHistoryWriter.ts`; wire it into `WorkoutInstance` the same way mobile's `[workoutId].tsx` does: schedule a debounced write on every set change, flush on component unmount. Use `window` visibility change instead of `AppState` for the background-flush equivalent.
+- **Exercise stats display** — on `WorkoutInstance` / `ExerciseRow`, fetch `ExerciseHistoryDoc` from Firestore when a drawer or panel opens and display max weight, median weight, sets this week, and max-volume set as chips (same data as `ExerciseEditDrawer` in mobile). Use existing `fetchExerciseHistory` from `FirestoreActions`.
+- **Duration tracking UI** — `Workout.durationSeconds` is in the type but the web has no UI for it. Add an elapsed timer to `WorkoutInstance` (counts up while the workout is open, same concept as mobile's workout mode) and persist `durationSeconds` on save. Display it on `WorkoutTool` workout cards.
+- **Wire `deleteWorkoutWithHistory`** — the web currently calls `deleteWorkoutById` directly; switch to `deleteWorkoutWithHistory` (already implemented in `FirestoreActions`) so deleting a workout also cleans up its exercise history lifts.
+
+### P3
+
+- **Custom exercises on web** — `UserProfile.customExercises` and `FirestoreActions.updateCustomExercises` exist but there is no web UI. Add custom exercise creation to `UserPreferencesModal` and surface custom exercises in `ExerciseCombobox` (same as mobile's picker).
+- **UI refresh** — visual pass across `WorkoutTool`, `ExerciseRow`, `WorkoutInstance` to match the quality bar set by the mobile redesign.
+- **2-week activity feed on dashboard** — new component below `WeeklySummary` showing last 2 weeks of workouts (date, duration, exercise names); new Firestore fetch, no schema change (shared with mobile P4).
+
+### P4
+
+- Weighted volume on dashboard (shared with mobile P4)
+- Set types on `SetEntry` (shared with mobile P4)
+- Muscle group history (shared with mobile P4)

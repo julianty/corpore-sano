@@ -3,31 +3,32 @@ import {
   getCurrentWeekMonday,
   computeStats,
   mergeLifts,
+  removeMatchingLifts,
 } from "./exerciseHistory";
 import type { Lift } from "./exerciseHistory";
 
 // --- normalizeExerciseKey ---
 
 describe("normalizeExerciseKey", () => {
-  it("lowercases and hyphenates spaces", () => {
-    expect(normalizeExerciseKey("Bench Press")).toBe("bench-press");
+  it("converts multi-word names to camelCase", () => {
+    expect(normalizeExerciseKey("Bench Press")).toBe("benchPress");
   });
 
   it("trims leading/trailing whitespace", () => {
-    expect(normalizeExerciseKey("  Overhead Press  ")).toBe("overhead-press");
+    expect(normalizeExerciseKey("  Overhead Press  ")).toBe("overheadPress");
   });
 
-  it("strips parentheses and other non-alphanumeric chars", () => {
+  it("strips non-alphanumeric chars and camelCases the following letter", () => {
     expect(normalizeExerciseKey("Dumbbell Row (Single Arm)")).toBe(
-      "dumbbell-row-single-arm",
+      "dumbbellRowSingleArm",
     );
   });
 
-  it("collapses consecutive non-alphanumeric chars into a single hyphen", () => {
-    expect(normalizeExerciseKey("Push  --  Up")).toBe("push-up");
+  it("collapses consecutive non-alphanumeric chars into one camel bump", () => {
+    expect(normalizeExerciseKey("Push  --  Up")).toBe("pushUp");
   });
 
-  it("handles already-lowercase input", () => {
+  it("handles already-lowercase single-word input", () => {
     expect(normalizeExerciseKey("squat")).toBe("squat");
   });
 });
@@ -150,5 +151,80 @@ describe("mergeLifts", () => {
   it("handles empty session lifts", () => {
     const stored: Lift[] = [{ weight: 90, reps: 8, date: "2026-04-20" }];
     expect(mergeLifts(stored, [], TODAY)).toEqual(stored);
+  });
+});
+
+// --- removeMatchingLifts ---
+
+describe("removeMatchingLifts", () => {
+  it("removes a lift whose weight and reps match", () => {
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-04-28" }];
+    const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 5 }]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("leaves unmatched lifts untouched", () => {
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-28" },
+      { weight: 90, reps: 8, date: "2026-04-20" },
+    ];
+    const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 5 }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({ weight: 90, reps: 8, date: "2026-04-20" });
+  });
+
+  it("ignores date — matches on weight+reps only", () => {
+    // The caller passes raw in-memory sets which have no date, so the match
+    // must work regardless of what date string Firestore stored.
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-01-01" }];
+    const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 5 }]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("consumes duplicates one-to-one — only removes the exact count requested", () => {
+    // Two identical lifts in history; caller removes one → one should remain.
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-27" },
+      { weight: 100, reps: 5, date: "2026-04-28" },
+    ];
+    const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 5 }]);
+    expect(result).toHaveLength(1);
+  });
+
+  it("removes multiple distinct lifts in one call", () => {
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-28" },
+      { weight: 110, reps: 3, date: "2026-04-28" },
+      { weight: 90, reps: 8, date: "2026-04-20" },
+    ];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5 },
+      { weight: 110, reps: 3 },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].weight).toBe(90);
+  });
+
+  it("returns all lifts unchanged when sets is empty", () => {
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-04-28" }];
+    expect(removeMatchingLifts(lifts, [])).toEqual(lifts);
+  });
+
+  it("returns empty array when every lift is matched", () => {
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-28" },
+      { weight: 90, reps: 8, date: "2026-04-20" },
+    ];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5 },
+      { weight: 90, reps: 8 },
+    ]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("does not remove a lift when only weight matches but reps differ", () => {
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-04-28" }];
+    const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 8 }]);
+    expect(result).toHaveLength(1);
   });
 });

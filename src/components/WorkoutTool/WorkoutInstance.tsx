@@ -19,8 +19,9 @@ import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { responsiveDimensions } from "../../styles/responsive";
-// TODO: Have a hover that pops up that explains how to change from kg to lbs.
-// TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
+import useExerciseHistoryWriter from "../../hooks/useExerciseHistoryWriter";
+import { normalizeExerciseKey } from "../../core/services/exerciseHistory";
+
 export function WorkoutInstance(props: {
   workoutId: string;
   initialData: Workout;
@@ -31,17 +32,24 @@ export function WorkoutInstance(props: {
     return initialData.date ?? Timestamp.now();
   });
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() => {
-    const { date, ...exercises } = initialData as unknown as Record<
-      string,
-      unknown
-    >;
-    return exercises as ExerciseMap;
+    // Strip known non-exercise fields so the date Timestamp (and any future
+    // scalar fields like durationSeconds) never end up rendered as an ExerciseRow.
+    // Mirrors workoutToExerciseMap in mobile/hooks/useWorkoutEditor.ts.
+    return Object.fromEntries(
+      Object.entries(initialData as unknown as Record<string, unknown>)
+        .filter(([k]) => k !== "date" && k !== "durationSeconds")
+        .map(([k, v]) => {
+          const ex = v as Exercise;
+          return [k, Array.isArray(ex?.sets) ? ex : { ...ex, sets: [] }];
+        }),
+    ) as ExerciseMap;
   });
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 48em)") ?? false;
+  const { scheduleWrite, flushKey } = useExerciseHistoryWriter();
 
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
@@ -56,15 +64,29 @@ export function WorkoutInstance(props: {
     };
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
+    const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
+    scheduleWrite(key, nextState, timestampString);
   }
 
-  function exerciseNameChangeHandler(
+  async function exerciseNameChangeHandler(
     name: string,
     variant: string,
     key: string,
     customExerciseId?: string,
   ) {
-    // ChangeHandler for the exercise name
+    const newKey = normalizeExerciseKey(variant);
+    const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
+    if (oldKey && oldKey !== newKey) {
+      // Commit any in-memory sets to Firestore under the old key before we touch history.
+      await flushKey(key, exercisesObject);
+      // Remove only this workout's sets from the old key — prior workouts' lifts must stay.
+      // (Don't use migrateExerciseHistory here: that would move the entire lifetime history,
+      // which is wrong when the user is swapping exercises rather than correcting a typo.)
+      const sets = (exercisesObject[key]?.sets ?? [])
+        .filter((s) => s.weightkg > 0 && s.reps > 0)
+        .map((s) => ({ weight: s.weightkg, reps: s.reps }));
+      await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
+    }
     const nextState = {
       ...exercisesObject,
       [key]: { ...exercisesObject[key], name: name, variant: variant },
@@ -76,6 +98,11 @@ export function WorkoutInstance(props: {
     }
     setExercisesObject(nextState);
     updateWorkoutData({ date: workoutDate, ...nextState });
+    if (oldKey && oldKey !== newKey && newKey) {
+      // Queue a write of this workout's sets under the new key so they land in history.
+      const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
+      scheduleWrite(key, nextState, timestampString);
+    }
   }
 
   function closeHandler(exerciseKey: string) {

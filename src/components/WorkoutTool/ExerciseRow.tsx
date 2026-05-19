@@ -65,8 +65,10 @@ function ExerciseRowComponent({
     [],
   );
 
+  const sets = exercise.sets ?? [];
+
   function updateSet(index: number, field: keyof SetEntry, value: number) {
-    const updated = exercise.sets.map((s, i) => {
+    const updated = sets.map((s, i) => {
       if (i !== index) return s;
       if (field === "weightlbs")
         return { ...s, weightlbs: value, weightkg: lbsToKg(value) };
@@ -78,19 +80,12 @@ function ExerciseRowComponent({
   }
 
   function addSet() {
-    const lastSet = exercise.sets.at(-1) ?? {
-      reps: 0,
-      weightlbs: 0,
-      weightkg: 0,
-    };
-    onSetsChange(exerciseKey, [...exercise.sets, { ...lastSet }]);
+    const lastSet = sets.at(-1) ?? { reps: 0, weightlbs: 0, weightkg: 0 };
+    onSetsChange(exerciseKey, [...sets, { ...lastSet }]);
   }
 
   function removeSet(index: number) {
-    onSetsChange(
-      exerciseKey,
-      exercise.sets.filter((_, i) => i !== index),
-    );
+    onSetsChange(exerciseKey, sets.filter((_, i) => i !== index));
   }
 
   return (
@@ -99,7 +94,7 @@ function ExerciseRowComponent({
         <Group gap="xs">
           <div style={{ flex: 1 }}>
             <ExerciseCombobox
-              defaultValue={exercise.variant}
+              defaultValue={exercise.variant ?? ""}
               catalog={exerciseCatalogArray}
               exerciseNameChangeHandler={(name, variant) =>
                 exerciseNameChangeHandler(name, variant, exerciseKey)
@@ -113,7 +108,7 @@ function ExerciseRowComponent({
           )}
         </Group>
 
-        {exercise.sets.length > 0 && (
+        {sets.length > 0 && (
           <Group gap="xs" px={4}>
             <Text size="xs" c="dimmed" w={20} ta="center">
               #
@@ -128,32 +123,32 @@ function ExerciseRowComponent({
           </Group>
         )}
 
-        {exercise.sets.map((set, index) => (
-          <Group key={index} gap="xs" align="center" px={4}>
-            <Text size="xs" c="dimmed" w={20} ta="center">
-              {index + 1}
-            </Text>
-            <NumberInput
-              value={set.reps}
-              onChange={(v) => updateSet(index, "reps", Number(v))}
-              onFocus={(e) => e.target.select()}
-              hideControls
-              style={{ flex: 1 }}
-              styles={{ input: { textAlign: "center" } }}
-            />
-            <NumberInput
-              value={set[weightField] as number}
-              onChange={(v) => updateSet(index, weightField, Number(v))}
-              onFocus={(e) => e.target.select()}
-              hideControls
-              style={{ flex: 1 }}
-              styles={{ input: { textAlign: "center" } }}
-            />
-            {editMode && (
-              <CloseButton size="sm" onClick={() => removeSet(index)} />
-            )}
-          </Group>
-        ))}
+        {sets.map((set, index) => (
+            <Group key={index} gap="xs" align="center" px={4}>
+              <Text size="xs" c="dimmed" w={20} ta="center">
+                {index + 1}
+              </Text>
+              <NumberInput
+                value={set.reps}
+                onChange={(v) => updateSet(index, "reps", Number(v))}
+                onFocus={(e) => e.target.select()}
+                hideControls
+                style={{ flex: 1 }}
+                styles={{ input: { textAlign: "center" } }}
+              />
+              <NumberInput
+                value={set[weightField] as number}
+                onChange={(v) => updateSet(index, weightField, Number(v))}
+                onFocus={(e) => e.target.select()}
+                hideControls
+                style={{ flex: 1 }}
+                styles={{ input: { textAlign: "center" } }}
+              />
+              {editMode && (
+                <CloseButton size="sm" onClick={() => removeSet(index)} />
+              )}
+            </Group>
+          ))}
 
         <Button
           leftSection={<IconPlus size={12} />}

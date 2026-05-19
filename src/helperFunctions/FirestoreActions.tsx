@@ -19,7 +19,11 @@ import {
 import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
-import { computeStats, normalizeExerciseKey, removeMatchingLifts } from "../core/services/exerciseHistory";
+import {
+  computeStats,
+  normalizeExerciseKey,
+  removeMatchingLifts,
+} from "../core/services/exerciseHistory";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -53,13 +57,20 @@ export const FirestoreActions = {
       const exercises = Object.entries(workout).filter(([k]) => k !== "date");
       await Promise.all(
         exercises.map(([, ex]) => {
-          const exercise = ex as { variant?: string; sets?: { weightkg: number; reps: number }[] };
+          const exercise = ex as {
+            variant?: string;
+            sets?: { weightkg: number; reps: number }[];
+          };
           const firestoreKey = normalizeExerciseKey(exercise.variant ?? "");
           if (!firestoreKey) return Promise.resolve();
           const sets = (exercise.sets ?? [])
             .filter((s) => s.weightkg > 0 && s.reps > 0)
             .map((s) => ({ weight: s.weightkg, reps: s.reps }));
-          return FirestoreActions.removeExerciseSetsFromHistory(userId, firestoreKey, sets);
+          return FirestoreActions.removeExerciseSetsFromHistory(
+            userId,
+            firestoreKey,
+            sets,
+          );
         }),
       );
     }
@@ -86,7 +97,9 @@ export const FirestoreActions = {
     const querySnapshot = await getDocs(workoutsQuery);
     return querySnapshot.docs.map((docSnapshot) => docSnapshot.id);
   },
-  fetchWorkoutSummaries: async (userId: string): Promise<{ id: string; date: Timestamp }[]> => {
+  fetchWorkoutSummaries: async (
+    userId: string,
+  ): Promise<{ id: string; date: Timestamp }[]> => {
     const workoutsQuery = query(
       collection(db, "users", userId, "workouts"),
       orderBy("date", "desc"),
@@ -205,10 +218,19 @@ export const FirestoreActions = {
     sets: { weight: number; reps: number }[],
   ): Promise<void> => {
     if (sets.length === 0) return;
-    const existing = await FirestoreActions.fetchExerciseHistory(userId, exerciseKey);
+    const existing = await FirestoreActions.fetchExerciseHistory(
+      userId,
+      exerciseKey,
+    );
     if (!existing) return;
+    // Match lifts by weight+reps using one-to-one consumption: if the same
+    // weight/reps pair appears twice in `sets`, it removes exactly two matching
+    // lifts from history — no more. Date is intentionally ignored so this works
+    // even if the caller doesn't know the exact date string stored in Firestore.
     const remaining = removeMatchingLifts(existing.allLifts, sets);
+    // Nothing matched — history is already clean, skip the write.
     if (remaining.length === existing.allLifts.length) return;
+    // All lifts removed — delete the doc entirely rather than leaving an empty shell.
     if (remaining.length === 0) {
       await FirestoreActions.deleteExerciseHistory(userId, exerciseKey);
     } else {

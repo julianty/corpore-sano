@@ -61,7 +61,15 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
     const newKey = normalizeExerciseKey(variant);
     if (oldKey && oldKey !== newKey) {
+      // Commit any in-memory sets to Firestore under the old key before we touch history.
       await flushKey(key, exercisesObject);
+      // Remove only this workout's sets from the old key — prior workouts' lifts must stay.
+      // (Don't use migrateExerciseHistory here: that would move the entire lifetime history,
+      // which is wrong when the user is swapping exercises rather than correcting a typo.)
+      const sets = (exercisesObject[key]?.sets ?? [])
+        .filter((s) => s.weightkg > 0 && s.reps > 0)
+        .map((s) => ({ weight: s.weightkg, reps: s.reps }));
+      await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
     }
     const updated: ExerciseMap = { ...exercisesObject };
     const patch: Partial<Exercise> = { name, variant };
@@ -69,8 +77,11 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     else delete updated[key].customExerciseId;
     updated[key] = { ...updated[key], ...patch };
     saveWorkout({ ...workout, ...updated });
-    if (oldKey && newKey && oldKey !== newKey) {
-      await FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, name);
+    if (oldKey !== newKey && newKey) {
+      // Queue a write of this workout's sets under the new key so they land in history.
+      const workoutDateStr =
+        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+      scheduleWrite(key, updated, workoutDateStr);
     }
   }
 

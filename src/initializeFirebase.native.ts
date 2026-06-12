@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -10,6 +10,8 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+// Single Firebase app shared by Firestore (here) and Auth (mobile/src/lib/auth.ts).
+// Guarded so whichever module loads first creates the app.
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 export default db;

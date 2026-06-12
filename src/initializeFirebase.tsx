@@ -9,6 +9,6 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_firebase_messagingSenderId,
   appId: import.meta.env.VITE_firebase_appId,
 };
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 export default db;

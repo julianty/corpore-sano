@@ -19,7 +19,7 @@ import {
 import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
-import { computeStats, normalizeExerciseKey, removeMatchingLifts } from "../core/services/exerciseHistory";
+import { computeStats, normalizeExerciseKey, removeWorkoutLifts } from "../core/services/exerciseHistory";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -50,17 +50,18 @@ export const FirestoreActions = {
   deleteWorkoutWithHistory: async (userId: string, workoutId: string) => {
     const workout = await FirestoreActions.fetchData(userId, workoutId);
     if (workout) {
-      const exercises = Object.entries(workout).filter(([k]) => k !== "date");
+      const firestoreKeys = new Set(
+        Object.entries(workout)
+          .filter(([k]) => k !== "date")
+          .map(([, ex]) =>
+            normalizeExerciseKey((ex as { variant?: string }).variant ?? ""),
+          )
+          .filter((key) => key !== ""),
+      );
       await Promise.all(
-        exercises.map(([, ex]) => {
-          const exercise = ex as { variant?: string; sets?: { weightkg: number; reps: number }[] };
-          const firestoreKey = normalizeExerciseKey(exercise.variant ?? "");
-          if (!firestoreKey) return Promise.resolve();
-          const sets = (exercise.sets ?? [])
-            .filter((s) => s.weightkg > 0 && s.reps > 0)
-            .map((s) => ({ weight: s.weightkg, reps: s.reps }));
-          return FirestoreActions.removeExerciseSetsFromHistory(userId, firestoreKey, sets);
-        }),
+        [...firestoreKeys].map((firestoreKey) =>
+          FirestoreActions.removeWorkoutLiftsFromHistory(userId, firestoreKey, workoutId),
+        ),
       );
     }
     await FirestoreActions.deleteWorkoutById(userId, workoutId);
@@ -199,15 +200,14 @@ export const FirestoreActions = {
     const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
     await deleteDoc(docRef);
   },
-  removeExerciseSetsFromHistory: async (
+  removeWorkoutLiftsFromHistory: async (
     userId: string,
     exerciseKey: string,
-    sets: { weight: number; reps: number }[],
+    workoutId: string,
   ): Promise<void> => {
-    if (sets.length === 0) return;
     const existing = await FirestoreActions.fetchExerciseHistory(userId, exerciseKey);
     if (!existing) return;
-    const remaining = removeMatchingLifts(existing.allLifts, sets);
+    const remaining = removeWorkoutLifts(existing.allLifts, workoutId);
     if (remaining.length === existing.allLifts.length) return;
     if (remaining.length === 0) {
       await FirestoreActions.deleteExerciseHistory(userId, exerciseKey);

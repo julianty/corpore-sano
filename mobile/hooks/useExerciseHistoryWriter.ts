@@ -9,7 +9,10 @@ import type { ExerciseHistoryDoc } from "@shared/core/services/exerciseHistory";
 import type { Exercise, ExerciseMap } from "@shared/types";
 import { AppState } from "react-native";
 
-export function useExerciseHistoryWriter(userId: string | null) {
+export function useExerciseHistoryWriter(
+  userId: string | null,
+  workoutId: string,
+) {
   const userIdRef = useRef(userId);
   const timersRef = useRef<
     Record<string, { timerId: number; write: () => Promise<void> }>
@@ -34,7 +37,12 @@ export function useExerciseHistoryWriter(userId: string | null) {
 
     const liftsToWrite = allSessionSets
       .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+      .map((s) => ({
+        weight: s.weightkg,
+        reps: s.reps,
+        date: workoutDateStr,
+        workoutId,
+      }));
 
     if (liftsToWrite.length === 0) return;
 
@@ -44,7 +52,7 @@ export function useExerciseHistoryWriter(userId: string | null) {
         firestoreKey,
       );
       const storedLifts = existing?.allLifts ?? [];
-      const merged = mergeLifts(storedLifts, liftsToWrite, workoutDateStr);
+      const merged = mergeLifts(storedLifts, liftsToWrite, workoutId);
       const computed = computeStats(merged);
 
       const doc: ExerciseHistoryDoc = {

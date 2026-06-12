@@ -35,6 +35,8 @@ Mobile imports web source with `import { X } from "@shared/types"`. Wired at thr
 
 Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.native.ts` is auto-preferred over `src/initializeFirebase.tsx` in the RN build.
 
+**One firebase copy only**: `firebase` is a root-only dependency; Metro's `nodeModulesPaths` falls through to the root `node_modules` for it. Never add `firebase` to `mobile/package.json` — a second SDK copy splits Auth and Firestore onto separate app instances, and Firestore requests stop carrying `request.auth`. Auth (`mobile/src/lib/auth.ts`) reuses the shared `app` exported by `initializeFirebase.native.ts`.
+
 ### Shared vs. platform-specific
 
 | Shared (`src/`, via `@shared`)       | Web-only                      | Mobile-only (`mobile/`)       |
@@ -134,7 +136,7 @@ Document schema:
 ```json
 {
   "exerciseName": "Bench Press",
-  "allLifts": [{ "weight": 225, "reps": 8, "date": "2026-04-08" }],
+  "allLifts": [{ "weight": 102, "reps": 8, "date": "2026-04-08", "workoutId": "aB3xY..." }],
   "computed": {
     "maxWeight": 245,
     "minWeight": 135,
@@ -147,13 +149,15 @@ Document schema:
 }
 ```
 
+Lift `weight` values are stored in **kg** (converted for display). Every lift carries the `workoutId` it was logged in: merging replaces only that workout's lifts (`mergeLifts`) and deleting a workout/exercise removes only that workout's lifts (`removeWorkoutLifts`) — never match by weight/reps signature or date alone, since same-day workouts and repeated weights are common. `src/migrateLiftWorkoutIds.ts` rebuilds all history docs from workout docs (run with `npx tsx`, supports `--dry-run` and explicit user-ID args).
+
 `bestSetWeight`/`bestSetReps` represent the single set with the highest `weight × reps` ever. Displayed as "Max Volume" chip in `ExerciseEditDrawer` and `ExerciseHistorySheet` as `reps × weight` (no unit label in the chip).
 
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
 
 ### Implemented
 
-- Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
+- Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`, `removeWorkoutLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
 - History UI: embedded in `ExerciseEditDrawer` — fetched from Firestore when drawer opens; displays max, median, sets-this-week, and max-volume chips inline above the set list. `ExerciseHistorySheet` shows the same stats in a full-screen list view.
 - Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount; exposes `flushKey(uuid, exercises)` for targeted single-key flush

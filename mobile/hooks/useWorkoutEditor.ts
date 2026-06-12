@@ -25,7 +25,10 @@ function workoutToExerciseMap(workout: Workout): ExerciseMap {
 
 export function useWorkoutEditor(userId: string | null, workoutId: string) {
   const [workout, setWorkout] = useState<Workout | null>(null);
-  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter(userId);
+  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter(
+    userId,
+    workoutId,
+  );
 
   useEffect(() => {
     if (!userId) return;
@@ -79,9 +82,6 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
 
     const exercise = exercisesObject[key];
     const firestoreKey = normalizeExerciseKey(exercise?.variant ?? "");
-    const sets = (exercise?.sets ?? [])
-      .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps }));
 
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];
@@ -102,7 +102,11 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr);
     } else {
       cancelKey(firestoreKey);
-      await FirestoreActions.removeExerciseSetsFromHistory(userId, firestoreKey, sets);
+      await FirestoreActions.removeWorkoutLiftsFromHistory(
+        userId,
+        firestoreKey,
+        workoutId,
+      );
     }
   }
 

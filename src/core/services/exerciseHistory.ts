@@ -2,6 +2,7 @@ export interface Lift {
   weight: number;
   reps: number;
   date: string; // ISO date "YYYY-MM-DD"
+  workoutId: string; // workout doc the lift was logged in
 }
 
 export interface ComputedStats {
@@ -72,29 +73,18 @@ export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
   };
 }
 
-// Removes lifts matching the given set signatures using one-to-one consumption,
-// so duplicate weights/reps only remove the exact count present in `sets`.
-export function removeMatchingLifts(
-  allLifts: Lift[],
-  sets: { weight: number; reps: number }[],
-): Lift[] {
-  const pool = [...sets];
-  return allLifts.filter((lift) => {
-    const idx = pool.findIndex((s) => s.weight === lift.weight && s.reps === lift.reps);
-    if (idx !== -1) {
-      pool.splice(idx, 1);
-      return false;
-    }
-    return true;
-  });
+// Removes all lifts recorded under the given workout.
+export function removeWorkoutLifts(allLifts: Lift[], workoutId: string): Lift[] {
+  return allLifts.filter((l) => l.workoutId !== workoutId);
 }
 
-// Replaces any stored lifts from `today` with `sessionLifts`, preserving all other dates.
+// Replaces any stored lifts from this workout with `sessionLifts`,
+// preserving lifts from all other workouts (including same-day ones).
 export function mergeLifts(
   storedLifts: Lift[],
   sessionLifts: Lift[],
-  today: string,
+  workoutId: string,
 ): Lift[] {
-  const priorLifts = storedLifts.filter((l) => l.date !== today);
-  return [...priorLifts, ...sessionLifts];
+  const otherWorkoutLifts = storedLifts.filter((l) => l.workoutId !== workoutId);
+  return [...otherWorkoutLifts, ...sessionLifts];
 }

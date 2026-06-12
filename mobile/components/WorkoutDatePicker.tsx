@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
-import { useAppTheme, type AppColors } from "../hooks/useAppTheme";
+import { useAppTheme, useAppScheme, type AppColors } from "../hooks/useAppTheme";
 
 interface Props {
   date: Timestamp | undefined;
@@ -12,6 +12,7 @@ interface Props {
 export function WorkoutDatePicker({ date, onDateChange }: Props) {
   const [showPicker, setShowPicker] = useState(false);
   const colors = useAppTheme();
+  const scheme = useAppScheme();
   const styles = makeStyles(colors);
 
   const dateLabel = (() => {
@@ -40,6 +41,7 @@ export function WorkoutDatePicker({ date, onDateChange }: Props) {
             value={date ? date.toDate() : new Date()}
             mode="date"
             display={Platform.OS === "ios" ? "inline" : "default"}
+            themeVariant={scheme}
             onChange={handleChange}
           />
           {Platform.OS === "ios" && (

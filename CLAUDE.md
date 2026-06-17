@@ -4,6 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+This is an npm **workspaces** monorepo. Run `npm install` once from the repo
+root — it installs both the root package and the `mobile` workspace into a
+single hoisted root `node_modules` with one root `package-lock.json`. Never
+run `npm install` inside `mobile/`.
+
 ### Web app (root)
 
 ```bash
@@ -23,11 +28,18 @@ npm run ios        # Run on iOS simulator
 npm run android    # Run on Android emulator
 ```
 
-No test suite exists for the mobile app yet.
+(`npm run ios --workspace mobile` from the root works too, but `cd mobile`
+then run is the primary documented flow.) No test suite exists for the mobile
+app yet.
 
 ## Architecture
 
-Monorepo with two apps sharing business logic. The web app's `src/` doubles as the shared library — no separate `packages/shared` workspace.
+npm **workspaces** monorepo with two apps sharing business logic. Root
+`package.json` declares `"workspaces": ["mobile"]`; the web app and the
+`mobile/` Expo app install into one hoisted root `node_modules` with a single
+root `package-lock.json` (`mobile/` has no lockfile and, for hoistable deps,
+no `node_modules` of its own). The web app's `src/` doubles as the shared
+library — no separate `packages/shared` workspace.
 
 ### Code sharing via `@shared`
 
@@ -35,7 +47,14 @@ Mobile imports web source with `import { X } from "@shared/types"`. Wired at thr
 
 Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.native.ts` is auto-preferred over `src/initializeFirebase.tsx` in the RN build.
 
-**One firebase copy only**: `firebase` is a root-only dependency; Metro's `nodeModulesPaths` falls through to the root `node_modules` for it. Never add `firebase` to `mobile/package.json` — a second SDK copy splits Auth and Firestore onto separate app instances, and Firestore requests stop carrying `request.auth`. Auth (`mobile/src/lib/auth.ts`) reuses the shared `app` exported by `initializeFirebase.native.ts`.
+**Shared dependencies must use compatible version ranges in both `package.json` files.** Because this is a workspace, npm only hoists a package to a single physical copy when every workspace's declared range converges on one resolvable version. A non-overlapping mismatch forces npm to nest a second copy under `mobile/node_modules`, and any dependency whose runtime relies on a single instance then breaks:
+
+- **`react`**: pinned to the exact same version in both (`19.1.0`, no caret) — React's hooks dispatcher / context is a process-wide singleton, so two copies throw `TypeError: Cannot read property 'useContext' of null` at startup. The mobile toolchain (Expo / React Native) dictates the React version; the web app follows it.
+- **`firebase`**: root-only (not in `mobile/package.json`); shared `src/` code imports it and it hoists to the single root copy. Never add `firebase` to `mobile/package.json` — a second SDK copy splits Auth and Firestore onto separate app instances, and Firestore requests stop carrying `request.auth`. Auth (`mobile/src/lib/auth.ts`) reuses the shared `app` exported by `initializeFirebase.native.ts`.
+
+When bumping a dep used by both apps, change it in both places (mobile's toolchain-driven version wins on conflict) and re-run `npm install` from the root.
+
+**`expo-router` is also declared in the root `package.json`** even though only the mobile app uses it. This is deliberate, not a stray dep: `babel-preset-expo` hoists to the root and decides whether to enable its expo-router transform (the one that inlines `EXPO_ROUTER_APP_ROOT` into `require.context`) via `require.resolve('expo-router')` **from the root**. Left to npm's hoisting, expo-router nests under `mobile/node_modules` (its `@react-navigation` / `@expo/metro-runtime` subtree conflicts with root versions), so the preset can't find it and every mobile bundle fails with `Invalid call ... require.context should be a string`. Declaring `expo-router` at the root forces a single copy into the root `node_modules` where the preset resolves it. The web build ignores it (Vite only bundles imports, `tsc` only includes `src/`). Keep its range in sync with `mobile/package.json`. Relatedly, `@reduxjs/toolkit` must be `>=2.5.0` in both — earlier 2.x declares a React-18-only peer that blocks installing expo-router at the root alongside React 19.
 
 ### Shared vs. platform-specific
 

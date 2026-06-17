@@ -7,6 +7,10 @@ const tsJestTransformCfg = createDefaultPreset().transform;
 /** @type {import("jest").Config} **/
 module.exports = {
   testEnvironment: "node",
+  // mobile/ is a workspace with its own RN toolchain; under the single
+  // hoisted node_modules there's no install boundary to stop Jest from
+  // crawling it, so exclude it explicitly.
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/mobile/"],
   transform: {
     ...tsJestTransformCfg,
   },

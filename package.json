@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "mobile"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -11,23 +14,24 @@
     "test": "jest"
   },
   "dependencies": {
-    "@mantine/core": "^7.3.2",
-    "@mantine/dates": "^7.5.0",
-    "@mantine/form": "^7.4.1",
-    "@mantine/hooks": "^7.3.2",
-    "@reduxjs/toolkit": "^2.1.0",
+    "@mantine/core": "^7.17.8",
+    "@mantine/dates": "^7.17.8",
+    "@mantine/form": "^7.17.8",
+    "@mantine/hooks": "^7.17.8",
+    "@reduxjs/toolkit": "^2.5.0",
     "@tabler/icons-react": "^3.1.0",
     "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
+    "expo-router": "~6.0.23",
     "firebase": "^10.14.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-redux": "^9.1.0"
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.11",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
@@ -42,5 +46,8 @@
     "tsx": "^4.20.4",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
+  },
+  "overrides": {
+    "react-native-screens": "~4.16.0"
   }
 }

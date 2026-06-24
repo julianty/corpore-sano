@@ -3,6 +3,7 @@ import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { normalizeExerciseKey, formatLocalDate } from "@shared/core/services/exerciseHistory";
+import { getExerciseEntries } from "@shared/core/services/workoutShape";
 import { useExerciseHistoryWriter } from "./useExerciseHistoryWriter";
 
 const EMPTY_EXERCISE: Exercise = {
@@ -14,12 +15,10 @@ const EMPTY_EXERCISE: Exercise = {
 
 function workoutToExerciseMap(workout: Workout): ExerciseMap {
   return Object.fromEntries(
-    Object.entries(workout)
-      .filter(([k]) => k !== "date")
-      .map(([k, v]) => {
-        const ex = v as Exercise;
-        return [k, Array.isArray(ex.sets) ? ex : { ...ex, sets: [] }];
-      }),
+    Object.entries(getExerciseEntries(workout)).map(([k, ex]) => [
+      k,
+      Array.isArray(ex.sets) ? ex : { ...ex, sets: [] },
+    ]),
   ) as ExerciseMap;
 }
 
@@ -48,7 +47,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
   function onSetsChange(key: string, sets: SetEntry[]) {
     if (!workout) return;
     const updated: ExerciseMap = { ...exercisesObject, [key]: { ...exercisesObject[key], sets } };
-    saveWorkout({ ...workout, ...updated });
+    saveWorkout({ ...workout, exercises: updated });
     const workoutDateStr = formatLocalDate(workout.date?.toDate() ?? new Date());
     scheduleWrite(key, updated, workoutDateStr);
   }
@@ -70,7 +69,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     if (customExerciseId !== undefined) patch.customExerciseId = customExerciseId;
     else delete updated[key].customExerciseId;
     updated[key] = { ...updated[key], ...patch };
-    saveWorkout({ ...workout, ...updated });
+    saveWorkout({ ...workout, exercises: updated });
     if (oldKey && newKey && oldKey !== newKey) {
       await FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, name);
     }
@@ -85,9 +84,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];
 
-    const updated = { ...workout };
-    delete (updated as Record<string, unknown>)[key];
-    saveWorkout(updated);
+    saveWorkout({ ...workout, exercises: updatedExercises });
 
     if (!firestoreKey) return;
 
@@ -116,7 +113,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       ...exercisesObject,
       [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
     };
-    saveWorkout({ ...workout, ...updated });
+    saveWorkout({ ...workout, exercises: updated });
     return key;
   }
 

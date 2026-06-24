@@ -2,6 +2,7 @@ import { Workout, MuscleSummary, SetEntry } from "../../types";
 import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 import { getExerciseByName } from "../../utils/exerciseLookup";
 import type { CatalogExercise } from "../../utils/exerciseLookup";
+import { getExerciseEntries } from "./workoutShape";
 
 export interface ParentGroupSummary {
   [group: string]: { sets: number; daysSinceLast?: number };
@@ -55,8 +56,8 @@ export function buildMuscleSummary(
       ? getDaysSince(workout.date.toDate())
       : 0;
 
-    Object.entries(workout).forEach(([key, value]) => {
-      if (key === "date" || !value || typeof value !== "object") return;
+    Object.values(getExerciseEntries(workout)).forEach((value) => {
+      if (!value || typeof value !== "object") return;
       const exerciseEntry = value as {
         name: string;
         sets: SetEntry[];

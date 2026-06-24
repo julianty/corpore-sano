@@ -1,5 +1,6 @@
 import { Box, Group, Paper, Stack, Text, Title, Tooltip } from "@mantine/core";
 import { WorkoutEntry } from "../../types";
+import { getExerciseEntries } from "../../core/services/workoutShape";
 
 type DotIntensity = "none" | "light" | "full";
 
@@ -53,12 +54,7 @@ function buildWorkoutDateMap(
     if (!entry.data.date) return;
     const date = entry.data.date.toDate();
     const key = toDateKey(date);
-    const exerciseCount = Object.keys(entry.data).filter(
-      (k) =>
-        k !== "date" &&
-        typeof (entry.data as unknown as Record<string, unknown>)[k] ===
-          "object",
-    ).length;
+    const exerciseCount = Object.keys(getExerciseEntries(entry.data)).length;
     const existing = map.get(key);
     if (existing) {
       existing.exerciseCount += exerciseCount;

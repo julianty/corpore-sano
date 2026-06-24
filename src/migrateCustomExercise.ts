@@ -144,10 +144,11 @@ async function main() {
 
   for (const wDoc of workoutsSnap.docs) {
     const data = wDoc.data() as Record<string, unknown>;
+    const exercises = (data.exercises ?? {}) as Record<string, unknown>;
     let mutated = false;
 
-    for (const [entryKey, value] of Object.entries(data)) {
-      if (entryKey === "date" || !isExerciseValue(value)) continue;
+    for (const [entryKey, value] of Object.entries(exercises)) {
+      if (!isExerciseValue(value)) continue;
 
       if (value.customExerciseId === customId) {
         rewrites.push({
@@ -158,12 +159,15 @@ async function main() {
         if (!customName) customName = value.name ?? value.variant;
         const next = { ...value, name: targetName!, variant: targetVariant! };
         delete next.customExerciseId;
-        data[entryKey] = next;
+        exercises[entryKey] = next;
         mutated = true;
       }
     }
 
-    if (mutated) docsToWrite.set(wDoc.id, data);
+    if (mutated) {
+      data.exercises = exercises;
+      docsToWrite.set(wDoc.id, data);
+    }
   }
 
   if (!customName) {
@@ -179,8 +183,9 @@ async function main() {
   const oldKey = normalizeExerciseKey(customName);
   for (const wDoc of workoutsSnap.docs) {
     const data = wDoc.data() as Record<string, unknown>;
-    for (const [entryKey, value] of Object.entries(data)) {
-      if (entryKey === "date" || !isExerciseValue(value)) continue;
+    const exercises = (data.exercises ?? {}) as Record<string, unknown>;
+    for (const [entryKey, value] of Object.entries(exercises)) {
+      if (!isExerciseValue(value)) continue;
       if (value.customExerciseId === customId) continue;
       if (normalizeExerciseKey(value.variant ?? "") === oldKey) {
         unmatched.push({ workoutId: wDoc.id, entryKey, variant: value.variant ?? "" });

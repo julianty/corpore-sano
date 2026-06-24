@@ -15,9 +15,11 @@ export interface Exercise {
 }
 
 export interface Workout {
-  // This should match the firestore workouts
+  // This should match the firestore workouts.
+  // Exercise entries live under `exercises` (a UUID-keyed sub-map), not at
+  // the top level. See getExerciseEntries() in core/services/workoutShape.ts.
   date: Timestamp | undefined;
-  exercises?: ExerciseMap;
+  exercises: ExerciseMap;
   durationSeconds?: number;
 }
 

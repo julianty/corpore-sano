@@ -19,6 +19,7 @@ import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { responsiveDimensions } from "../../styles/responsive";
+import { getExerciseEntries } from "../../core/services/workoutShape";
 // TODO: Have a hover that pops up that explains how to change from kg to lbs.
 // TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
@@ -30,13 +31,9 @@ export function WorkoutInstance(props: {
   const [workoutDate, setWorkoutDate] = useState<Timestamp>(() => {
     return initialData.date ?? Timestamp.now();
   });
-  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() => {
-    const { date, ...exercises } = initialData as unknown as Record<
-      string,
-      unknown
-    >;
-    return exercises as ExerciseMap;
-  });
+  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() =>
+    getExerciseEntries(initialData),
+  );
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
@@ -55,7 +52,7 @@ export function WorkoutInstance(props: {
       [key]: { ...exercisesObject[key], sets },
     };
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
   function exerciseNameChangeHandler(
@@ -69,7 +66,7 @@ export function WorkoutInstance(props: {
       [key]: { ...exercisesObject[key], name: name, variant: variant },
     };
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
   function closeHandler(exerciseKey: string) {
@@ -77,7 +74,7 @@ export function WorkoutInstance(props: {
     const nextState = { ...exercisesObject };
     delete nextState[exerciseKey];
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
   function addNewExercise() {
@@ -108,7 +105,7 @@ export function WorkoutInstance(props: {
             onChange={(value) => {
               const timestampDate = Timestamp.fromDate(value as Date);
               setWorkoutDate(timestampDate);
-              updateWorkoutData({ date: timestampDate, ...exercisesObject });
+              updateWorkoutData({ date: timestampDate, exercises: exercisesObject });
             }}
             value={workoutDate?.toDate()}
             maw={responsiveDimensions.inputMaxWidth.md}

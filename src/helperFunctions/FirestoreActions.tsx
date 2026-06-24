@@ -19,6 +19,7 @@ import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
 import { computeStats, normalizeExerciseKey, removeWorkoutLifts } from "../core/services/exerciseHistory";
+import { getExerciseEntries } from "../core/services/workoutShape";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -50,9 +51,8 @@ export const FirestoreActions = {
     const workout = await FirestoreActions.fetchData(userId, workoutId);
     if (workout) {
       const firestoreKeys = new Set(
-        Object.entries(workout)
-          .filter(([k]) => k !== "date")
-          .map(([, ex]) =>
+        Object.values(getExerciseEntries(workout))
+          .map((ex) =>
             normalizeExerciseKey((ex as { variant?: string }).variant ?? ""),
           )
           .filter((key) => key !== ""),

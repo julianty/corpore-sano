@@ -1,5 +1,5 @@
 import {
-  buildMuscleSummary,
+  buildMuscleSummary as buildMuscleSummaryRaw,
   rollupToParentGroups,
   getLastWorkedFreshness,
 } from "./muscleCalculations";
@@ -30,6 +30,25 @@ const makeSet = (reps: number, weightkg?: number, weightlbs?: number) => ({
 });
 const makeSets = (count: number, reps: number, weightkg?: number, weightlbs?: number) =>
   Array.from({ length: count }, () => makeSet(reps, weightkg, weightlbs));
+
+// Fixtures below are written in a flat { date, ex1, ex2, ... } shape for
+// brevity. Real workout docs nest entries under `exercises`, so this shim
+// rewraps each fixture into { date, exercises: { ... } } before passing it to
+// the real buildMuscleSummary.
+const wrap = (w: Record<string, unknown>) => {
+  const { date, ...exercises } = w;
+  return { date, exercises };
+};
+const buildMuscleSummary = (
+  workouts: Record<string, unknown>[],
+  ...args: Parameters<typeof buildMuscleSummaryRaw> extends [unknown, ...infer R]
+    ? R
+    : never
+) =>
+  buildMuscleSummaryRaw(
+    workouts.map(wrap) as Parameters<typeof buildMuscleSummaryRaw>[0],
+    ...args,
+  );
 
 // --- buildMuscleSummary tests ---
 

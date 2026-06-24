@@ -87,8 +87,9 @@ async function rebuildUser(userId: string): Promise<void> {
     const data = workoutDoc.data();
     const date = workoutDateStr(data.date);
 
-    for (const [key, value] of Object.entries(data)) {
-      if (key === "date" || !value || typeof value !== "object") continue;
+    const exercises = (data.exercises ?? {}) as Record<string, unknown>;
+    for (const value of Object.values(exercises)) {
+      if (!value || typeof value !== "object") continue;
       const exercise = value as {
         name?: string;
         variant?: string;

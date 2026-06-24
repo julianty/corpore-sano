@@ -1,6 +1,7 @@
 import {
   normalizeExerciseKey,
   getCurrentWeekMonday,
+  formatLocalDate,
   computeStats,
   mergeLifts,
   removeWorkoutLifts,
@@ -55,6 +56,27 @@ describe("getCurrentWeekMonday", () => {
     );
     expect(diffDays).toBeGreaterThanOrEqual(0);
     expect(diffDays).toBeLessThanOrEqual(6);
+  });
+});
+
+// --- formatLocalDate ---
+
+describe("formatLocalDate", () => {
+  it("formats a date as YYYY-MM-DD using local calendar fields", () => {
+    // Construct via local Y/M/D so the assertion is timezone-independent.
+    const d = new Date(2026, 0, 5); // Jan 5 2026, local midnight
+    expect(formatLocalDate(d)).toBe("2026-01-05");
+  });
+
+  it("zero-pads single-digit months and days", () => {
+    expect(formatLocalDate(new Date(2026, 8, 9))).toBe("2026-09-09");
+  });
+
+  it("uses the local date, not the UTC date, near midnight", () => {
+    // 11:30pm local on Jun 23 — toISOString() could roll this to Jun 24 UTC
+    // for timezones behind UTC; formatLocalDate must stay on the 23rd.
+    const d = new Date(2026, 5, 23, 23, 30, 0);
+    expect(formatLocalDate(d)).toBe("2026-06-23");
   });
 });
 

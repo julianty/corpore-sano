@@ -29,6 +29,16 @@ export function normalizeExerciseKey(name: string): string {
     .replace(/[^a-z0-9]+$/, "");
 }
 
+// Formats a Date as "YYYY-MM-DD" in the **local** timezone. Lift dates and the
+// week-Monday bucket must share this basis: using UTC (toISOString) here while
+// bucketing locally shifts lifts logged near midnight into the wrong day/week.
+export function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function getCurrentWeekMonday(): string {
   return getMondayOf(new Date());
 }
@@ -45,10 +55,7 @@ function getMondayOf(date: Date): string {
   const daysFromMonday = (dayOfWeek + 6) % 7;
   const monday = new Date(date);
   monday.setDate(date.getDate() - daysFromMonday);
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, "0");
-  const d = String(monday.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return formatLocalDate(monday);
 }
 
 // mondayStr is injectable for testing; defaults to current week's Monday

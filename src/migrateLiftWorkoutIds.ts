@@ -24,6 +24,7 @@ import { initializeApp } from "firebase/app";
 import dotenv from "dotenv";
 import {
   computeStats,
+  formatLocalDate,
   normalizeExerciseKey,
 } from "./core/services/exerciseHistory";
 import type { ExerciseHistoryDoc, Lift } from "./core/services/exerciseHistory";
@@ -55,10 +56,10 @@ const cliUserIds = args.filter((a) => a !== "--dry-run");
 
 function workoutDateStr(date: unknown): string {
   if (date instanceof Timestamp) {
-    return date.toDate().toISOString().slice(0, 10);
+    return formatLocalDate(date.toDate());
   }
   // Matches updateWorkoutById's default for date-less workouts
-  return new Date().toISOString().slice(0, 10);
+  return formatLocalDate(new Date());
 }
 
 async function discoverUserIds(): Promise<string[]> {

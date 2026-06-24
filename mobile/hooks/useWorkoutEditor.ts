@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
-import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
+import { normalizeExerciseKey, formatLocalDate } from "@shared/core/services/exerciseHistory";
 import { useExerciseHistoryWriter } from "./useExerciseHistoryWriter";
 
 const EMPTY_EXERCISE: Exercise = {
@@ -49,8 +49,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     if (!workout) return;
     const updated: ExerciseMap = { ...exercisesObject, [key]: { ...exercisesObject[key], sets } };
     saveWorkout({ ...workout, ...updated });
-    const workoutDateStr =
-      workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+    const workoutDateStr = formatLocalDate(workout.date?.toDate() ?? new Date());
     scheduleWrite(key, updated, workoutDateStr);
   }
 

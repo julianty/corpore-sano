@@ -12,6 +12,7 @@ const exerciseCatalogUpdated = {
         "Front Squat",
         "Hack Squat",
         "Goblet Squat",
+        "Belt Squat",
       ],
     },
 
@@ -22,6 +23,7 @@ const exerciseCatalogUpdated = {
         "Barbell Bench Press",
         "Incline Barbell Bench Press",
         "Decline Barbell Bench Press",
+        "Machine Decline Bench Press",
       ],
     },
     {
@@ -99,7 +101,13 @@ const exerciseCatalogUpdated = {
     {
       name: "Row",
       muscles: ["Lattisimus Dorsi", "Biceps", "Trapezius"],
-      variants: ["Bent Over Row", "Seated Row", "Cable Row", "Machine Row"],
+      variants: [
+        "Bent Over Row",
+        "Seated Row",
+        "Cable Row",
+        "Machine Row",
+        "Iso-lateral Row",
+      ],
     },
     {
       name: "Skull Crusher",
@@ -118,7 +126,7 @@ const exerciseCatalogUpdated = {
     {
       name: "Dips",
       muscles: ["Triceps", "Chest", "Shoulders"],
-      variants: ["Machine Dips", "Bodyweight Dips"],
+      variants: ["Machine Dips", "Bodyweight Dips", "Machine Seated Dip"],
     },
     {
       name: "Lateral Pulldown",
@@ -127,6 +135,8 @@ const exerciseCatalogUpdated = {
         "Straight Bar Lat Pulldown",
         "V-bar Lat Pulldown",
         "Reverse-grip Lat Pulldown",
+        "Close Grip Lat Pulldown",
+        "One Arm Lat Pulldown",
       ],
     },
     {
@@ -137,6 +147,21 @@ const exerciseCatalogUpdated = {
         "Dumbbell Rear Delt Fly",
         "Cable Rear Delt Fly",
       ],
+    },
+    {
+      name: "Upright Row",
+      muscles: ["Deltoids", "Trapezius"],
+      variants: ["Upright Barbell Row"],
+    },
+    {
+      name: "Calf Raise",
+      muscles: ["Calves"],
+      variants: ["Standing Calf Raise", "Seated Calf Raise"],
+    },
+    {
+      name: "Romanian Deadlift",
+      muscles: ["Hamstrings", "Glutes"],
+      variants: ["Romanian Deadlift", "Staggered Dumbbell Deadlift"],
     },
   ],
 };

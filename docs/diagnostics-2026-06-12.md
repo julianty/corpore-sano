@@ -87,7 +87,8 @@
 - **What:** RN JS contexts survive backgrounding for days, so the "last 7 days" fetch window silently widens (7 + N days since launch) — the dashboard overcounts sets. Same stale `today` powers `getMondayDate()`, which additionally computes `getDay() - 1` and on **Sundays returns tomorrow** (web-only consumer; the mobile/list/history code uses the correct `(getDay()+6)%7` form).
 - **Fix direction:** compute `new Date()` inside each function; delete or fix `getMondayDate` in favor of the shared `getCurrentWeekMonday`.
 
-### M8 — Workout doc shape vs. `Workout` type: exercises live at the top level
+### M8 — Workout doc shape vs. `Workout` type: exercises live at the top level — ✓ FIXED (2026-06-24)
+**Resolution:** Exercise entries migrated into a nested `exercises` sub-map (`src/migrateWorkoutShape.ts`); `Workout.exercises` is now required; all reads go through `getExerciseEntries()` in `src/core/services/workoutShape.ts`. Phantom-field class of bug eliminated.
 - **Where:** writes spread exercises beside `date` (`useWorkoutEditor.ts:48,71,116`), reads filter `k !== "date"` (`useWorkoutEditor.ts:15-24`, `FirestoreActions.tsx:53`, `muscleCalculations.ts:57`). Type says `Workout.exercises?: ExerciseMap` (`src/types.ts:17-22`) — that field is never used at runtime; CLAUDE.md repeats the wrong shape.
 - **What:** Any future scalar/object field added to the doc gets treated as an exercise by `workoutToExerciseMap` (no `typeof` guard, unlike `buildMuscleSummary:58`). The already-typed `durationSeconds` field — displayed by `WorkoutCard.tsx:52` — would render a phantom exercise row in the editor the day something writes it.
 - **Fix direction:** either migrate docs to a real `exercises` sub-map or fix the type + add a guard in `workoutToExerciseMap`; update CLAUDE.md.
@@ -120,7 +121,7 @@
 5. **H3 — match removal by date** in `removeMatchingLifts` callers.
 6. **M1/M2/M3 — auth/session hygiene bundle**: explicit demo-mode flag, stale-fetch guard, state reset + timer cancellation on sign-out.
 7. **M4 + L4 — custom-exercise rename migration** and id-preserving selection.
-8. **M6, M7, M8, M9** as a persistence-hardening pass.
+8. **M6, M7, M9** as a persistence-hardening pass (M8 ✓ done 2026-06-24).
 9. **Lows** opportunistically; update CLAUDE.md where it contradicts the code (M5, M8, L3).
 
 ## Suggested verification once fixes land

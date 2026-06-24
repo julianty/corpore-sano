@@ -71,7 +71,7 @@ When bumping a dep used by both apps, change it in both places (mobile's toolcha
 
 Core types: `Exercise`, `SetEntry`, `Workout`, `ExerciseMap`, `Muscle`, `MuscleSummary`, `UserProfile`.
 
-`Workout.exercises` is an `ExerciseMap` (object keyed by UUID). Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
+`Workout.exercises` is an `ExerciseMap` (object keyed by UUID) — a real nested sub-map on the doc, alongside `date`/`durationSeconds`. Always read a workout's exercises via `getExerciseEntries(workout)` in `src/core/services/workoutShape.ts`; never scan the doc's own keys and filter out `date` (scalar fields like `durationSeconds` would be mistaken for exercises). Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
 
 ### Firestore data model
 

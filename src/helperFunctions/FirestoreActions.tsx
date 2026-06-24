@@ -13,7 +13,6 @@ import {
   setDoc,
   startAfter,
   Timestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import db from "../initializeFirebase";
@@ -148,7 +147,7 @@ export const FirestoreActions = {
   },
   updateUserProfile: async (userId: string, userProfile: UserProfile) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
-    await updateDoc(docRef, { ...userProfile });
+    await setDoc(docRef, { ...userProfile }, { merge: true });
   },
   fetchFavoriteExercises: async (userId: string) => {
     const userProfile = await getDoc(
@@ -165,7 +164,7 @@ export const FirestoreActions = {
     favoriteExercises: string[],
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
-    await updateDoc(docRef, { favoriteExercises: favoriteExercises });
+    await setDoc(docRef, { favoriteExercises: favoriteExercises }, { merge: true });
   },
   updateCustomExercises: async (
     userId: string,

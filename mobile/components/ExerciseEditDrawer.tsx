@@ -67,7 +67,7 @@ export function ExerciseEditDrawer({
 
   useEffect(() => {
     if (visible && !exercise.variant) setPickerVisible(true);
-  }, [visible]);
+  }, [visible, exercise.variant]);
 
   useEffect(() => {
     if (!visible || !exercise.variant) return;

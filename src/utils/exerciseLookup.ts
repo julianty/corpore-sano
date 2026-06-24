@@ -4,12 +4,21 @@
  * Replaces O(N) filter operations with constant-time access
  */
 
+/** A single entry in the exercise catalog (`exerciseCatalog.data`). */
+export interface CatalogExercise {
+  name: string;
+  muscles: string[];
+  variants?: string[];
+}
+
 /**
  * Creates a Map of exercises indexed by name for O(1) lookup
  * @param exerciseCatalog - Array of exercise records
  * @returns Map with exercise name as key
  */
-export function createExerciseMap(exerciseCatalog: any[]): Map<string, any> {
+export function createExerciseMap(
+  exerciseCatalog: CatalogExercise[],
+): Map<string, CatalogExercise> {
   return new Map(exerciseCatalog.map((exercise) => [exercise.name, exercise]));
 }
 
@@ -20,8 +29,8 @@ export function createExerciseMap(exerciseCatalog: any[]): Map<string, any> {
  * @returns Exercise record or null if not found
  */
 export function getExerciseByName(
-  map: Map<string, any>,
+  map: Map<string, CatalogExercise>,
   name: string,
-): any | null {
+): CatalogExercise | null {
   return map.get(name) || null;
 }

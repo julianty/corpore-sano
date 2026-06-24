@@ -22,50 +22,53 @@ export function useExerciseHistoryWriter(
     userIdRef.current = userId;
   });
 
-  const updateFirestore = async (
-    exercises: ExerciseMap,
-    exercise: Exercise,
-    firestoreKey: string,
-    workoutDateStr: string,
-  ) => {
-    const uid = userIdRef.current;
-    if (!uid) return;
+  const updateFirestore = useCallback(
+    async (
+      exercises: ExerciseMap,
+      exercise: Exercise,
+      firestoreKey: string,
+      workoutDateStr: string,
+    ) => {
+      const uid = userIdRef.current;
+      if (!uid) return;
 
-    const allSessionSets = Object.values(exercises)
-      .filter((ex) => normalizeExerciseKey(ex.variant) === firestoreKey)
-      .flatMap((ex) => ex.sets);
+      const allSessionSets = Object.values(exercises)
+        .filter((ex) => normalizeExerciseKey(ex.variant) === firestoreKey)
+        .flatMap((ex) => ex.sets);
 
-    const liftsToWrite = allSessionSets
-      .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({
-        weight: s.weightkg,
-        reps: s.reps,
-        date: workoutDateStr,
-        workoutId,
-      }));
+      const liftsToWrite = allSessionSets
+        .filter((s) => s.weightkg > 0 && s.reps > 0)
+        .map((s) => ({
+          weight: s.weightkg,
+          reps: s.reps,
+          date: workoutDateStr,
+          workoutId,
+        }));
 
-    if (liftsToWrite.length === 0) return;
+      if (liftsToWrite.length === 0) return;
 
-    try {
-      const existing = await FirestoreActions.fetchExerciseHistory(
-        uid,
-        firestoreKey,
-      );
-      const storedLifts = existing?.allLifts ?? [];
-      const merged = mergeLifts(storedLifts, liftsToWrite, workoutId);
-      const computed = computeStats(merged);
+      try {
+        const existing = await FirestoreActions.fetchExerciseHistory(
+          uid,
+          firestoreKey,
+        );
+        const storedLifts = existing?.allLifts ?? [];
+        const merged = mergeLifts(storedLifts, liftsToWrite, workoutId);
+        const computed = computeStats(merged);
 
-      const doc: ExerciseHistoryDoc = {
-        exerciseName: exercise.name,
-        allLifts: merged,
-        computed,
-      };
+        const doc: ExerciseHistoryDoc = {
+          exerciseName: exercise.name,
+          allLifts: merged,
+          computed,
+        };
 
-      await FirestoreActions.upsertExerciseHistory(uid, firestoreKey, doc);
-    } catch (e) {
-      console.error("[useExerciseHistoryWriter] upsert failed:", e);
-    }
-  };
+        await FirestoreActions.upsertExerciseHistory(uid, firestoreKey, doc);
+      } catch (e) {
+        console.error("[useExerciseHistoryWriter] upsert failed:", e);
+      }
+    },
+    [workoutId],
+  );
 
   const scheduleWrite = useCallback(
     async (exerciseUUID: string, exercises: ExerciseMap, workoutDateStr: string) => {
@@ -90,7 +93,7 @@ export function useExerciseHistoryWriter(
         write: () => updateFirestore(exercises, exercise, firestoreKey, workoutDateStr),
       };
     },
-    [],
+    [updateFirestore],
   );
 
   // Flush a single pending write for a specific exercise UUID.

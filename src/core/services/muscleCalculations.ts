@@ -1,6 +1,7 @@
 import { Workout, MuscleSummary, SetEntry } from "../../types";
 import { muscleGroups as muscleGroupsData } from "../../data/muscleGroups";
 import { getExerciseByName } from "../../utils/exerciseLookup";
+import type { CatalogExercise } from "../../utils/exerciseLookup";
 
 export interface ParentGroupSummary {
   [group: string]: { sets: number; daysSinceLast?: number };
@@ -20,7 +21,7 @@ export interface ParentGroupSummary {
  */
 export function buildMuscleSummary(
   workouts: Workout[],
-  exerciseMap: Map<string, unknown>,
+  exerciseMap: Map<string, CatalogExercise>,
   getDaysSince: (date: Date) => number,
   setsWindowDays?: number,
   customExercises?: Record<
@@ -101,7 +102,7 @@ export function buildMuscleSummary(
       // only count their sets once toward that parent group.
       const parentGroupsSeen = new Set<string>();
 
-      (exercise as { muscles: string[] }).muscles.forEach((muscleName) => {
+      exercise.muscles.forEach((muscleName) => {
         if (!muscleGroups[muscleName]) return;
         const withinSetsWindow =
           setsWindowDays === undefined || daysSinceWorkout <= setsWindowDays;

@@ -95,6 +95,33 @@ All `FirestoreActions` live in `src/helperFunctions/FirestoreActions.tsx`. Reads
 
 Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exercise catalog). User profile state lives in React context (`UserProfileContext` in `mobile/app/_layout.tsx`), not Redux.
 
+### Mobile authentication (`mobile/src/lib/auth.ts`)
+
+Email/password and Google Sign-In, both landing on the single shared Firebase
+`auth` instance so Firestore requests carry `request.auth`.
+
+- **Google** uses `@react-native-google-signin/google-signin` (declared in
+  `mobile/package.json`, hoisted to root). `signInWithGoogle()` runs the native
+  flow, reads the id_token from the **v13+ response shape** (`response.data.idToken`
+  via `isSuccessResponse()` — not the old `userInfo.idToken`), then exchanges it
+  through the Firebase JS SDK's `signInWithCredential(auth, GoogleAuthProvider.credential(idToken))`.
+  Web still uses `signInWithPopup` (`src/components/Auth/GoogleLogin.tsx`) — popup/redirect don't work in RN.
+- **`GoogleSignin.configure`** needs both `webClientId` (this is what makes the
+  id_token acceptable to Firebase — the *web* OAuth client, not the iOS one) and
+  `iosClientId`. Both are public OAuth client IDs and live in `auth.ts`.
+- **Native module → no Expo Go.** Requires a dev build (`expo prebuild` +
+  `expo run:ios`). Three config pieces in `mobile/app.json` are load-bearing:
+  the google-signin plugin with an explicit `iosUrlScheme` (the plist's
+  `REVERSED_CLIENT_ID`; without it the Expo 54 build ships without the URL
+  scheme and sign-in fails with "missing URL scheme"), `ios.googleServicesFile`
+  pointing at `GoogleService-Info.plist`, and **`expo-build-properties` with
+  `ios.useFrameworks: "static"`** — the GoogleSignin iOS SDK pulls in Swift pods
+  (`AppCheckCore`/`GoogleUtilities`/`RecaptchaInterop`) that won't link as static
+  libraries otherwise, so `pod install` fails without it.
+- **Android is not wired yet** — needs an Android app registered in Firebase +
+  SHA-1 fingerprints + `google-services.json`. The JS code path is already
+  cross-platform.
+
 ## Testing
 
 Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.
@@ -222,4 +249,4 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 ### P5
 
-- Google OAuth sign-in — alongside existing email/password flow; low priority, not blocking App Store submission
+- ~~Google OAuth sign-in — alongside existing email/password flow~~ ✓ done on iOS (see [Mobile authentication](#mobile-authentication-mobilesrclibauthts)); Android still needs Firebase Android app + SHA-1 + `google-services.json`

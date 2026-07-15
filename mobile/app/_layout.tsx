@@ -55,11 +55,15 @@ function AppProviders() {
     return unsubscribe;
   }, [dispatch]);
 
+  // Refresh demo workout dates only when demo mode is explicitly entered — not
+  // on the "demoUser" sentinel, which is the initial Redux state on every cold
+  // start (before the auth listener resolves), so this used to fire for every
+  // logged-in user too.
   useEffect(() => {
-    if (userId === "demoUser") {
+    if (demoMode) {
       FirestoreActions.updateDemoData();
     }
-  }, [userId]);
+  }, [demoMode]);
 
   useEffect(() => {
     FirestoreActions.fetchUserProfile(userId).then((profile) => {

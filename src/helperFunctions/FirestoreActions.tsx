@@ -242,32 +242,28 @@ export const FirestoreActions = {
     // This is a function to update the demo data in the database
     // to demonstrate the functionality of the muscle summary
     const userId = "demoUser";
-    // Fetch all workouts of demoUser
-    await FirestoreActions.fetchWorkoutIds(userId).then((workoutIds) => {
-      // Randomly choose dates within the last 7 days for each workout
-      const timestampsFromLastWeek: Timestamp[] = [];
-      [1, 2, 3, 4, 5, 6, 7].forEach((day) => {
-        const date = new Date();
-        date.setDate(date.getDate() - day);
-        timestampsFromLastWeek.push(Timestamp.fromDate(date));
-      });
+    const workoutIds = await FirestoreActions.fetchWorkoutIds(userId);
 
-      workoutIds.forEach(async (workoutId) => {
-        // Replace each workout with a new workout with a date from the last week
+    // Give each workout a random date within the last 7 days. Pick per workout
+    // rather than draining a fixed pool with splice — the old code indexed a
+    // shrinking array with a fixed 0-6 range, so once the pool ran low the
+    // index overshot, splice returned [], and the date became `undefined`
+    // (then silently stamped Timestamp.now()). This also handles >7 workouts.
+    await Promise.all(
+      workoutIds.map(async (workoutId) => {
         const workout = await FirestoreActions.fetchData(userId, workoutId);
+        const date = new Date();
+        date.setDate(date.getDate() - (Math.floor(Math.random() * 7) + 1));
         const updatedWorkout = {
           ...(workout as Workout),
-          date: timestampsFromLastWeek.splice(
-            Math.floor(Math.random() * 7),
-            1,
-          )[0],
+          date: Timestamp.fromDate(date),
         };
         await FirestoreActions.updateWorkoutById(
           userId,
           workoutId,
           updatedWorkout,
         );
-      });
-    });
+      }),
+    );
   },
 };

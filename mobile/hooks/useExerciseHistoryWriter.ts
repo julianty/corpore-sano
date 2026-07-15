@@ -120,14 +120,16 @@ export function useExerciseHistoryWriter(
     delete timersRef.current[firestoreKey];
   }, []);
 
-  // Function to clear out pending writes
-  const flushAll = useCallback(() => {
-    Object.entries(timersRef.current).forEach(
-      async ([key, { timerId, write }]) => {
+  // Flush all pending writes, awaiting each roundtrip so callers can wait for
+  // them to land (e.g. before the JS thread is suspended on background).
+  const flushAll = useCallback(async () => {
+    const pending = Object.entries(timersRef.current);
+    await Promise.all(
+      pending.map(([key, { timerId, write }]) => {
         clearTimeout(timerId);
         delete timersRef.current[key];
-        await write();
-      },
+        return write();
+      }),
     );
   }, []);
 
@@ -135,13 +137,13 @@ export function useExerciseHistoryWriter(
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (["background", "inactive"].includes(state)) {
-        flushAll();
+        void flushAll();
       }
     });
     return () => {
       // fire on unmount
       subscription.remove();
-      flushAll();
+      void flushAll();
     };
   }, [flushAll]);
   return { scheduleWrite, flushKey, cancelKey, flushAll };

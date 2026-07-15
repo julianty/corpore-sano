@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useAppSelector } from "@shared/hooks";
+import { formatLocalDate } from "@shared/core/services/exerciseHistory";
 import { ExerciseRow } from "../../../src/components/ExerciseRow";
 import { ExerciseEditDrawer } from "../../../components/ExerciseEditDrawer";
 import { WorkoutDatePicker } from "../../../components/WorkoutDatePicker";
@@ -61,6 +62,8 @@ export default function WorkoutDetailScreen() {
           exercise={activeExercise}
           exerciseKey={activeKey}
           userId={userId}
+          workoutId={workoutId}
+          workoutDateStr={formatLocalDate(workout.date?.toDate() ?? new Date())}
           onSetsChange={onSetsChange}
           exerciseNameChangeHandler={exerciseNameChangeHandler}
           closeHandler={(key) => {

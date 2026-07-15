@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,8 +20,9 @@ import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import {
   normalizeExerciseKey,
   computeStats,
+  mergeLifts,
 } from "@shared/core/services/exerciseHistory";
-import type { ComputedStats } from "@shared/core/services/exerciseHistory";
+import type { Lift } from "@shared/core/services/exerciseHistory";
 import { useAppTheme, type AppColors } from "../hooks/useAppTheme";
 
 interface Props {
@@ -30,6 +31,8 @@ interface Props {
   exercise: Exercise;
   exerciseKey: string;
   userId: string;
+  workoutId: string;
+  workoutDateStr: string;
   onSetsChange: (key: string, sets: SetEntry[]) => void;
   exerciseNameChangeHandler: (
     name: string,
@@ -46,6 +49,8 @@ export function ExerciseEditDrawer({
   exercise,
   exerciseKey,
   userId,
+  workoutId,
+  workoutDateStr,
   onSetsChange,
   exerciseNameChangeHandler,
   closeHandler,
@@ -54,7 +59,7 @@ export function ExerciseEditDrawer({
   const weightUnit = ctx?.userProfile.weightUnit ?? "lbs";
   const customExercises = ctx?.userProfile.customExercises;
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [stats, setStats] = useState<ComputedStats | null>(null);
+  const [storedLifts, setStoredLifts] = useState<Lift[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const colors = useAppTheme();
   const styles = makeStyles(colors);
@@ -73,12 +78,36 @@ export function ExerciseEditDrawer({
     if (!visible || !exercise.variant) return;
     const key = normalizeExerciseKey(exercise.variant);
     if (!key) return;
+    let cancelled = false;
     setHistoryLoading(true);
-    setStats(null);
+    setStoredLifts([]);
     FirestoreActions.fetchExerciseHistory(userId, key)
-      .then((doc) => setStats(doc ? computeStats(doc.allLifts) : null))
-      .finally(() => setHistoryLoading(false));
+      .then((doc) => {
+        if (!cancelled) setStoredLifts(doc?.allLifts ?? []);
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [visible, exercise.variant, userId]);
+
+  // Merge the current in-session sets with the stored history before computing
+  // stats, so Max / This week / Max Volume reflect what was just logged rather
+  // than lagging the 30s debounced write (which may not have fired yet).
+  const stats = useMemo(() => {
+    const sessionLifts: Lift[] = exercise.sets
+      .filter((s) => s.weightkg > 0 && s.reps > 0)
+      .map((s) => ({
+        weight: s.weightkg,
+        reps: s.reps,
+        date: workoutDateStr,
+        workoutId,
+      }));
+    const merged = mergeLifts(storedLifts, sessionLifts, workoutId);
+    return merged.length ? computeStats(merged) : null;
+  }, [storedLifts, exercise.sets, workoutDateStr, workoutId]);
 
   function fmt(kg: number): string {
     const val = weightUnit === "lbs" ? kgToLbs(kg) : kg;

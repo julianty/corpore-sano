@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import { UserProfileContext } from "../../app/_layout";
 import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
+import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
 import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 const PARENT_GROUPS = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
@@ -31,8 +32,9 @@ export function CustomExercises() {
   }
 
   function saveRename(id: string) {
+    const oldName = customExercises[id].name;
     const trimmed = draftName.trim();
-    if (!trimmed || trimmed === customExercises[id].name) {
+    if (!trimmed || trimmed === oldName) {
       closeEdit();
       return;
     }
@@ -42,6 +44,16 @@ export function CustomExercises() {
     };
     setUserProfile((prev) => ({ ...prev, customExercises: updated }));
     FirestoreActions.updateCustomExercises(userId, updated);
+
+    // History is keyed by the normalized exercise name, so a rename would fork
+    // it: new sessions log under the new key while past lifts stay under the
+    // old one. Carry the old key's history onto the new key. (No-op when both
+    // names normalize to the same key, e.g. "curl a" -> "Curl A".)
+    const oldKey = normalizeExerciseKey(oldName);
+    const newKey = normalizeExerciseKey(trimmed);
+    if (oldKey && newKey && oldKey !== newKey) {
+      FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, trimmed);
+    }
     closeEdit();
   }
 

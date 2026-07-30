@@ -132,7 +132,9 @@ function ExerciseRowComponent({
                 value={set.reps}
                 onChange={(v) => updateSet(index, "reps", Number(v))}
                 onFocus={(e) => e.target.select()}
+                onMouseUp={(e) => e.preventDefault()}
                 hideControls
+                inputMode="numeric"
                 style={{ flex: 1 }}
                 styles={{ input: { textAlign: "center" } }}
               />
@@ -140,7 +142,9 @@ function ExerciseRowComponent({
                 value={set[weightField] as number}
                 onChange={(v) => updateSet(index, weightField, Number(v))}
                 onFocus={(e) => e.target.select()}
+                onMouseUp={(e) => e.preventDefault()}
                 hideControls
+                inputMode="decimal"
                 style={{ flex: 1 }}
                 styles={{ input: { textAlign: "center" } }}
               />

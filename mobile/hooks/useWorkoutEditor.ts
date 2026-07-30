@@ -3,6 +3,10 @@ import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
+import {
+  workoutToExerciseMap,
+  exerciseMapToWorkout,
+} from "@shared/core/services/workoutTransforms";
 import { useExerciseHistoryWriter } from "./useExerciseHistoryWriter";
 
 const EMPTY_EXERCISE: Exercise = {
@@ -11,17 +15,6 @@ const EMPTY_EXERCISE: Exercise = {
   variant: "",
   sets: [],
 };
-
-function workoutToExerciseMap(workout: Workout): ExerciseMap {
-  return Object.fromEntries(
-    Object.entries(workout)
-      .filter(([k]) => k !== "date")
-      .map(([k, v]) => {
-        const ex = v as Exercise;
-        return [k, Array.isArray(ex.sets) ? ex : { ...ex, sets: [] }];
-      }),
-  ) as ExerciseMap;
-}
 
 export function useWorkoutEditor(userId: string | null, workoutId: string) {
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -42,10 +35,17 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     await FirestoreActions.updateWorkoutById(userId, workoutId, updated);
   }
 
+  function saveExercises(updatedExercises: ExerciseMap) {
+    if (!workout) return;
+    saveWorkout(
+      exerciseMapToWorkout(updatedExercises, workout.date, workout.durationSeconds),
+    );
+  }
+
   function onSetsChange(key: string, sets: SetEntry[]) {
     if (!workout) return;
     const updated: ExerciseMap = { ...exercisesObject, [key]: { ...exercisesObject[key], sets } };
-    saveWorkout({ ...workout, ...updated });
+    saveExercises(updated);
     const workoutDateStr =
       workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
     scheduleWrite(key, updated, workoutDateStr);
@@ -76,7 +76,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     if (customExerciseId !== undefined) patch.customExerciseId = customExerciseId;
     else delete updated[key].customExerciseId;
     updated[key] = { ...updated[key], ...patch };
-    saveWorkout({ ...workout, ...updated });
+    saveExercises(updated);
     if (oldKey !== newKey && newKey) {
       // Queue a write of this workout's sets under the new key so they land in history.
       const workoutDateStr =
@@ -96,10 +96,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
 
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];
-
-    const updated = { ...workout };
-    delete (updated as Record<string, unknown>)[key];
-    saveWorkout(updated);
+    saveExercises(updatedExercises);
 
     if (!firestoreKey) return;
 
@@ -124,13 +121,15 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       ...exercisesObject,
       [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
     };
-    saveWorkout({ ...workout, ...updated });
+    saveExercises(updated);
     return key;
   }
 
   function onDateChange(date: Date) {
     if (!workout) return;
-    saveWorkout({ ...workout, date: Timestamp.fromDate(date) });
+    saveWorkout(
+      exerciseMapToWorkout(exercisesObject, Timestamp.fromDate(date), workout.durationSeconds),
+    );
   }
 
   return {

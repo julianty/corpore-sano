@@ -12,7 +12,7 @@ import {
 import { DateInput } from "@mantine/dates";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAppSelector } from "../../hooks";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Exercise, ExerciseMap, SetEntry, Workout } from "../../types";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
@@ -21,6 +21,10 @@ import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { responsiveDimensions } from "../../styles/responsive";
 import useExerciseHistoryWriter from "../../hooks/useExerciseHistoryWriter";
 import { normalizeExerciseKey } from "../../core/services/exerciseHistory";
+import {
+  workoutToExerciseMap,
+  exerciseMapToWorkout,
+} from "../../core/services/workoutTransforms";
 
 export function WorkoutInstance(props: {
   workoutId: string;
@@ -31,19 +35,10 @@ export function WorkoutInstance(props: {
   const [workoutDate, setWorkoutDate] = useState<Timestamp>(() => {
     return initialData.date ?? Timestamp.now();
   });
-  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() => {
-    // Strip known non-exercise fields so the date Timestamp (and any future
-    // scalar fields like durationSeconds) never end up rendered as an ExerciseRow.
-    // Mirrors workoutToExerciseMap in mobile/hooks/useWorkoutEditor.ts.
-    return Object.fromEntries(
-      Object.entries(initialData as unknown as Record<string, unknown>)
-        .filter(([k]) => k !== "date" && k !== "durationSeconds")
-        .map(([k, v]) => {
-          const ex = v as Exercise;
-          return [k, Array.isArray(ex?.sets) ? ex : { ...ex, sets: [] }];
-        }),
-    ) as ExerciseMap;
-  });
+  const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() =>
+    workoutToExerciseMap(initialData),
+  );
+  const durationSecondsRef = useRef(initialData.durationSeconds);
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
@@ -63,7 +58,9 @@ export function WorkoutInstance(props: {
       [key]: { ...exercisesObject[key], sets },
     };
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData(
+      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
+    );
     const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
     scheduleWrite(key, nextState, timestampString);
   }
@@ -97,7 +94,9 @@ export function WorkoutInstance(props: {
       delete nextState[key].customExerciseId;
     }
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData(
+      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
+    );
     if (oldKey && oldKey !== newKey && newKey) {
       // Queue a write of this workout's sets under the new key so they land in history.
       const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
@@ -110,7 +109,9 @@ export function WorkoutInstance(props: {
     const nextState = { ...exercisesObject };
     delete nextState[exerciseKey];
     setExercisesObject(nextState);
-    updateWorkoutData({ date: workoutDate, ...nextState });
+    updateWorkoutData(
+      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
+    );
   }
 
   function addNewExercise() {
@@ -141,7 +142,13 @@ export function WorkoutInstance(props: {
             onChange={(value) => {
               const timestampDate = Timestamp.fromDate(value as Date);
               setWorkoutDate(timestampDate);
-              updateWorkoutData({ date: timestampDate, ...exercisesObject });
+              updateWorkoutData(
+                exerciseMapToWorkout(
+                  exercisesObject,
+                  timestampDate,
+                  durationSecondsRef.current,
+                ),
+              );
             }}
             value={workoutDate?.toDate()}
             maw={responsiveDimensions.inputMaxWidth.md}

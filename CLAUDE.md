@@ -50,13 +50,13 @@ Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.nativ
 
 Core types: `Exercise`, `SetEntry`, `Workout`, `ExerciseMap`, `Muscle`, `MuscleSummary`, `UserProfile`.
 
-`Workout` stores exercises as **flat top-level keys** on the Firestore document alongside `date` — there is no nested `exercises` field. Both apps read by stripping `date` and treating remaining keys as `ExerciseMap`. Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
+`Workout.exercises` is an `ExerciseMap` (object keyed by exercise key), nested under the `exercises` field alongside `date` and optional `durationSeconds` — this is the actual shape of every production Firestore document. Both apps must read/write through `workoutToExerciseMap` / `exerciseMapToWorkout` (`src/core/services/workoutTransforms.ts`) rather than hand-rolling the transform — a prior refactor (see git history around "fix types to match mobile") wrongly assumed a flat top-level-key shape with no nested `exercises` field; that assumption never matched real data and caused weight fields to silently fail to populate on web. Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
 
 ### Firestore data model
 
 ```
 users/{userId}/
-  workouts/{workoutId}          # Workout docs (date, [exerciseKey]: Exercise, durationSeconds?)
+  workouts/{workoutId}          # Workout docs (date, exercises: ExerciseMap, durationSeconds?)
   preferences/userProfile       # UserProfile (weightUnit, colorScheme, customExercises, favoriteExercises)
 
 userStats/{userId}/
@@ -67,7 +67,8 @@ All `FirestoreActions` live in `src/helperFunctions/FirestoreActions.tsx`. Reads
 
 ### Business logic (`src/core/`)
 
-- `buildMuscleSummary(workouts, exerciseMap)` — per-muscle set counts and recency data
+- `workoutToExerciseMap(workout)` / `exerciseMapToWorkout(exercises, date, durationSeconds?)` (`src/core/services/workoutTransforms.ts`) — the canonical, shared translation between a Firestore `Workout` document and an in-memory `ExerciseMap`. Used by both `WorkoutInstance.tsx` (web) and `useWorkoutEditor.ts` (mobile) — do not reimplement this per-platform.
+- `buildMuscleSummary(workouts, exerciseMap)` — per-muscle set counts and recency data; reads `workout.exercises`
 - `rollupToParentGroups(muscleSummary)` — aggregates muscles into parent groups (Shoulders, Back, Chest, Arms, Core, Legs)
 
 ### Redux
@@ -76,7 +77,7 @@ Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exe
 
 ## Testing
 
-Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.
+Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/core/services/workoutTransforms.test.ts`, `src/lib/utils.test.ts`.
 
 ## Mobile routing
 
@@ -207,7 +208,7 @@ The mobile app has outpaced the web app on several fronts. The items below bring
 
 ### Critical (data model bugs)
 
-- ~~**Fix `WorkoutInstance` exercises schema**~~ ✓ done — confirmed flat schema is canonical on both apps; removed misleading `exercises?: ExerciseMap` field from `Workout` type.
+- ~~**Fix `WorkoutInstance` exercises schema**~~ ✓ done (corrected) — an earlier pass wrongly removed `exercises?: ExerciseMap` from `Workout`, assuming a flat top-level-key schema that never matched real Firestore data; this caused weight fields to silently fail to populate on web. Restored `exercises: ExerciseMap` as required, added shared `workoutToExerciseMap`/`exerciseMapToWorkout` (`src/core/services/workoutTransforms.ts`) used by both platforms, and fixed `muscleCalculations.ts` and `FirestoreActions.deleteWorkoutWithHistory` which had the same flat-key assumption.
 - ~~**Remove legacy `ExerciseHistory` type**~~ ✓ done — deleted `ExerciseHistory` interface and `UserProfile.exerciseHistory` from `src/types.ts`.
 - ~~**Fix `ExerciseFieldsProps.exerciseNameChangeHandler` signature**~~ ✓ done — added `customExerciseId?: string` parameter; fixed `undefined` vs `null` guard and added delete-if-absent branch in `WorkoutInstance`.
 

@@ -44,7 +44,7 @@ function App() {
       const newUserProfile = {
         ...userProfile,
         username: displayName,
-        weightUnit: profile!.weightUnit,
+        weightUnit: profile!.weightUnit ?? "lbs",
         colorScheme: profile!.colorScheme,
       };
       setUserProfile(newUserProfile);

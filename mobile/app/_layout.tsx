@@ -67,7 +67,7 @@ function AppProviders() {
       setUserProfile((prev) => ({
         ...prev,
         username: displayName,
-        weightUnit: profile.weightUnit,
+        weightUnit: profile.weightUnit ?? "lbs",
         colorScheme: profile.colorScheme ?? "system",
         customExercises: profile.customExercises ?? {},
       }));

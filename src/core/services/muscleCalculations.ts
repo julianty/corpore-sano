@@ -54,8 +54,8 @@ export function buildMuscleSummary(
       ? getDaysSince(workout.date.toDate())
       : 0;
 
-    Object.entries(workout).forEach(([key, value]) => {
-      if (key === "date" || !value || typeof value !== "object") return;
+    Object.entries(workout.exercises ?? {}).forEach(([, value]) => {
+      if (!value || typeof value !== "object") return;
       const exerciseEntry = value as {
         name: string;
         sets: SetEntry[];

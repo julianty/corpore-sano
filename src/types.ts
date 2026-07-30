@@ -17,6 +17,7 @@ export interface Exercise {
 export interface Workout {
   // This should match the firestore workouts
   date: Timestamp | undefined;
+  exercises: ExerciseMap;
   durationSeconds?: number;
 }
 

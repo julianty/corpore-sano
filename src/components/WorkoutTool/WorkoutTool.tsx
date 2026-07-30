@@ -80,7 +80,7 @@ export function WorkoutTool() {
 
     const newEntry: WorkoutEntry = {
       id: docId,
-      data: { date: undefined },
+      data: { date: undefined, exercises: {} },
     };
     setWorkouts((prev) => [newEntry, ...prev]);
   }

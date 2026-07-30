@@ -24,6 +24,7 @@ import {
   normalizeExerciseKey,
   removeMatchingLifts,
 } from "../core/services/exerciseHistory";
+import { workoutToExerciseMap } from "../core/services/workoutTransforms";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -54,7 +55,7 @@ export const FirestoreActions = {
   deleteWorkoutWithHistory: async (userId: string, workoutId: string) => {
     const workout = await FirestoreActions.fetchData(userId, workoutId);
     if (workout) {
-      const exercises = Object.entries(workout).filter(([k]) => k !== "date");
+      const exercises = Object.entries(workoutToExerciseMap(workout as Workout));
       await Promise.all(
         exercises.map(([, ex]) => {
           const exercise = ex as {

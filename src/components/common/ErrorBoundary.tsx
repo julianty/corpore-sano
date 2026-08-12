@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     };
   }
 
-  static getDerivedStateFromError(_error: Error): Pick<ErrorBoundaryState, "hasError"> {
+  static getDerivedStateFromError(): Pick<ErrorBoundaryState, "hasError"> {
     return { hasError: true };
   }
 

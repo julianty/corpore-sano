@@ -67,6 +67,9 @@ export function ExerciseEditDrawer({
 
   useEffect(() => {
     if (visible && !exercise.variant) setPickerVisible(true);
+    // Only reacts to the drawer opening — including exercise.variant would
+    // reopen the picker whenever the user picks an exercise while visible.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   useEffect(() => {

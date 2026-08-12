@@ -9,7 +9,9 @@
  * @param exerciseCatalog - Array of exercise records
  * @returns Map with exercise name as key
  */
-export function createExerciseMap(exerciseCatalog: any[]): Map<string, any> {
+export function createExerciseMap<T extends { name: string }>(
+  exerciseCatalog: T[],
+): Map<string, T> {
   return new Map(exerciseCatalog.map((exercise) => [exercise.name, exercise]));
 }
 
@@ -19,9 +21,6 @@ export function createExerciseMap(exerciseCatalog: any[]): Map<string, any> {
  * @param name - Exercise name to look up
  * @returns Exercise record or null if not found
  */
-export function getExerciseByName(
-  map: Map<string, any>,
-  name: string,
-): any | null {
+export function getExerciseByName<T>(map: Map<string, T>, name: string): T | null {
   return map.get(name) || null;
 }

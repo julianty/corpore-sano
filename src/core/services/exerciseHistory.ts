@@ -74,13 +74,21 @@ export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
 
 // Removes lifts matching the given set signatures using one-to-one consumption,
 // so duplicate weights/reps only remove the exact count present in `sets`.
+// When a set carries a `date`, it must also match the lift's date — this prevents
+// removing a same-weight/reps lift logged on a different day. Sets without a date
+// fall back to matching on weight+reps only.
 export function removeMatchingLifts(
   allLifts: Lift[],
-  sets: { weight: number; reps: number }[],
+  sets: { weight: number; reps: number; date?: string }[],
 ): Lift[] {
   const pool = [...sets];
   return allLifts.filter((lift) => {
-    const idx = pool.findIndex((s) => s.weight === lift.weight && s.reps === lift.reps);
+    const idx = pool.findIndex(
+      (s) =>
+        s.weight === lift.weight &&
+        s.reps === lift.reps &&
+        (s.date === undefined || s.date === lift.date),
+    );
     if (idx !== -1) {
       pool.splice(idx, 1);
       return false;

@@ -55,6 +55,10 @@ export const FirestoreActions = {
   deleteWorkoutWithHistory: async (userId: string, workoutId: string) => {
     const workout = await FirestoreActions.fetchData(userId, workoutId);
     if (workout) {
+      const workoutDate = (workout as Workout).date
+        ?.toDate()
+        .toISOString()
+        .slice(0, 10);
       const exercises = Object.entries(workoutToExerciseMap(workout as Workout));
       await Promise.all(
         exercises.map(([, ex]) => {
@@ -66,7 +70,7 @@ export const FirestoreActions = {
           if (!firestoreKey) return Promise.resolve();
           const sets = (exercise.sets ?? [])
             .filter((s) => s.weightkg > 0 && s.reps > 0)
-            .map((s) => ({ weight: s.weightkg, reps: s.reps }));
+            .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDate }));
           return FirestoreActions.removeExerciseSetsFromHistory(
             userId,
             firestoreKey,
@@ -216,7 +220,7 @@ export const FirestoreActions = {
   removeExerciseSetsFromHistory: async (
     userId: string,
     exerciseKey: string,
-    sets: { weight: number; reps: number }[],
+    sets: { weight: number; reps: number; date?: string }[],
   ): Promise<void> => {
     if (sets.length === 0) return;
     const existing = await FirestoreActions.fetchExerciseHistory(
@@ -226,8 +230,8 @@ export const FirestoreActions = {
     if (!existing) return;
     // Match lifts by weight+reps using one-to-one consumption: if the same
     // weight/reps pair appears twice in `sets`, it removes exactly two matching
-    // lifts from history — no more. Date is intentionally ignored so this works
-    // even if the caller doesn't know the exact date string stored in Firestore.
+    // lifts from history — no more. When callers pass a `date`, it must also
+    // match, so a same-weight/reps lift logged on a different day is left alone.
     const remaining = removeMatchingLifts(existing.allLifts, sets);
     // Nothing matched — history is already clean, skip the write.
     if (remaining.length === existing.allLifts.length) return;

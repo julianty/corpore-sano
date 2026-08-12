@@ -66,9 +66,11 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       // Remove only this workout's sets from the old key — prior workouts' lifts must stay.
       // (Don't use migrateExerciseHistory here: that would move the entire lifetime history,
       // which is wrong when the user is swapping exercises rather than correcting a typo.)
+      const workoutDateStr =
+        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
       const sets = (exercisesObject[key]?.sets ?? [])
         .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({ weight: s.weightkg, reps: s.reps }));
+        .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
       await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
     }
     const updated: ExerciseMap = { ...exercisesObject };
@@ -90,9 +92,11 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
 
     const exercise = exercisesObject[key];
     const firestoreKey = normalizeExerciseKey(exercise?.variant ?? "");
+    const workoutDateStr =
+      workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
     const sets = (exercise?.sets ?? [])
       .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps }));
+      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
 
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];
@@ -105,8 +109,6 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     );
 
     if (duplicateEntry) {
-      const workoutDateStr =
-        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
       scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr);
     } else {
       cancelKey(firestoreKey);

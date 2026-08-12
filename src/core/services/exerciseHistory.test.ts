@@ -173,12 +173,31 @@ describe("removeMatchingLifts", () => {
     expect(result[0]).toEqual({ weight: 90, reps: 8, date: "2026-04-20" });
   });
 
-  it("ignores date — matches on weight+reps only", () => {
-    // The caller passes raw in-memory sets which have no date, so the match
-    // must work regardless of what date string Firestore stored.
+  it("matches on weight+reps only when the set has no date", () => {
+    // Callers that can't determine a date fall back to weight+reps matching.
     const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-01-01" }];
     const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 5 }]);
     expect(result).toHaveLength(0);
+  });
+
+  it("does not remove a same weight+reps lift logged on a different day", () => {
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-01-01" }];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5, date: "2026-04-28" },
+    ]);
+    expect(result).toHaveLength(1);
+  });
+
+  it("removes a lift when weight, reps, and date all match", () => {
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-01-01" },
+      { weight: 100, reps: 5, date: "2026-04-28" },
+    ];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5, date: "2026-04-28" },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].date).toBe("2026-01-01");
   });
 
   it("consumes duplicates one-to-one — only removes the exact count requested", () => {

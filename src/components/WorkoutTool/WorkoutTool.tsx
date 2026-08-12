@@ -1,4 +1,4 @@
-import { Button, Stack, Title } from "@mantine/core";
+import { Button, Group, Stack, Title } from "@mantine/core";
 import { WorkoutInstance } from "./WorkoutInstance";
 import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
@@ -18,7 +18,7 @@ function AddWorkoutButton(props: { clickHandler: React.MouseEventHandler }) {
       leftSection={<IconPlus size={16} />}
       onClick={clickHandler}
       size="lg"
-      w={"50%"}
+      w={{ base: "100%", md: "auto" }}
     >
       Add New Workout
     </Button>
@@ -87,8 +87,10 @@ export function WorkoutTool() {
 
   return (
     <Stack>
-      <Title order={2}>Workout Tool</Title>
-      <AddWorkoutButton clickHandler={addEmptyWorkout} />
+      <Group justify="space-between" wrap="wrap">
+        <Title order={2}>Workouts</Title>
+        <AddWorkoutButton clickHandler={addEmptyWorkout} />
+      </Group>
       {workouts.map((entry) => (
         <WorkoutInstance
           key={`workoutId${entry.id}`}
@@ -101,9 +103,11 @@ export function WorkoutTool() {
         <Button
           onClick={loadMore}
           loading={isLoading}
-          variant="light"
+          variant="default"
           size="lg"
-          w="50%"
+          fullWidth
+          maw={{ base: "100%", md: 220 }}
+          mx={{ base: 0, md: "auto" }}
         >
           Load More Workouts
         </Button>

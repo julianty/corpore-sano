@@ -58,12 +58,12 @@ export function Hero() {
       )}
 
       {showHero && (
-      <Paper p="md" withBorder>
-        <Stack gap="lg">
+      <Paper p={{ base: "sm", sm: "md" }} withBorder={false}>
+        <Stack gap="md">
           <Group justify="space-between" align="flex-start">
-            <Stack gap="xs">
-              <Title order={2}>Corpore Sano</Title>
-              <Text size="lg" c="dimmed">
+            <Stack gap={2}>
+              <Title order={2} fz={{ base: "lg", sm: "xl" }}>Corpore Sano</Title>
+              <Text size="sm" c="dimmed">
                 Your intelligent workout tracker
               </Text>
             </Stack>
@@ -73,9 +73,11 @@ export function Hero() {
             />
           </Group>
 
-          <Stack gap="sm">
-            <Title order={4}>Key Features</Title>
-            <Stack gap="xs" p={"md"}>
+          <Stack gap="xs">
+            <Title order={4} fz="sm" tt="uppercase" c="dimmed" fw={600}>
+              Key Features
+            </Title>
+            <Stack gap="xs">
               {currentFeatures.map((feature) => (
                 <FeatureItem
                   key={feature}
@@ -90,14 +92,16 @@ export function Hero() {
             </Stack>
           </Stack>
 
-          <Stack gap="sm">
+          <Stack gap="xs">
             <Group gap="sm">
-              <Title order={4}>Planned Features</Title>
+              <Title order={4} fz="sm" tt="uppercase" c="dimmed" fw={600}>
+                Planned Features
+              </Title>
               <Badge variant="light" color="orange">
                 Coming Soon
               </Badge>
             </Group>
-            <Stack gap="xs" p={"md"}>
+            <Stack gap="xs">
               {plannedFeatures.map((feature) => (
                 <FeatureItem
                   key={feature}

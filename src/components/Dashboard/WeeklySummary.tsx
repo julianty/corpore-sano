@@ -1,4 +1,4 @@
-import { Group } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { useEffect, useState, useMemo } from "react";
 import { Workout, WorkoutEntry } from "../../types";
 import { useAppSelector } from "../../hooks";
@@ -62,9 +62,9 @@ export default function WeeklySummary() {
   }, [workoutEntries, exerciseMap]);
 
   return (
-    <Group align="flex-start">
-      <MuscleGroupTable parentMuscleGroupsNumSets={parentMuscleGroupsNumSets} />
+    <Stack gap="lg">
       <WorkoutActivityTracker workoutEntries={workoutEntries} />
-    </Group>
+      <MuscleGroupTable parentMuscleGroupsNumSets={parentMuscleGroupsNumSets} />
+    </Stack>
   );
 }

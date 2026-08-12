@@ -39,19 +39,39 @@ export function Header() {
         centered
       />
       <header>
-        <Group justify="space-between">
-          <Flex align={"center"} gap="sm" pt={"sm"}>
-            <Title aria-label="Corpore Sano - Fitness Workout Tracker">
+        <Group justify="space-between" wrap="wrap" py="sm" gap="sm">
+          <Flex align={"center"} gap={9}>
+            <Flex
+              align="center"
+              justify="center"
+              w={26}
+              h={26}
+              bg="mint.5"
+              c="black"
+              fw={700}
+              fz="xs"
+              style={{ borderRadius: "var(--mantine-radius-sm)" }}
+              aria-hidden
+            >
+              CS
+            </Flex>
+            <Title
+              order={1}
+              fz={{ base: "lg", sm: "xl" }}
+              aria-label="Corpore Sano - Fitness Workout Tracker"
+            >
               Corpore Sano
             </Title>
-            <IconBarbell size={36} aria-label="Barbell icon" />
+            <IconBarbell size={22} color="var(--mantine-color-dimmed)" aria-label="Barbell icon" />
           </Flex>
           <nav>
-            <Group>
+            <Group gap="xs">
               <GoogleLogin />
               <Menu>
                 <Menu.Target>
-                  <Button aria-label="Open profile menu">Profile</Button>
+                  <Button variant="default" aria-label="Open profile menu">
+                    Profile
+                  </Button>
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item onClick={open}>User Preferences</Menu.Item>

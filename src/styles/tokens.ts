@@ -5,10 +5,10 @@
 
 // ===== COLOR TOKENS =====
 export const colors = {
-  // Primary
-  primary: "#1c7ed6",      // Mantine blue
-  primaryLight: "#1971c2",
-  primaryDark: "#1864ab",
+  // Primary — mint accent, matches documented brand (#3de8a0)
+  primary: "#3de8a0",
+  primaryLight: "#6cf2bb",
+  primaryDark: "#2fb57d",
 
   // Secondary
   secondary: "#f59f00",     // Mantine orange
@@ -45,6 +45,23 @@ export const colors = {
   dark700: "#495057",
   dark800: "#343a40",
   dark900: "#212529",
+} as const;
+
+// ===== SURFACE TOKENS =====
+// Dark-theme surface scale — max two elevations above the base background.
+// base: page background · raised: cards (Paper) · inset: nested/input surfaces
+// hairline: section dividers · border: card/input borders
+export const surfaces = {
+  base: "#0b0b0c",
+  raised: "#111214",
+  inset: "#16181b",
+  hairline: "#1c1e21",
+  border: "#26282c",
+  textPrimary: "#f2f3f5",
+  textSecondary: "#a8adb5",
+  textMuted: "#5d626b",
+  textFaint: "#4a4e56",
+  stale: "#ff9f4a",
 } as const;
 
 // ===== TYPOGRAPHY TOKENS =====
@@ -225,6 +242,7 @@ export const components = {
 // ===== EXPORT ALL TOKENS AS SINGLE OBJECT =====
 export const designTokens = {
   colors,
+  surfaces,
   typography,
   spacing,
   sizes,

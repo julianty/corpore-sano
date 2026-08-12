@@ -17,14 +17,20 @@ export function MuscleGroupTable({
   parentMuscleGroupsNumSets: ParentGroupSummary;
 }) {
   return (
-    <Paper p="md" withBorder>
-      <Title order={5}>Muscle Groups</Title>
-      <Table>
+    <Paper p={{ base: "sm", sm: "md" }} withBorder>
+      <Title order={5} mb="sm">Muscle Groups</Title>
+      <Table verticalSpacing={6} withRowBorders={false}>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Group</Table.Th>
-            <Table.Th>Sets this week</Table.Th>
-            <Table.Th>Last Worked</Table.Th>
+            <Table.Th fz="xs" tt="uppercase" c="dimmed" fw={500}>
+              Group
+            </Table.Th>
+            <Table.Th fz="xs" tt="uppercase" c="dimmed" fw={500} ta="right">
+              Sets
+            </Table.Th>
+            <Table.Th fz="xs" tt="uppercase" c="dimmed" fw={500} ta="right">
+              Last Worked
+            </Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -41,10 +47,16 @@ export function MuscleGroupTable({
               label = `${raw} days ago`;
             }
             return (
-              <Table.Tr key={group}>
+              <Table.Tr
+                key={group}
+                style={{ borderTop: "1px solid var(--mantine-color-dark-4)" }}
+              >
                 <Table.Td>{group}</Table.Td>
-                <Table.Td>{data.sets}</Table.Td>
+                <Table.Td ta="right" fw={600} c={data.sets > 0 ? "mint.4" : "dimmed"}>
+                  {data.sets}
+                </Table.Td>
                 <Table.Td
+                  ta="right"
                   style={{
                     color: freshnessColor[freshness],
                     fontWeight: freshness === "stale" ? 700 : undefined,

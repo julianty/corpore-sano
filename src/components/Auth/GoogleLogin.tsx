@@ -50,10 +50,18 @@ export function GoogleLogin() {
     });
   }
   if (loggedIn) {
-    return <Button onClick={handleSignOut}>Sign Out</Button>;
+    return (
+      <Button variant="default" onClick={handleSignOut}>
+        Sign Out
+      </Button>
+    );
   } else {
     return (
-      <Button leftSection={<IconBrandGoogle size={16} />} onClick={handleClick}>
+      <Button
+        variant="default"
+        leftSection={<IconBrandGoogle size={16} />}
+        onClick={handleClick}
+      >
         Google Login
       </Button>
     );

@@ -10,9 +10,9 @@ function getDotIntensity(exerciseCount: number): DotIntensity {
 }
 
 const dotColors: Record<DotIntensity, string> = {
-  none: "var(--mantine-color-dark-4)",
-  light: "var(--mantine-color-blue-3)",
-  full: "var(--mantine-color-blue-6)",
+  none: "var(--mantine-color-dark-5)",
+  light: "var(--mantine-color-mint-3)",
+  full: "var(--mantine-color-mint-6)",
 };
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -142,7 +142,7 @@ function DotRow({
                     opacity: isFuture ? 0.3 : 1,
                     border:
                       toDateKey(date) === toDateKey(today)
-                        ? "2px solid var(--mantine-color-blue-4)"
+                        ? "2px solid var(--mantine-color-mint-4)"
                         : "2px solid transparent",
                   }}
                 />
@@ -172,7 +172,7 @@ export function WorkoutActivityTracker({
   const workoutMap = buildWorkoutDateMap(workoutEntries);
 
   return (
-    <Paper p="md" withBorder>
+    <Paper p={{ base: "sm", sm: "md" }} withBorder>
       <Stack gap="sm">
         <Title order={5}>Activity</Title>
         <DotRow

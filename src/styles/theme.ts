@@ -7,7 +7,8 @@ import { designTokens } from "./tokens";
  */
 
 export const corporeTheme: MantineThemeOverride = {
-  defaultRadius: "md",
+  defaultRadius: "lg",
+  autoContrast: true,
 
   colors: {
     blue: [
@@ -34,9 +35,24 @@ export const corporeTheme: MantineThemeOverride = {
       "#592D00",
       "#2F1A00",
     ],
+    // Brand accent — seeded on the documented #3de8a0. Index 5 is the exact
+    // brand value and is what primaryShade.dark resolves to below.
+    mint: [
+      "#EAFBF2",
+      "#C7F5DE",
+      "#9FEEC7",
+      "#74E7AE",
+      "#52E29B",
+      "#3DE8A0",
+      "#2FB57D",
+      "#228760",
+      "#175C42",
+      "#0C3325",
+    ],
   },
 
-  primaryColor: "blue",
+  primaryColor: "mint",
+  primaryShade: { light: 6, dark: 5 },
 
   // Font customization
   fontFamily: designTokens.typography.fontFamily.body,
@@ -113,6 +129,8 @@ export const corporeTheme: MantineThemeOverride = {
     TextInput: {
       styles: {
         input: {
+          backgroundColor: designTokens.surfaces.inset,
+          borderColor: designTokens.surfaces.border,
           transition:
             "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
 
@@ -126,6 +144,8 @@ export const corporeTheme: MantineThemeOverride = {
     NumberInput: {
       styles: {
         input: {
+          backgroundColor: designTokens.surfaces.inset,
+          borderColor: designTokens.surfaces.border,
           transition:
             "border-color 150ms ease-in-out, box-shadow 150ms ease-in-out",
 
@@ -147,6 +167,10 @@ export const corporeTheme: MantineThemeOverride = {
       styles: {
         content: {
           borderRadius: "12px",
+          backgroundColor: designTokens.surfaces.raised,
+        },
+        header: {
+          backgroundColor: designTokens.surfaces.raised,
         },
       },
     },
@@ -157,8 +181,16 @@ export const corporeTheme: MantineThemeOverride = {
       },
       styles: {
         root: {
+          backgroundColor: designTokens.surfaces.raised,
+          borderColor: designTokens.surfaces.border,
           transition: "box-shadow 150ms ease-in-out",
         },
+      },
+    },
+
+    Divider: {
+      defaultProps: {
+        color: designTokens.surfaces.hairline,
       },
     },
 
@@ -168,7 +200,7 @@ export const corporeTheme: MantineThemeOverride = {
           transition: "background-color 150ms ease-in-out",
 
           "&:hover": {
-            backgroundColor: "var(--mantine-color-gray-0)",
+            backgroundColor: designTokens.surfaces.inset,
           },
         },
       },

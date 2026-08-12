@@ -13,12 +13,13 @@ html {
 body {
   margin: 0;
   padding: 0;
+  background-color: #0b0b0c;
 }
 
 /* ===== Accessibility: Focus Visible ===== */
 
 *:focus-visible {
-  outline: 2px solid #1c7ed6; /* Mantine blue */
+  outline: 2px solid #3de8a0; /* mint accent */
   outline-offset: 2px;
 }
 

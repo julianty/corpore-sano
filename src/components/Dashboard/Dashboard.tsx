@@ -8,7 +8,7 @@ export function Dashboard() {
       <Stack>
         {/* <MuscleDiagram /> */}
         <Title order={2} id="dashboard-title">
-          Summary
+          Overview
         </Title>
         <WeeklySummary />
       </Stack>

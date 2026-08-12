@@ -1,13 +1,15 @@
 import {
   Button,
   CloseButton,
+  Collapse,
   Group,
   NumberInput,
   Paper,
   Stack,
   Text,
+  UnstyledButton,
 } from "@mantine/core";
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { SetEntry } from "../../types";
 import exerciseCatalogUpdated from "../../data/exerciseCatalogUpdated";
 import { ExerciseRowProps } from "../../types";
@@ -16,7 +18,7 @@ import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { ExerciseCombobox } from "./ExerciseComobox";
 import { UserProfileContext } from "../../App";
 import { kgToLbs, lbsToKg } from "../../lib/utils";
-import { IconPlus } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconPlus } from "@tabler/icons-react";
 
 const exerciseCatalog = exerciseCatalogUpdated;
 
@@ -66,6 +68,7 @@ function ExerciseRowComponent({
   );
 
   const sets = exercise.sets ?? [];
+  const [expanded, setExpanded] = useState(sets.length === 0);
 
   function updateSet(index: number, field: keyof SetEntry, value: number) {
     const updated = sets.map((s, i) => {
@@ -88,10 +91,12 @@ function ExerciseRowComponent({
     onSetsChange(exerciseKey, sets.filter((_, i) => i !== index));
   }
 
+  const canCollapse = sets.length > 0;
+
   return (
-    <Paper p="xs" withBorder>
+    <Paper p={{ base: "sm", sm: "sm" }} withBorder>
       <Stack gap="xs">
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap">
           <div style={{ flex: 1 }}>
             <ExerciseCombobox
               defaultValue={exercise.variant ?? ""}
@@ -103,65 +108,103 @@ function ExerciseRowComponent({
               favoriteExercises={favoriteExercises}
             />
           </div>
+          {canCollapse && (
+            <UnstyledButton
+              onClick={() => setExpanded((v) => !v)}
+              aria-label={expanded ? "Collapse sets" : "Expand sets"}
+              aria-expanded={expanded}
+              style={{ display: "flex", color: "var(--mantine-color-dimmed)" }}
+            >
+              {expanded ? (
+                <IconChevronUp size={18} />
+              ) : (
+                <IconChevronDown size={18} />
+              )}
+            </UnstyledButton>
+          )}
           {editMode && (
             <CloseButton onClick={() => closeHandler(exerciseKey)} />
           )}
         </Group>
 
-        {sets.length > 0 && (
-          <Group gap="xs" px={4}>
-            <Text size="xs" c="dimmed" w={20} ta="center">
-              #
-            </Text>
-            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
-              Reps
-            </Text>
-            <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
-              Weight ({weightUnit})
-            </Text>
-            {editMode && <div style={{ width: 28 }} />}
+        {canCollapse && !expanded && (
+          <Group gap={6}>
+            {sets.map((set, index) => (
+              <Text
+                key={index}
+                size="sm"
+                fw={600}
+                px={9}
+                py={5}
+                bg="dark.6"
+                style={{ borderRadius: "var(--mantine-radius-sm)" }}
+              >
+                {set.reps} × {set[weightField] as number}
+              </Text>
+            ))}
           </Group>
         )}
 
-        {sets.map((set, index) => (
-            <Group key={index} gap="xs" align="center" px={4}>
-              <Text size="xs" c="dimmed" w={20} ta="center">
-                {index + 1}
-              </Text>
-              <NumberInput
-                value={set.reps}
-                onChange={(v) => updateSet(index, "reps", Number(v))}
-                onFocus={(e) => e.target.select()}
-                onMouseUp={(e) => e.preventDefault()}
-                hideControls
-                inputMode="numeric"
-                style={{ flex: 1 }}
-                styles={{ input: { textAlign: "center" } }}
-              />
-              <NumberInput
-                value={set[weightField] as number}
-                onChange={(v) => updateSet(index, weightField, Number(v))}
-                onFocus={(e) => e.target.select()}
-                onMouseUp={(e) => e.preventDefault()}
-                hideControls
-                inputMode="decimal"
-                style={{ flex: 1 }}
-                styles={{ input: { textAlign: "center" } }}
-              />
-              {editMode && (
-                <CloseButton size="sm" onClick={() => removeSet(index)} />
-              )}
-            </Group>
-          ))}
+        <Collapse in={expanded || !canCollapse}>
+          <Stack gap="xs">
+            {sets.length > 0 && (
+              <Group gap="xs" px={4}>
+                <Text size="xs" c="dimmed" w={20} ta="center">
+                  #
+                </Text>
+                <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
+                  Reps
+                </Text>
+                <Text size="xs" c="dimmed" style={{ flex: 1 }} ta="center">
+                  Weight ({weightUnit})
+                </Text>
+                {editMode && <div style={{ width: 28 }} />}
+              </Group>
+            )}
 
-        <Button
-          leftSection={<IconPlus size={12} />}
-          onClick={addSet}
-          variant="subtle"
-          size="xs"
-        >
-          Add Set
-        </Button>
+            {sets.map((set, index) => (
+              <Group key={index} gap="xs" align="center" px={4}>
+                <Text size="xs" c="dimmed" w={20} ta="center">
+                  {index + 1}
+                </Text>
+                <NumberInput
+                  value={set.reps}
+                  onChange={(v) => updateSet(index, "reps", Number(v))}
+                  onFocus={(e) => e.target.select()}
+                  onMouseUp={(e) => e.preventDefault()}
+                  hideControls
+                  inputMode="numeric"
+                  size="md"
+                  style={{ flex: 1 }}
+                  styles={{ input: { textAlign: "center" } }}
+                />
+                <NumberInput
+                  value={set[weightField] as number}
+                  onChange={(v) => updateSet(index, weightField, Number(v))}
+                  onFocus={(e) => e.target.select()}
+                  onMouseUp={(e) => e.preventDefault()}
+                  hideControls
+                  inputMode="decimal"
+                  size="md"
+                  style={{ flex: 1 }}
+                  styles={{ input: { textAlign: "center" } }}
+                />
+                {editMode && (
+                  <CloseButton size="sm" onClick={() => removeSet(index)} />
+                )}
+              </Group>
+            ))}
+
+            <Button
+              leftSection={<IconPlus size={12} />}
+              onClick={addSet}
+              variant="subtle"
+              size="xs"
+            >
+              Add Set
+            </Button>
+          </Stack>
+        </Collapse>
       </Stack>
     </Paper>
   );

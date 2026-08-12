@@ -1,4 +1,4 @@
-import { Container, Stack, Text } from "@mantine/core";
+import { Container, Grid, Stack, Text } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import { createContext, useEffect, useState } from "react";
@@ -51,19 +51,30 @@ function App() {
     });
   }, [userId, displayName]);
   return (
-    <Container>
+    <Container
+      fluid
+      maw={{ base: 480, md: 1320 }}
+      mx="auto"
+      px={{ base: 0, sm: "md", lg: 40 }}
+    >
       <UserProfileContext.Provider value={{ userProfile, setUserProfile }}>
-        <Stack p={{ sm: "sm", md: "lg" }}>
+        <Stack gap="lg" py="md" px={{ base: "sm", sm: 0 }}>
           <Header />
           <main id="main-content">
-            <Stack p={{ sm: "sm", md: "lg" }}>
+            <Stack gap="lg">
               {userId === "demoUser" ? (
                 <Hero />
               ) : (
                 <Text>Welcome {displayName}!</Text>
               )}
-              <Dashboard />
-              <WorkoutTool />
+              <Grid gutter={{ base: "lg", md: 40 }}>
+                <Grid.Col span={{ base: 12, md: 4, lg: 3 }}>
+                  <Dashboard />
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 8, lg: 9 }}>
+                  <WorkoutTool />
+                </Grid.Col>
+              </Grid>
             </Stack>
           </main>
         </Stack>

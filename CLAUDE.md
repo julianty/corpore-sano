@@ -215,14 +215,12 @@ The mobile app has outpaced the web app on several fronts. The items below bring
 ### P1 (bug — affects both platforms)
 
 - ~~**Exercise swap vs rename history handling**~~ ✓ done — replaced `migrateExerciseHistory` call in `exerciseNameChangeHandler` (both `WorkoutInstance.tsx` and `useWorkoutEditor.ts`) with `removeExerciseSetsFromHistory` on the old key + `scheduleWrite` to the new key. `migrateExerciseHistory` remains available for a future explicit "merge history" action.
-- **Date-specific history removal** — `removeMatchingLifts` in `src/core/services/exerciseHistory.ts` currently matches on weight+reps only, ignoring date. If the same set (e.g. 100kg×5) was logged on two different days and the user swaps the exercise today, a historical lift from a different day could be incorrectly removed. Fix: add an optional `date?: string` field to the `sets` parameter; when provided, the lift's date must also match. Thread the workout date through all callers: `exerciseNameChangeHandler` (both platforms) and `deleteWorkoutWithHistory` in `FirestoreActions`. Update `removeMatchingLifts` tests accordingly.
+- ~~**Date-specific history removal**~~ ✓ done — `removeMatchingLifts` now accepts an optional `date` per set; when provided it must also match the stored lift's date, so a same-weight/reps lift from a different day is no longer removed. Threaded through `exerciseNameChangeHandler` (both platforms), `closeHandler` (mobile), and `deleteWorkoutWithHistory` in `FirestoreActions`.
 
 ### P2 (feature parity — port from mobile)
 
-- **Exercise history writes** — port `mobile/hooks/useExerciseHistoryWriter.ts` to `src/hooks/useExerciseHistoryWriter.ts`; wire it into `WorkoutInstance` the same way mobile's `[workoutId].tsx` does: schedule a debounced write on every set change, flush on component unmount. Use `window` visibility change instead of `AppState` for the background-flush equivalent.
+- ~~**Exercise history writes**~~ ✓ done — `src/hooks/useExerciseHistoryWriter.ts` exists and is wired into `WorkoutInstance`, scheduling a debounced write on every set change and flushing on unmount.
 - **Exercise stats display** — on `WorkoutInstance` / `ExerciseRow`, fetch `ExerciseHistoryDoc` from Firestore when a drawer or panel opens and display max weight, median weight, sets this week, and max-volume set as chips (same data as `ExerciseEditDrawer` in mobile). Use existing `fetchExerciseHistory` from `FirestoreActions`.
-- **Duration tracking UI** — `Workout.durationSeconds` is in the type but the web has no UI for it. Add an elapsed timer to `WorkoutInstance` (counts up while the workout is open, same concept as mobile's workout mode) and persist `durationSeconds` on save. Display it on `WorkoutTool` workout cards.
-- **Wire `deleteWorkoutWithHistory`** — the web currently calls `deleteWorkoutById` directly; switch to `deleteWorkoutWithHistory` (already implemented in `FirestoreActions`) so deleting a workout also cleans up its exercise history lifts. Complete the date-specific removal fix (P1 above) first, otherwise `deleteWorkoutWithHistory` may remove wrong lifts.
 
 ### P3
 

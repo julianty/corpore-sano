@@ -59,13 +59,20 @@ function AppProviders() {
     return unsubscribe;
   }, [dispatch]);
 
+  // Firestore rules require request.auth != null for every path, so these
+  // fetches must wait until a session — real login or a successful anonymous
+  // demo sign-in — actually exists, not just until auth state is checked.
+  const sessionReady = authChecked && (demoMode || userId !== "demoUser");
+
   useEffect(() => {
+    if (!sessionReady) return;
     if (userId === "demoUser") {
       FirestoreActions.updateDemoData();
     }
-  }, [userId]);
+  }, [userId, sessionReady]);
 
   useEffect(() => {
+    if (!sessionReady) return;
     FirestoreActions.fetchUserProfile(userId).then((profile) => {
       if (!profile) return;
       setUserProfile((prev) => ({
@@ -76,7 +83,7 @@ function AppProviders() {
         customExercises: profile.customExercises ?? {},
       }));
     });
-  }, [userId, displayName]);
+  }, [userId, displayName, sessionReady]);
 
   // Waiting for Firebase to report auth state
   if (!authChecked) {
@@ -102,15 +109,13 @@ function AppProviders() {
   if (!isAuthenticated) {
     return (
       <LoginScreen
-        onDemoMode={() => {
+        onDemoMode={async () => {
           // Demo mode still needs a real Firebase session so Firestore
-          // requests to the demoUser path satisfy the security rules.
-          signInAnonymously()
-            .catch(() => {
-              // Firestore reads/writes will be denied without a session, but
-              // don't block the UI.
-            })
-            .finally(() => setDemoMode(true));
+          // requests to the demoUser path satisfy the security rules. Let a
+          // failure propagate to LoginScreen rather than entering demo mode
+          // with no working session.
+          await signInAnonymously();
+          setDemoMode(true);
         }}
       />
     );

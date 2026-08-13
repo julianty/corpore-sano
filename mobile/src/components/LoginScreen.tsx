@@ -13,7 +13,7 @@ import { signIn, signUp } from "../lib/auth";
 import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface LoginScreenProps {
-  onDemoMode: () => void;
+  onDemoMode: () => Promise<void>;
 }
 
 export function LoginScreen({ onDemoMode }: LoginScreenProps) {
@@ -41,6 +41,22 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
     } catch (e: unknown) {
       const msg =
         e instanceof Error ? e.message : "Something went wrong. Try again.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDemoMode() {
+    setError("");
+    setLoading(true);
+    try {
+      await onDemoMode();
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : "Could not start demo mode. Try again.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -109,7 +125,11 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
 
       <View style={styles.divider} />
 
-      <TouchableOpacity style={styles.demoButton} onPress={onDemoMode}>
+      <TouchableOpacity
+        style={[styles.demoButton, loading && styles.primaryButtonDisabled]}
+        onPress={handleDemoMode}
+        disabled={loading}
+      >
         <Text style={styles.demoButtonText}>Continue as Demo</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>

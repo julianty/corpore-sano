@@ -75,21 +75,24 @@ export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
 
 // Removes lifts matching the given set signatures using one-to-one consumption,
 // so duplicate weights/reps only remove the exact count present in `sets`.
-// When a set carries a `date`, it must also match the lift's date — this prevents
-// removing a same-weight/reps lift logged on a different day. Sets without a date
-// fall back to matching on weight+reps only.
+// When both the set and the stored lift carry a workoutId, that must match —
+// the strongest signal, since two different workouts logged the same day can
+// otherwise share an identical weight+reps+date signature. Falls back to date
+// matching (and then weight+reps only) when either side lacks a workoutId, for
+// pre-migration lifts and callers that can't determine one.
 export function removeMatchingLifts(
   allLifts: Lift[],
-  sets: { weight: number; reps: number; date?: string }[],
+  sets: { weight: number; reps: number; date?: string; workoutId?: string }[],
 ): Lift[] {
   const pool = [...sets];
   return allLifts.filter((lift) => {
-    const idx = pool.findIndex(
-      (s) =>
-        s.weight === lift.weight &&
-        s.reps === lift.reps &&
-        (s.date === undefined || s.date === lift.date),
-    );
+    const idx = pool.findIndex((s) => {
+      if (s.weight !== lift.weight || s.reps !== lift.reps) return false;
+      if (s.workoutId !== undefined && lift.workoutId !== undefined) {
+        return s.workoutId === lift.workoutId;
+      }
+      return s.date === undefined || s.date === lift.date;
+    });
     if (idx !== -1) {
       pool.splice(idx, 1);
       return false;
@@ -102,13 +105,17 @@ export function removeMatchingLifts(
 // preserving lifts from every other workout — including ones logged on the same day.
 // Filtering by date alone would wrongly wipe out a different workout's lifts logged
 // the same day; workoutId scopes the replacement to only this workout's contribution.
-// Lifts written before workoutId existed have no workoutId and are never matched here,
-// so they're preserved until they're naturally rewritten with a workoutId attached.
+// Lifts written before workoutId existed have no workoutId, so they can't be matched
+// that way — those fall back to the old date-based replacement so re-editing a
+// pre-migration workout doesn't duplicate its sets instead of updating them in place.
 export function mergeLifts(
   storedLifts: Lift[],
   sessionLifts: Lift[],
   workoutId: string,
+  today: string,
 ): Lift[] {
-  const priorLifts = storedLifts.filter((l) => l.workoutId !== workoutId);
+  const priorLifts = storedLifts.filter((l) =>
+    l.workoutId !== undefined ? l.workoutId !== workoutId : l.date !== today,
+  );
   return [...priorLifts, ...sessionLifts];
 }

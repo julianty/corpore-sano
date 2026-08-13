@@ -70,7 +70,12 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
         workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
       const sets = (exercisesObject[key]?.sets ?? [])
         .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+        .map((s) => ({
+          weight: s.weightkg,
+          reps: s.reps,
+          date: workoutDateStr,
+          workoutId,
+        }));
       await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
     }
     const updated: ExerciseMap = { ...exercisesObject };
@@ -96,7 +101,12 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
     const sets = (exercise?.sets ?? [])
       .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+      .map((s) => ({
+        weight: s.weightkg,
+        reps: s.reps,
+        date: workoutDateStr,
+        workoutId,
+      }));
 
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];

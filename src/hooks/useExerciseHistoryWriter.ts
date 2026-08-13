@@ -80,7 +80,7 @@ export default function useExerciseHistoryWriter() {
         firestoreKey,
       );
       const storedLifts = existing?.allLifts ?? [];
-      const merged = mergeLifts(storedLifts, liftsToWrite, workoutId);
+      const merged = mergeLifts(storedLifts, liftsToWrite, workoutId, workoutDateStr);
       const computed = computeStats(merged);
 
       const doc: ExerciseHistoryDoc = {

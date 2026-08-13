@@ -130,7 +130,7 @@ describe("mergeLifts", () => {
     const session: Lift[] = [
       { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_B },
     ];
-    const merged = mergeLifts(stored, session, WORKOUT_B);
+    const merged = mergeLifts(stored, session, WORKOUT_B, TODAY);
     expect(merged).toHaveLength(2);
     expect(merged).toContainEqual(stored[0]);
     expect(merged).toContainEqual(session[0]);
@@ -144,7 +144,7 @@ describe("mergeLifts", () => {
       { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
       { weight: 105, reps: 3, date: TODAY, workoutId: WORKOUT_A },
     ];
-    const merged = mergeLifts(stored, session, WORKOUT_A);
+    const merged = mergeLifts(stored, session, WORKOUT_A, TODAY);
     expect(merged).toHaveLength(2);
     expect(merged.find((l) => l.weight === 80)).toBeUndefined();
   });
@@ -158,33 +158,43 @@ describe("mergeLifts", () => {
     const session: Lift[] = [
       { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_B },
     ];
-    const merged = mergeLifts(stored, session, WORKOUT_B);
+    const merged = mergeLifts(stored, session, WORKOUT_B, TODAY);
     expect(merged).toHaveLength(2);
     expect(merged).toContainEqual(stored[0]);
   });
 
-  it("never replaces a legacy lift that has no workoutId", () => {
-    const stored: Lift[] = [{ weight: 90, reps: 8, date: TODAY }]; // pre-migration lift
+  it("preserves a legacy lift (no workoutId) from a different day untouched", () => {
+    const stored: Lift[] = [{ weight: 90, reps: 8, date: "2026-04-20" }]; // pre-migration lift
     const session: Lift[] = [
       { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
     ];
-    const merged = mergeLifts(stored, session, WORKOUT_A);
+    const merged = mergeLifts(stored, session, WORKOUT_A, TODAY);
     expect(merged).toHaveLength(2);
     expect(merged).toContainEqual(stored[0]);
+  });
+
+  it("replaces same-day legacy lifts by date, so re-editing a pre-migration workout doesn't duplicate its sets", () => {
+    const stored: Lift[] = [{ weight: 80, reps: 5, date: TODAY }]; // pre-migration lift, no workoutId
+    const session: Lift[] = [
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
+    ];
+    const merged = mergeLifts(stored, session, WORKOUT_A, TODAY);
+    expect(merged).toHaveLength(1);
+    expect(merged).toContainEqual(session[0]);
   });
 
   it("handles empty stored lifts", () => {
     const session: Lift[] = [
       { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
     ];
-    expect(mergeLifts([], session, WORKOUT_A)).toEqual(session);
+    expect(mergeLifts([], session, WORKOUT_A, TODAY)).toEqual(session);
   });
 
   it("handles empty session lifts for a different workout", () => {
     const stored: Lift[] = [
       { weight: 90, reps: 8, date: "2026-04-20", workoutId: WORKOUT_A },
     ];
-    expect(mergeLifts(stored, [], WORKOUT_B)).toEqual(stored);
+    expect(mergeLifts(stored, [], WORKOUT_B, TODAY)).toEqual(stored);
   });
 });
 
@@ -278,6 +288,36 @@ describe("removeMatchingLifts", () => {
   it("does not remove a lift when only weight matches but reps differ", () => {
     const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-04-28" }];
     const result = removeMatchingLifts(lifts, [{ weight: 100, reps: 8 }]);
+    expect(result).toHaveLength(1);
+  });
+
+  it("does not remove a same weight+reps+date lift from a different workout when both are tagged", () => {
+    // Two workouts logged the same day with an identical set — workoutId is the
+    // strongest signal and must win over the date-only fallback.
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-28", workoutId: "workoutA" },
+    ];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5, date: "2026-04-28", workoutId: "workoutB" },
+    ]);
+    expect(result).toHaveLength(1);
+  });
+
+  it("removes a lift when workoutId matches, even without a date on the set", () => {
+    const lifts: Lift[] = [
+      { weight: 100, reps: 5, date: "2026-04-28", workoutId: "workoutA" },
+    ];
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5, workoutId: "workoutA" },
+    ]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("falls back to date matching when the stored lift has no workoutId", () => {
+    const lifts: Lift[] = [{ weight: 100, reps: 5, date: "2026-01-01" }]; // pre-migration lift
+    const result = removeMatchingLifts(lifts, [
+      { weight: 100, reps: 5, date: "2026-04-28", workoutId: "workoutA" },
+    ]);
     expect(result).toHaveLength(1);
   });
 });

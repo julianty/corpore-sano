@@ -82,7 +82,12 @@ export function WorkoutInstance(props: {
       const workoutDateStr = workoutDate.toDate().toISOString().slice(0, 10);
       const sets = (exercisesObject[key]?.sets ?? [])
         .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+        .map((s) => ({
+          weight: s.weightkg,
+          reps: s.reps,
+          date: workoutDateStr,
+          workoutId,
+        }));
       await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
     }
     const nextState = {
@@ -111,7 +116,12 @@ export function WorkoutInstance(props: {
     const workoutDateStr = workoutDate.toDate().toISOString().slice(0, 10);
     const sets = (exercise?.sets ?? [])
       .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+      .map((s) => ({
+        weight: s.weightkg,
+        reps: s.reps,
+        date: workoutDateStr,
+        workoutId,
+      }));
 
     // Remove the clicked exercise from the exercise object
     const nextState = { ...exercisesObject };

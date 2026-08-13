@@ -70,7 +70,12 @@ export const FirestoreActions = {
           if (!firestoreKey) return Promise.resolve();
           const sets = (exercise.sets ?? [])
             .filter((s) => s.weightkg > 0 && s.reps > 0)
-            .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDate }));
+            .map((s) => ({
+              weight: s.weightkg,
+              reps: s.reps,
+              date: workoutDate,
+              workoutId,
+            }));
           return FirestoreActions.removeExerciseSetsFromHistory(
             userId,
             firestoreKey,
@@ -220,7 +225,7 @@ export const FirestoreActions = {
   removeExerciseSetsFromHistory: async (
     userId: string,
     exerciseKey: string,
-    sets: { weight: number; reps: number; date?: string }[],
+    sets: { weight: number; reps: number; date?: string; workoutId?: string }[],
   ): Promise<void> => {
     if (sets.length === 0) return;
     const existing = await FirestoreActions.fetchExerciseHistory(
@@ -230,8 +235,11 @@ export const FirestoreActions = {
     if (!existing) return;
     // Match lifts by weight+reps using one-to-one consumption: if the same
     // weight/reps pair appears twice in `sets`, it removes exactly two matching
-    // lifts from history — no more. When callers pass a `date`, it must also
-    // match, so a same-weight/reps lift logged on a different day is left alone.
+    // lifts from history — no more. When callers pass a `workoutId` and the
+    // stored lift has one too, that must also match (the strongest signal, since
+    // two different workouts can share an identical weight+reps+date). Otherwise
+    // falls back to requiring the `date` to match, so a same-weight/reps lift
+    // logged on a different day is left alone.
     const remaining = removeMatchingLifts(existing.allLifts, sets);
     // Nothing matched — history is already clean, skip the write.
     if (remaining.length === existing.allLifts.length) return;

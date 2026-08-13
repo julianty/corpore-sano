@@ -121,15 +121,17 @@ export function useExerciseHistoryWriter(userId: string | null) {
     delete timersRef.current[firestoreKey];
   }, []);
 
-  // Function to clear out pending writes
-  const flushAll = useCallback(() => {
-    Object.entries(timersRef.current).forEach(
-      async ([key, { timerId, write }]) => {
-        clearTimeout(timerId);
-        delete timersRef.current[key];
-        await write();
-      },
-    );
+  // Function to clear out pending writes. forEach(async ...) would kick off each write
+  // without the returned promise ever being tracked, so flushAll's own promise resolved
+  // immediately rather than once every write actually completed. Promise.all ties them
+  // together properly so a caller that awaits flushAll gets a real completion guarantee.
+  const flushAll = useCallback(async () => {
+    const pending = Object.entries(timersRef.current);
+    pending.forEach(([key, { timerId }]) => {
+      clearTimeout(timerId);
+      delete timersRef.current[key];
+    });
+    await Promise.all(pending.map(([, { write }]) => write()));
   }, []);
 
   // Add a subscription to App state to flush pending writes

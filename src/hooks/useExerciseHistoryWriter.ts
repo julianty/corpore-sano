@@ -23,15 +23,17 @@ export default function useExerciseHistoryWriter() {
   >({});
 
   const flushAll = useCallback(async () => {
-    // Used for when app is unmounted or whenever all pending debounces should be written
-    // Loop through all the timers and write
-    Object.entries(timersRef.current).forEach(
-      async ([firestoreKey, { timerId, write }]) => {
-        clearTimeout(timerId);
-        delete timersRef.current[firestoreKey];
-        await write();
-      },
-    );
+    // Used for when app is unmounted or whenever all pending debounces should be written.
+    // forEach(async ...) would kick off each write without the returned promise ever being
+    // tracked, so flushAll's own promise resolved immediately rather than once every write
+    // actually completed — callers awaiting it (or a future caller that wants to) got no
+    // real guarantee. Promise.all ties them together properly.
+    const pending = Object.entries(timersRef.current);
+    pending.forEach(([firestoreKey, { timerId }]) => {
+      clearTimeout(timerId);
+      delete timersRef.current[firestoreKey];
+    });
+    await Promise.all(pending.map(([, { write }]) => write()));
   }, []);
 
   useEffect(() => {

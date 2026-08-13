@@ -119,38 +119,72 @@ describe("computeStats", () => {
 // --- mergeLifts ---
 
 const TODAY = "2026-04-28";
+const WORKOUT_A = "workoutA";
+const WORKOUT_B = "workoutB";
 
 describe("mergeLifts", () => {
-  it("preserves past lifts and appends session lifts for today", () => {
-    const stored: Lift[] = [{ weight: 90, reps: 8, date: "2026-04-20" }];
-    const session: Lift[] = [{ weight: 100, reps: 5, date: TODAY }];
-    const merged = mergeLifts(stored, session, TODAY);
-    expect(merged).toHaveLength(2);
-    expect(merged).toContainEqual({ weight: 90, reps: 8, date: "2026-04-20" });
-    expect(merged).toContainEqual({ weight: 100, reps: 5, date: TODAY });
-  });
-
-  it("replaces stored lifts from today rather than duplicating them", () => {
+  it("preserves lifts from other workouts and appends this workout's session lifts", () => {
     const stored: Lift[] = [
-      { weight: 80, reps: 5, date: TODAY }, // old version of today's data
+      { weight: 90, reps: 8, date: "2026-04-20", workoutId: WORKOUT_A },
     ];
     const session: Lift[] = [
-      { weight: 100, reps: 5, date: TODAY },
-      { weight: 105, reps: 3, date: TODAY },
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_B },
     ];
-    const merged = mergeLifts(stored, session, TODAY);
-    expect(merged.filter((l) => l.date === TODAY)).toHaveLength(2);
+    const merged = mergeLifts(stored, session, WORKOUT_B);
+    expect(merged).toHaveLength(2);
+    expect(merged).toContainEqual(stored[0]);
+    expect(merged).toContainEqual(session[0]);
+  });
+
+  it("replaces stored lifts from the same workout rather than duplicating them", () => {
+    const stored: Lift[] = [
+      { weight: 80, reps: 5, date: TODAY, workoutId: WORKOUT_A }, // old version of this workout's data
+    ];
+    const session: Lift[] = [
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
+      { weight: 105, reps: 3, date: TODAY, workoutId: WORKOUT_A },
+    ];
+    const merged = mergeLifts(stored, session, WORKOUT_A);
+    expect(merged).toHaveLength(2);
     expect(merged.find((l) => l.weight === 80)).toBeUndefined();
   });
 
-  it("handles empty stored lifts", () => {
-    const session: Lift[] = [{ weight: 100, reps: 5, date: TODAY }];
-    expect(mergeLifts([], session, TODAY)).toEqual(session);
+  it("does not clobber a same-day lift logged under a different workout", () => {
+    // This is the bug this function exists to prevent: two workouts on the same
+    // calendar day must not erase each other's history.
+    const stored: Lift[] = [
+      { weight: 90, reps: 8, date: TODAY, workoutId: WORKOUT_A },
+    ];
+    const session: Lift[] = [
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_B },
+    ];
+    const merged = mergeLifts(stored, session, WORKOUT_B);
+    expect(merged).toHaveLength(2);
+    expect(merged).toContainEqual(stored[0]);
   });
 
-  it("handles empty session lifts", () => {
-    const stored: Lift[] = [{ weight: 90, reps: 8, date: "2026-04-20" }];
-    expect(mergeLifts(stored, [], TODAY)).toEqual(stored);
+  it("never replaces a legacy lift that has no workoutId", () => {
+    const stored: Lift[] = [{ weight: 90, reps: 8, date: TODAY }]; // pre-migration lift
+    const session: Lift[] = [
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
+    ];
+    const merged = mergeLifts(stored, session, WORKOUT_A);
+    expect(merged).toHaveLength(2);
+    expect(merged).toContainEqual(stored[0]);
+  });
+
+  it("handles empty stored lifts", () => {
+    const session: Lift[] = [
+      { weight: 100, reps: 5, date: TODAY, workoutId: WORKOUT_A },
+    ];
+    expect(mergeLifts([], session, WORKOUT_A)).toEqual(session);
+  });
+
+  it("handles empty session lifts for a different workout", () => {
+    const stored: Lift[] = [
+      { weight: 90, reps: 8, date: "2026-04-20", workoutId: WORKOUT_A },
+    ];
+    expect(mergeLifts(stored, [], WORKOUT_B)).toEqual(stored);
   });
 });
 

@@ -44,7 +44,7 @@ export function WorkoutInstance(props: {
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 48em)") ?? false;
-  const { scheduleWrite, flushKey } = useExerciseHistoryWriter();
+  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter();
 
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
@@ -62,7 +62,7 @@ export function WorkoutInstance(props: {
       exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
     );
     const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
-    scheduleWrite(key, nextState, timestampString);
+    scheduleWrite(key, nextState, timestampString, workoutId);
   }
 
   async function exerciseNameChangeHandler(
@@ -101,11 +101,18 @@ export function WorkoutInstance(props: {
     if (oldKey && oldKey !== newKey && newKey) {
       // Queue a write of this workout's sets under the new key so they land in history.
       const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
-      scheduleWrite(key, nextState, timestampString);
+      scheduleWrite(key, nextState, timestampString, workoutId);
     }
   }
 
-  function closeHandler(exerciseKey: string) {
+  async function closeHandler(exerciseKey: string) {
+    const exercise = exercisesObject[exerciseKey];
+    const firestoreKey = normalizeExerciseKey(exercise?.variant ?? "");
+    const workoutDateStr = workoutDate.toDate().toISOString().slice(0, 10);
+    const sets = (exercise?.sets ?? [])
+      .filter((s) => s.weightkg > 0 && s.reps > 0)
+      .map((s) => ({ weight: s.weightkg, reps: s.reps, date: workoutDateStr }));
+
     // Remove the clicked exercise from the exercise object
     const nextState = { ...exercisesObject };
     delete nextState[exerciseKey];
@@ -113,6 +120,26 @@ export function WorkoutInstance(props: {
     updateWorkoutData(
       exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
     );
+
+    if (!firestoreKey) return;
+
+    // If another exercise in this workout still normalizes to the same key,
+    // its own scheduled write already reflects the correct remaining sets —
+    // don't delete the history it's about to (re)write.
+    const duplicateEntry = Object.entries(nextState).find(
+      ([, ex]) => normalizeExerciseKey(ex.variant) === firestoreKey,
+    );
+
+    if (duplicateEntry) {
+      scheduleWrite(duplicateEntry[0], nextState, workoutDateStr, workoutId);
+    } else {
+      cancelKey(firestoreKey);
+      await FirestoreActions.removeExerciseSetsFromHistory(
+        userId,
+        firestoreKey,
+        sets,
+      );
+    }
   }
 
   function addNewExercise() {

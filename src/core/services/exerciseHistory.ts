@@ -2,6 +2,7 @@ export interface Lift {
   weight: number;
   reps: number;
   date: string; // ISO date "YYYY-MM-DD"
+  workoutId?: string; // which workout doc this lift came from; absent on pre-migration lifts
 }
 
 export interface ComputedStats {
@@ -97,12 +98,17 @@ export function removeMatchingLifts(
   });
 }
 
-// Replaces any stored lifts from `today` with `sessionLifts`, preserving all other dates.
+// Replaces stored lifts that came from this same workout doc with `sessionLifts`,
+// preserving lifts from every other workout — including ones logged on the same day.
+// Filtering by date alone would wrongly wipe out a different workout's lifts logged
+// the same day; workoutId scopes the replacement to only this workout's contribution.
+// Lifts written before workoutId existed have no workoutId and are never matched here,
+// so they're preserved until they're naturally rewritten with a workoutId attached.
 export function mergeLifts(
   storedLifts: Lift[],
   sessionLifts: Lift[],
-  today: string,
+  workoutId: string,
 ): Lift[] {
-  const priorLifts = storedLifts.filter((l) => l.date !== today);
+  const priorLifts = storedLifts.filter((l) => l.workoutId !== workoutId);
   return [...priorLifts, ...sessionLifts];
 }

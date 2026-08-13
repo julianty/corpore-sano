@@ -5,6 +5,7 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously as firebaseSignInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
@@ -46,6 +47,10 @@ export function signIn(email: string, password: string) {
 
 export function signUp(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
+}
+
+export function signInAnonymously() {
+  return firebaseSignInAnonymously(auth);
 }
 
 export function signOut() {

@@ -1,6 +1,7 @@
 import { Container, Stack, Text } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { createContext, useEffect, useState } from "react";
 import { Dashboard } from "./components/Dashboard/Dashboard";
 import { Header } from "./components/Header";
@@ -28,6 +29,21 @@ function App() {
     weightUnit: "lbs",
     colorScheme: "dark",
   });
+
+  useEffect(() => {
+    // The web app has no login gate and defaults to the shared "demoUser"
+    // account, so establish an anonymous session whenever none exists —
+    // Firestore rules now require request.auth != null for every path.
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        signInAnonymously(auth).catch(() => {
+          // Firestore reads/writes will be denied without a session
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     // Ensure that the demo data is updated when the demo user logs in

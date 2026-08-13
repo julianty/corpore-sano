@@ -7,7 +7,7 @@ import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector, useAppDispatch } from "@shared/hooks";
 import { authSlice } from "@shared/features/auth/authSlice";
 import { UserProfile } from "@shared/types";
-import { listenAuthState, signOut } from "../src/lib/auth";
+import { listenAuthState, signInAnonymously, signOut } from "../src/lib/auth";
 import { LoginScreen } from "../src/components/LoginScreen";
 
 export type UserProfileContextType = {
@@ -40,16 +40,20 @@ function AppProviders() {
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsubscribe = listenAuthState((user) => {
-      if (user) {
+      // An anonymous session backs demo mode only — it must not become the
+      // Redux userId, or every `userId === "demoUser"` check and Firestore
+      // path that expects the literal "demoUser" doc would break.
+      if (user && !user.isAnonymous) {
         dispatch(
           authSlice.actions.logInUser({
             uid: user.uid,
             displayName: user.displayName ?? user.email ?? "User",
           }),
         );
-      } else {
+      } else if (!user) {
         dispatch(authSlice.actions.logOutUser());
       }
+      // If user is anonymous, do nothing — userId stays "demoUser".
       setAuthChecked(true);
     });
     return unsubscribe;
@@ -96,7 +100,20 @@ function AppProviders() {
     userProfile.colorScheme === "system" ? deviceScheme : userProfile.colorScheme;
 
   if (!isAuthenticated) {
-    return <LoginScreen onDemoMode={() => setDemoMode(true)} />;
+    return (
+      <LoginScreen
+        onDemoMode={() => {
+          // Demo mode still needs a real Firebase session so Firestore
+          // requests to the demoUser path satisfy the security rules.
+          signInAnonymously()
+            .catch(() => {
+              // Firestore reads/writes will be denied without a session, but
+              // don't block the UI.
+            })
+            .finally(() => setDemoMode(true));
+        }}
+      />
+    );
   }
 
   return (

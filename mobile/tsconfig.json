@@ -2,7 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "moduleSuffixes": [".native", ""],
+    // Mirrors Metro's platform-extension resolution order for the platforms
+    // this app actually ships (iOS only — Android isn't wired yet, see
+    // CLAUDE.md). Add ".android" here if/when that changes.
+    "moduleSuffixes": [".ios", ".native", ""],
     "paths": {
       "@shared/*": ["../src/*"],
       "react-native": ["./node_modules/react-native"]

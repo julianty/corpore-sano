@@ -60,9 +60,13 @@ const dark: AppColors = {
 };
 
 // Falls back to device scheme when UserProfileContext is unavailable (e.g. LoginScreen)
-export function useAppTheme(): AppColors {
+export function useAppScheme(): "light" | "dark" {
   const ctx = useContext(UserProfileContext);
   const deviceScheme = useColorScheme() ?? "light";
-  const scheme = ctx?.resolvedColorScheme ?? deviceScheme;
+  return ctx?.resolvedColorScheme ?? deviceScheme;
+}
+
+export function useAppTheme(): AppColors {
+  const scheme = useAppScheme();
   return scheme === "dark" ? dark : light;
 }

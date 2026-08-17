@@ -13,18 +13,13 @@ import {
   setDoc,
   startAfter,
   Timestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import db from "../initializeFirebase";
 import { UserProfile, Workout, WorkoutEntry } from "../types";
 import type { ExerciseHistoryDoc } from "../core/services/exerciseHistory";
-import {
-  computeStats,
-  normalizeExerciseKey,
-  removeMatchingLifts,
-} from "../core/services/exerciseHistory";
-import { workoutToExerciseMap } from "../core/services/workoutTransforms";
+import { computeStats, normalizeExerciseKey, removeWorkoutLifts } from "../core/services/exerciseHistory";
+import { getExerciseEntries } from "../core/services/workoutShape";
 
 export type WorkoutPageCursor = QueryDocumentSnapshot<DocumentData> | null;
 
@@ -55,33 +50,17 @@ export const FirestoreActions = {
   deleteWorkoutWithHistory: async (userId: string, workoutId: string) => {
     const workout = await FirestoreActions.fetchData(userId, workoutId);
     if (workout) {
-      const workoutDate = (workout as Workout).date
-        ?.toDate()
-        .toISOString()
-        .slice(0, 10);
-      const exercises = Object.entries(workoutToExerciseMap(workout as Workout));
+      const firestoreKeys = new Set(
+        Object.values(getExerciseEntries(workout))
+          .map((ex) =>
+            normalizeExerciseKey((ex as { variant?: string }).variant ?? ""),
+          )
+          .filter((key) => key !== ""),
+      );
       await Promise.all(
-        exercises.map(([, ex]) => {
-          const exercise = ex as {
-            variant?: string;
-            sets?: { weightkg: number; reps: number }[];
-          };
-          const firestoreKey = normalizeExerciseKey(exercise.variant ?? "");
-          if (!firestoreKey) return Promise.resolve();
-          const sets = (exercise.sets ?? [])
-            .filter((s) => s.weightkg > 0 && s.reps > 0)
-            .map((s) => ({
-              weight: s.weightkg,
-              reps: s.reps,
-              date: workoutDate,
-              workoutId,
-            }));
-          return FirestoreActions.removeExerciseSetsFromHistory(
-            userId,
-            firestoreKey,
-            sets,
-          );
-        }),
+        [...firestoreKeys].map((firestoreKey) =>
+          FirestoreActions.removeWorkoutLiftsFromHistory(userId, firestoreKey, workoutId),
+        ),
       );
     }
     await FirestoreActions.deleteWorkoutById(userId, workoutId);
@@ -107,9 +86,7 @@ export const FirestoreActions = {
     const querySnapshot = await getDocs(workoutsQuery);
     return querySnapshot.docs.map((docSnapshot) => docSnapshot.id);
   },
-  fetchWorkoutSummaries: async (
-    userId: string,
-  ): Promise<{ id: string; date: Timestamp }[]> => {
+  fetchWorkoutSummaries: async (userId: string): Promise<{ id: string; date: Timestamp }[]> => {
     const workoutsQuery = query(
       collection(db, "users", userId, "workouts"),
       orderBy("date", "desc"),
@@ -170,7 +147,7 @@ export const FirestoreActions = {
   },
   updateUserProfile: async (userId: string, userProfile: UserProfile) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
-    await updateDoc(docRef, { ...userProfile });
+    await setDoc(docRef, { ...userProfile }, { merge: true });
   },
   fetchFavoriteExercises: async (userId: string) => {
     const userProfile = await getDoc(
@@ -187,7 +164,7 @@ export const FirestoreActions = {
     favoriteExercises: string[],
   ) => {
     const docRef = doc(db, "users", userId, "preferences", "userProfile");
-    await updateDoc(docRef, { favoriteExercises: favoriteExercises });
+    await setDoc(docRef, { favoriteExercises: favoriteExercises }, { merge: true });
   },
   updateCustomExercises: async (
     userId: string,
@@ -222,28 +199,15 @@ export const FirestoreActions = {
     const docRef = doc(db, "userStats", userId, "exercises", exerciseKey);
     await deleteDoc(docRef);
   },
-  removeExerciseSetsFromHistory: async (
+  removeWorkoutLiftsFromHistory: async (
     userId: string,
     exerciseKey: string,
-    sets: { weight: number; reps: number; date?: string; workoutId?: string }[],
+    workoutId: string,
   ): Promise<void> => {
-    if (sets.length === 0) return;
-    const existing = await FirestoreActions.fetchExerciseHistory(
-      userId,
-      exerciseKey,
-    );
+    const existing = await FirestoreActions.fetchExerciseHistory(userId, exerciseKey);
     if (!existing) return;
-    // Match lifts by weight+reps using one-to-one consumption: if the same
-    // weight/reps pair appears twice in `sets`, it removes exactly two matching
-    // lifts from history — no more. When callers pass a `workoutId` and the
-    // stored lift has one too, that must also match (the strongest signal, since
-    // two different workouts can share an identical weight+reps+date). Otherwise
-    // falls back to requiring the `date` to match, so a same-weight/reps lift
-    // logged on a different day is left alone.
-    const remaining = removeMatchingLifts(existing.allLifts, sets);
-    // Nothing matched — history is already clean, skip the write.
+    const remaining = removeWorkoutLifts(existing.allLifts, workoutId);
     if (remaining.length === existing.allLifts.length) return;
-    // All lifts removed — delete the doc entirely rather than leaving an empty shell.
     if (remaining.length === 0) {
       await FirestoreActions.deleteExerciseHistory(userId, exerciseKey);
     } else {
@@ -278,32 +242,28 @@ export const FirestoreActions = {
     // This is a function to update the demo data in the database
     // to demonstrate the functionality of the muscle summary
     const userId = "demoUser";
-    // Fetch all workouts of demoUser
-    await FirestoreActions.fetchWorkoutIds(userId).then((workoutIds) => {
-      // Randomly choose dates within the last 7 days for each workout
-      const timestampsFromLastWeek: Timestamp[] = [];
-      [1, 2, 3, 4, 5, 6, 7].forEach((day) => {
-        const date = new Date();
-        date.setDate(date.getDate() - day);
-        timestampsFromLastWeek.push(Timestamp.fromDate(date));
-      });
+    const workoutIds = await FirestoreActions.fetchWorkoutIds(userId);
 
-      workoutIds.forEach(async (workoutId) => {
-        // Replace each workout with a new workout with a date from the last week
+    // Give each workout a random date within the last 7 days. Pick per workout
+    // rather than draining a fixed pool with splice — the old code indexed a
+    // shrinking array with a fixed 0-6 range, so once the pool ran low the
+    // index overshot, splice returned [], and the date became `undefined`
+    // (then silently stamped Timestamp.now()). This also handles >7 workouts.
+    await Promise.all(
+      workoutIds.map(async (workoutId) => {
         const workout = await FirestoreActions.fetchData(userId, workoutId);
+        const date = new Date();
+        date.setDate(date.getDate() - (Math.floor(Math.random() * 7) + 1));
         const updatedWorkout = {
           ...(workout as Workout),
-          date: timestampsFromLastWeek.splice(
-            Math.floor(Math.random() * 7),
-            1,
-          )[0],
+          date: Timestamp.fromDate(date),
         };
         await FirestoreActions.updateWorkoutById(
           userId,
           workoutId,
           updatedWorkout,
         );
-      });
-    });
+      }),
+    );
   },
 };

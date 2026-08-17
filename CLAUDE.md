@@ -4,6 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+This is an npm **workspaces** monorepo. Run `npm install` once from the repo
+root — it installs both the root package and the `mobile` workspace into a
+single hoisted root `node_modules` with one root `package-lock.json`. Never
+run `npm install` inside `mobile/`.
+
 ### Web app (root)
 
 ```bash
@@ -23,17 +28,33 @@ npm run ios        # Run on iOS simulator
 npm run android    # Run on Android emulator
 ```
 
-No test suite exists for the mobile app yet.
+(`npm run ios --workspace mobile` from the root works too, but `cd mobile`
+then run is the primary documented flow.) No test suite exists for the mobile
+app yet.
 
 ## Architecture
 
-Monorepo with two apps sharing business logic. The web app's `src/` doubles as the shared library — no separate `packages/shared` workspace.
+npm **workspaces** monorepo with two apps sharing business logic. Root
+`package.json` declares `"workspaces": ["mobile"]`; the web app and the
+`mobile/` Expo app install into one hoisted root `node_modules` with a single
+root `package-lock.json` (`mobile/` has no lockfile and, for hoistable deps,
+no `node_modules` of its own). The web app's `src/` doubles as the shared
+library — no separate `packages/shared` workspace.
 
 ### Code sharing via `@shared`
 
 Mobile imports web source with `import { X } from "@shared/types"`. Wired at three levels: TypeScript `paths` in `mobile/tsconfig.json`, `babel-plugin-module-resolver` in `mobile/babel.config.js`, and `watchFolders`/`nodeModulesPaths` in `mobile/metro.config.js`.
 
 Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.native.ts` is auto-preferred over `src/initializeFirebase.tsx` in the RN build.
+
+**Shared dependencies must use compatible version ranges in both `package.json` files.** Because this is a workspace, npm only hoists a package to a single physical copy when every workspace's declared range converges on one resolvable version. A non-overlapping mismatch forces npm to nest a second copy under `mobile/node_modules`, and any dependency whose runtime relies on a single instance then breaks:
+
+- **`react`**: pinned to the exact same version in both (`19.1.0`, no caret) — React's hooks dispatcher / context is a process-wide singleton, so two copies throw `TypeError: Cannot read property 'useContext' of null` at startup. The mobile toolchain (Expo / React Native) dictates the React version; the web app follows it.
+- **`firebase`**: root-only (not in `mobile/package.json`); shared `src/` code imports it and it hoists to the single root copy. Never add `firebase` to `mobile/package.json` — a second SDK copy splits Auth and Firestore onto separate app instances, and Firestore requests stop carrying `request.auth`. Auth (`mobile/src/lib/auth.ts`) reuses the shared `app` exported by `initializeFirebase.native.ts`.
+
+When bumping a dep used by both apps, change it in both places (mobile's toolchain-driven version wins on conflict) and re-run `npm install` from the root.
+
+**`expo-router` is also declared in the root `package.json`** even though only the mobile app uses it. This is deliberate, not a stray dep: `babel-preset-expo` hoists to the root and decides whether to enable its expo-router transform (the one that inlines `EXPO_ROUTER_APP_ROOT` into `require.context`) via `require.resolve('expo-router')` **from the root**. Left to npm's hoisting, expo-router nests under `mobile/node_modules` (its `@react-navigation` / `@expo/metro-runtime` subtree conflicts with root versions), so the preset can't find it and every mobile bundle fails with `Invalid call ... require.context should be a string`. Declaring `expo-router` at the root forces a single copy into the root `node_modules` where the preset resolves it. The web build ignores it (Vite only bundles imports, `tsc` only includes `src/`). Keep its range in sync with `mobile/package.json`. Relatedly, `@reduxjs/toolkit` must be `>=2.5.0` in both — earlier 2.x declares a React-18-only peer that blocks installing expo-router at the root alongside React 19.
 
 ### Shared vs. platform-specific
 
@@ -50,13 +71,13 @@ Firebase init uses Metro's `.native.ts` extension: `src/initializeFirebase.nativ
 
 Core types: `Exercise`, `SetEntry`, `Workout`, `ExerciseMap`, `Muscle`, `MuscleSummary`, `UserProfile`.
 
-`Workout.exercises` is an `ExerciseMap` (object keyed by exercise key), nested under the `exercises` field alongside `date` and optional `durationSeconds` — this is the actual shape of every production Firestore document. Both apps must read/write through `workoutToExerciseMap` / `exerciseMapToWorkout` (`src/core/services/workoutTransforms.ts`) rather than hand-rolling the transform — a prior refactor (see git history around "fix types to match mobile") wrongly assumed a flat top-level-key shape with no nested `exercises` field; that assumption never matched real data and caused weight fields to silently fail to populate on web. Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
+`Workout.exercises` is an `ExerciseMap` (object keyed by UUID) — a real nested sub-map on the doc, alongside `date`/`durationSeconds`. Always read a workout's exercises via `getExerciseEntries(workout)` in `src/core/services/workoutShape.ts`; never scan the doc's own keys and filter out `date` (scalar fields like `durationSeconds` would be mistaken for exercises). Each `Exercise` holds a `SetEntry[]` with both `weightlbs` and `weightkg` stored.
 
 ### Firestore data model
 
 ```
 users/{userId}/
-  workouts/{workoutId}          # Workout docs (date, exercises: ExerciseMap, durationSeconds?)
+  workouts/{workoutId}          # Workout docs (date, exercises, durationSeconds)
   preferences/userProfile       # UserProfile (weightUnit, colorScheme, customExercises, favoriteExercises)
 
 userStats/{userId}/
@@ -67,17 +88,43 @@ All `FirestoreActions` live in `src/helperFunctions/FirestoreActions.tsx`. Reads
 
 ### Business logic (`src/core/`)
 
-- `workoutToExerciseMap(workout)` / `exerciseMapToWorkout(exercises, date, durationSeconds?)` (`src/core/services/workoutTransforms.ts`) — the canonical, shared translation between a Firestore `Workout` document and an in-memory `ExerciseMap`. Used by both `WorkoutInstance.tsx` (web) and `useWorkoutEditor.ts` (mobile) — do not reimplement this per-platform.
-- `buildMuscleSummary(workouts, exerciseMap)` — per-muscle set counts and recency data; reads `workout.exercises`
+- `buildMuscleSummary(workouts, exerciseMap)` — per-muscle set counts and recency data
 - `rollupToParentGroups(muscleSummary)` — aggregates muscles into parent groups (Shoulders, Back, Chest, Arms, Core, Legs)
 
 ### Redux
 
 Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exercise catalog). User profile state lives in React context (`UserProfileContext` in `mobile/app/_layout.tsx`), not Redux.
 
+### Mobile authentication (`mobile/src/lib/auth.ts`)
+
+Email/password and Google Sign-In, both landing on the single shared Firebase
+`auth` instance so Firestore requests carry `request.auth`.
+
+- **Google** uses `@react-native-google-signin/google-signin` (declared in
+  `mobile/package.json`, hoisted to root). `signInWithGoogle()` runs the native
+  flow, reads the id_token from the **v13+ response shape** (`response.data.idToken`
+  via `isSuccessResponse()` — not the old `userInfo.idToken`), then exchanges it
+  through the Firebase JS SDK's `signInWithCredential(auth, GoogleAuthProvider.credential(idToken))`.
+  Web still uses `signInWithPopup` (`src/components/Auth/GoogleLogin.tsx`) — popup/redirect don't work in RN.
+- **`GoogleSignin.configure`** needs both `webClientId` (this is what makes the
+  id_token acceptable to Firebase — the *web* OAuth client, not the iOS one) and
+  `iosClientId`. Both are public OAuth client IDs and live in `auth.ts`.
+- **Native module → no Expo Go.** Requires a dev build (`expo prebuild` +
+  `expo run:ios`). Three config pieces in `mobile/app.json` are load-bearing:
+  the google-signin plugin with an explicit `iosUrlScheme` (the plist's
+  `REVERSED_CLIENT_ID`; without it the Expo 54 build ships without the URL
+  scheme and sign-in fails with "missing URL scheme"), `ios.googleServicesFile`
+  pointing at `GoogleService-Info.plist`, and **`expo-build-properties` with
+  `ios.useFrameworks: "static"`** — the GoogleSignin iOS SDK pulls in Swift pods
+  (`AppCheckCore`/`GoogleUtilities`/`RecaptchaInterop`) that won't link as static
+  libraries otherwise, so `pod install` fails without it.
+- **Android is not wired yet** — needs an Android app registered in Firebase +
+  SHA-1 fingerprints + `google-services.json`. The JS code path is already
+  cross-platform.
+
 ## Testing
 
-Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/core/services/workoutTransforms.test.ts`, `src/lib/utils.test.ts`.
+Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.
 
 ## Mobile routing
 
@@ -135,7 +182,7 @@ Document schema:
 ```json
 {
   "exerciseName": "Bench Press",
-  "allLifts": [{ "weight": 225, "reps": 8, "date": "2026-04-08" }],
+  "allLifts": [{ "weight": 102, "reps": 8, "date": "2026-04-08", "workoutId": "aB3xY..." }],
   "computed": {
     "maxWeight": 245,
     "minWeight": 135,
@@ -148,13 +195,15 @@ Document schema:
 }
 ```
 
+Lift `weight` values are stored in **kg** (converted for display). Every lift carries the `workoutId` it was logged in: merging replaces only that workout's lifts (`mergeLifts`) and deleting a workout/exercise removes only that workout's lifts (`removeWorkoutLifts`) — never match by weight/reps signature or date alone, since same-day workouts and repeated weights are common. `src/migrateLiftWorkoutIds.ts` rebuilds all history docs from workout docs (run with `npx tsx`, supports `--dry-run` and explicit user-ID args).
+
 `bestSetWeight`/`bestSetReps` represent the single set with the highest `weight × reps` ever. Displayed as "Max Volume" chip in `ExerciseEditDrawer` and `ExerciseHistorySheet` as `reps × weight` (no unit label in the chip).
 
 `setsWeekOf` staleness check: if `setsWeekOf` ≠ current week's Monday, display `setsThisWeek` as 0.
 
 ### Implemented
 
-- Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`
+- Core utilities in `src/core/services/exerciseHistory.ts`: `normalizeExerciseKey`, `computeStats`, `getCurrentWeekMonday`, `mergeLifts`, `removeWorkoutLifts`
 - Firestore read/write: `fetchExerciseHistory` and `upsertExerciseHistory` in `src/helperFunctions/FirestoreActions.tsx`
 - History UI: embedded in `ExerciseEditDrawer` — fetched from Firestore when drawer opens; displays max, median, sets-this-week, and max-volume chips inline above the set list. `ExerciseHistorySheet` shows the same stats in a full-screen list view.
 - Write hook: `mobile/hooks/useExerciseHistoryWriter.ts` — per-exercise 30s debounce timers, AppState flush on background/inactive, flush on unmount; exposes `flushKey(uuid, exercises)` for targeted single-key flush
@@ -174,7 +223,7 @@ Document schema:
 
 Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not implement.
 
-## Roadmap (Mobile)
+## Roadmap
 
 ### P2
 
@@ -195,41 +244,9 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 - Set types on `SetEntry` — add optional `type?: 'normal' | 'warmup' | 'amrap'` field; warm-up sets excluded from history stats (max weight, median, volume); AMRAP counted normally; UI in `ExerciseEditDrawer` set rows; non-breaking schema change (backfill as 'normal')
 - Muscle group history — inline "last week" column added to `WeeklySummary` table; rows become tappable, opening a detail screen with 4-week sets-per-week breakdown + last worked date; requires expanding Firestore query window beyond current 7-day limit
 - RPE field on `SetEntry` data model (schema change, add to exercise logging UI)
+- Custom-exercise → catalog migration (reusable) — let a user re-point a mistakenly-created custom exercise onto an existing catalog exercise, carrying set/history data over. Today both workout entries and history docs are keyed by `normalizeExerciseKey(variant)` (a name-derived string), so migrating means rewriting the name/variant on every workout entry + moving/merging the `userStats/{userId}/exercises/{key}` history doc.
+- Investigate changing how custom-exercise logs are referenced — workouts and history currently reference exercises by **name string** (`name`/`variant`, history key = normalized variant), even though `Exercise.customExerciseId` already exists. If logs referenced a stable **exercise ID** instead (and history were keyed by ID), a custom→catalog migration would collapse to a single reference swap (repoint the ID) rather than rewriting every workout entry and rebuilding name-derived history keys. Evaluate the schema change + backfill cost vs. the migration simplification it buys. (See the `ExerciseHistory` "Do I need unique exercise IDs?" TODO in `src/types.ts`.)
 
 ### P5
 
-- Google OAuth sign-in — alongside existing email/password flow; low priority, not blocking App Store submission
-
----
-
-## Roadmap (Web)
-
-The mobile app has outpaced the web app on several fronts. The items below bring the web up to parity, plus fix a schema bug introduced during mobile development.
-
-### Critical (data model bugs)
-
-- ~~**Fix `WorkoutInstance` exercises schema**~~ ✓ done (corrected) — an earlier pass wrongly removed `exercises?: ExerciseMap` from `Workout`, assuming a flat top-level-key schema that never matched real Firestore data; this caused weight fields to silently fail to populate on web. Restored `exercises: ExerciseMap` as required, added shared `workoutToExerciseMap`/`exerciseMapToWorkout` (`src/core/services/workoutTransforms.ts`) used by both platforms, and fixed `muscleCalculations.ts` and `FirestoreActions.deleteWorkoutWithHistory` which had the same flat-key assumption.
-- ~~**Remove legacy `ExerciseHistory` type**~~ ✓ done — deleted `ExerciseHistory` interface and `UserProfile.exerciseHistory` from `src/types.ts`.
-- ~~**Fix `ExerciseFieldsProps.exerciseNameChangeHandler` signature**~~ ✓ done — added `customExerciseId?: string` parameter; fixed `undefined` vs `null` guard and added delete-if-absent branch in `WorkoutInstance`.
-
-### P1 (bug — affects both platforms)
-
-- ~~**Exercise swap vs rename history handling**~~ ✓ done — replaced `migrateExerciseHistory` call in `exerciseNameChangeHandler` (both `WorkoutInstance.tsx` and `useWorkoutEditor.ts`) with `removeExerciseSetsFromHistory` on the old key + `scheduleWrite` to the new key. `migrateExerciseHistory` remains available for a future explicit "merge history" action.
-- ~~**Date-specific history removal**~~ ✓ done — `removeMatchingLifts` now accepts an optional `date` per set; when provided it must also match the stored lift's date, so a same-weight/reps lift from a different day is no longer removed. Threaded through `exerciseNameChangeHandler` (both platforms), `closeHandler` (mobile), and `deleteWorkoutWithHistory` in `FirestoreActions`.
-
-### P2 (feature parity — port from mobile)
-
-- ~~**Exercise history writes**~~ ✓ done — `src/hooks/useExerciseHistoryWriter.ts` exists and is wired into `WorkoutInstance`, scheduling a debounced write on every set change and flushing on unmount.
-- **Exercise stats display** — on `WorkoutInstance` / `ExerciseRow`, fetch `ExerciseHistoryDoc` from Firestore when a drawer or panel opens and display max weight, median weight, sets this week, and max-volume set as chips (same data as `ExerciseEditDrawer` in mobile). Use existing `fetchExerciseHistory` from `FirestoreActions`.
-
-### P3
-
-- **Custom exercises on web** — `UserProfile.customExercises` and `FirestoreActions.updateCustomExercises` exist but there is no web UI. Add custom exercise creation to `UserPreferencesModal` and surface custom exercises in `ExerciseCombobox` (same as mobile's picker).
-- **UI refresh** — visual pass across `WorkoutTool`, `ExerciseRow`, `WorkoutInstance` to match the quality bar set by the mobile redesign.
-- **2-week activity feed on dashboard** — new component below `WeeklySummary` showing last 2 weeks of workouts (date, duration, exercise names); new Firestore fetch, no schema change (shared with mobile P4).
-
-### P4
-
-- Weighted volume on dashboard (shared with mobile P4)
-- Set types on `SetEntry` (shared with mobile P4)
-- Muscle group history (shared with mobile P4)
+- ~~Google OAuth sign-in — alongside existing email/password flow~~ ✓ done on iOS (see [Mobile authentication](#mobile-authentication-mobilesrclibauthts)); Android still needs Firebase Android app + SHA-1 + `google-services.json`

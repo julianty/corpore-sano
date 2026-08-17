@@ -12,20 +12,16 @@ import {
 import { DateInput } from "@mantine/dates";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAppSelector } from "../../hooks";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Exercise, ExerciseMap, SetEntry, Workout } from "../../types";
 import { FirestoreActions } from "../../helperFunctions/FirestoreActions";
 import { Timestamp } from "firebase/firestore";
 import { ExerciseFields } from "./ExerciseFields";
 import { IconCalendar, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { responsiveDimensions } from "../../styles/responsive";
-import useExerciseHistoryWriter from "../../hooks/useExerciseHistoryWriter";
-import { normalizeExerciseKey } from "../../core/services/exerciseHistory";
-import {
-  workoutToExerciseMap,
-  exerciseMapToWorkout,
-} from "../../core/services/workoutTransforms";
-
+import { getExerciseEntries } from "../../core/services/workoutShape";
+// TODO: Have a hover that pops up that explains how to change from kg to lbs.
+// TODO: Make it so that the default value in the fields are the "lastKg" from user Profile.
 export function WorkoutInstance(props: {
   workoutId: string;
   initialData: Workout;
@@ -36,15 +32,13 @@ export function WorkoutInstance(props: {
     return initialData.date ?? Timestamp.now();
   });
   const [exercisesObject, setExercisesObject] = useState<ExerciseMap>(() =>
-    workoutToExerciseMap(initialData),
+    getExerciseEntries(initialData),
   );
-  const durationSecondsRef = useRef(initialData.durationSeconds);
 
   const userId = useAppSelector((state) => state.auth.userId);
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 48em)") ?? false;
-  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter();
 
   const updateWorkoutData = useCallback(
     (updatedDoc: Workout) =>
@@ -58,98 +52,29 @@ export function WorkoutInstance(props: {
       [key]: { ...exercisesObject[key], sets },
     };
     setExercisesObject(nextState);
-    updateWorkoutData(
-      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
-    );
-    const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
-    scheduleWrite(key, nextState, timestampString, workoutId);
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
-  async function exerciseNameChangeHandler(
+  function exerciseNameChangeHandler(
     name: string,
     variant: string,
     key: string,
-    customExerciseId?: string,
   ) {
-    const newKey = normalizeExerciseKey(variant);
-    const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
-    if (oldKey && oldKey !== newKey) {
-      // Commit any in-memory sets to Firestore under the old key before we touch history.
-      await flushKey(key, exercisesObject);
-      // Remove only this workout's sets from the old key — prior workouts' lifts must stay.
-      // (Don't use migrateExerciseHistory here: that would move the entire lifetime history,
-      // which is wrong when the user is swapping exercises rather than correcting a typo.)
-      const workoutDateStr = workoutDate.toDate().toISOString().slice(0, 10);
-      const sets = (exercisesObject[key]?.sets ?? [])
-        .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({
-          weight: s.weightkg,
-          reps: s.reps,
-          date: workoutDateStr,
-          workoutId,
-        }));
-      await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
-    }
+    // ChangeHandler for the exercise name
     const nextState = {
       ...exercisesObject,
       [key]: { ...exercisesObject[key], name: name, variant: variant },
     };
-    if (customExerciseId !== undefined) {
-      nextState[key].customExerciseId = customExerciseId;
-    } else {
-      delete nextState[key].customExerciseId;
-    }
     setExercisesObject(nextState);
-    updateWorkoutData(
-      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
-    );
-    if (oldKey && oldKey !== newKey && newKey) {
-      // Queue a write of this workout's sets under the new key so they land in history.
-      const timestampString = workoutDate.toDate().toISOString().slice(0, 10);
-      scheduleWrite(key, nextState, timestampString, workoutId);
-    }
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
-  async function closeHandler(exerciseKey: string) {
-    const exercise = exercisesObject[exerciseKey];
-    const firestoreKey = normalizeExerciseKey(exercise?.variant ?? "");
-    const workoutDateStr = workoutDate.toDate().toISOString().slice(0, 10);
-    const sets = (exercise?.sets ?? [])
-      .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({
-        weight: s.weightkg,
-        reps: s.reps,
-        date: workoutDateStr,
-        workoutId,
-      }));
-
+  function closeHandler(exerciseKey: string) {
     // Remove the clicked exercise from the exercise object
     const nextState = { ...exercisesObject };
     delete nextState[exerciseKey];
     setExercisesObject(nextState);
-    updateWorkoutData(
-      exerciseMapToWorkout(nextState, workoutDate, durationSecondsRef.current),
-    );
-
-    if (!firestoreKey) return;
-
-    // If another exercise in this workout still normalizes to the same key,
-    // its own scheduled write already reflects the correct remaining sets —
-    // don't delete the history it's about to (re)write.
-    const duplicateEntry = Object.entries(nextState).find(
-      ([, ex]) => normalizeExerciseKey(ex.variant) === firestoreKey,
-    );
-
-    if (duplicateEntry) {
-      scheduleWrite(duplicateEntry[0], nextState, workoutDateStr, workoutId);
-    } else {
-      cancelKey(firestoreKey);
-      await FirestoreActions.removeExerciseSetsFromHistory(
-        userId,
-        firestoreKey,
-        sets,
-      );
-    }
+    updateWorkoutData({ date: workoutDate, exercises: nextState });
   }
 
   function addNewExercise() {
@@ -180,13 +105,7 @@ export function WorkoutInstance(props: {
             onChange={(value) => {
               const timestampDate = Timestamp.fromDate(value as Date);
               setWorkoutDate(timestampDate);
-              updateWorkoutData(
-                exerciseMapToWorkout(
-                  exercisesObject,
-                  timestampDate,
-                  durationSecondsRef.current,
-                ),
-              );
+              updateWorkoutData({ date: timestampDate, exercises: exercisesObject });
             }}
             value={workoutDate?.toDate()}
             maw={responsiveDimensions.inputMaxWidth.md}
@@ -255,7 +174,10 @@ export function WorkoutInstance(props: {
           undone.
         </Text>
         <Group justify="flex-end">
-          <Button variant="default" onClick={() => setDeleteConfirmOpen(false)}>
+          <Button
+            variant="default"
+            onClick={() => setDeleteConfirmOpen(false)}
+          >
             Cancel
           </Button>
           <Button

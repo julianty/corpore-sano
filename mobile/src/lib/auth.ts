@@ -1,33 +1,27 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   initializeAuth,
   getReactNativePersistence,
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInAnonymously as firebaseSignInAnonymously,
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
   Auth,
 } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase app from mobile's own firebase/app so it shares the
-// same internal registry as firebase/auth (also from mobile's node_modules).
-// The shared ../src/initializeFirebase.native.ts resolves firebase/app from
-// the ROOT node_modules, which is a separate SDK instance — mixing the two
-// causes "Component auth has not been registered yet".
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+import {
+  GoogleSignin,
+  isSuccessResponse,
+  isErrorWithCode,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
+// Reuse the shared Firebase app (Metro resolves the .native.ts variant), so
+// Auth and Firestore live on the same SDK instance and Firestore requests
+// carry the signed-in user's credentials.
+import { app } from "@shared/initializeFirebase";
 
 let auth: Auth;
 try {
@@ -41,16 +35,57 @@ try {
 
 export { auth };
 
+// OAuth client IDs (public identifiers, not secrets — the iOS one also ships
+// in GoogleService-Info.plist). `webClientId` is what makes the Google id_token
+// acceptable to Firebase; `iosClientId` scopes the native iOS sign-in flow.
+const WEB_CLIENT_ID =
+  "2036797871-utt1sd9vr3m9prgcuv1hvvafsek4lmsf.apps.googleusercontent.com";
+const IOS_CLIENT_ID =
+  "2036797871-hu1fpquj4mgpldqlvjm66vta8s9ua9v5.apps.googleusercontent.com";
+
+GoogleSignin.configure({
+  webClientId: WEB_CLIENT_ID,
+  iosClientId: IOS_CLIENT_ID,
+});
+
+/** Sentinel returned when the user dismisses the Google account picker. */
+export const GOOGLE_SIGN_IN_CANCELLED = "GOOGLE_SIGN_IN_CANCELLED";
+
+/**
+ * Runs the native Google sign-in flow, then exchanges the returned Google
+ * id_token for a Firebase session on the shared `auth` instance (so Firestore
+ * requests carry the user's credentials, same as email/password sign-in).
+ * Throws `GOOGLE_SIGN_IN_CANCELLED` if the user dismisses the picker.
+ */
+export async function signInWithGoogle() {
+  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  let response;
+  try {
+    response = await GoogleSignin.signIn();
+  } catch (e: unknown) {
+    if (isErrorWithCode(e) && e.code === statusCodes.SIGN_IN_CANCELLED) {
+      throw new Error(GOOGLE_SIGN_IN_CANCELLED);
+    }
+    throw e;
+  }
+  if (!isSuccessResponse(response)) {
+    // type === "cancelled": user backed out of the picker.
+    throw new Error(GOOGLE_SIGN_IN_CANCELLED);
+  }
+  const { idToken } = response.data;
+  if (!idToken) {
+    throw new Error("Google sign-in did not return an ID token.");
+  }
+  const credential = GoogleAuthProvider.credential(idToken);
+  return signInWithCredential(auth, credential);
+}
+
 export function signIn(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
 }
 
 export function signUp(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
-}
-
-export function signInAnonymously() {
-  return firebaseSignInAnonymously(auth);
 }
 
 export function signOut() {

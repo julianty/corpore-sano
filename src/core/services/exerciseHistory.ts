@@ -2,7 +2,7 @@ export interface Lift {
   weight: number;
   reps: number;
   date: string; // ISO date "YYYY-MM-DD"
-  workoutId?: string; // which workout doc this lift came from; absent on pre-migration lifts
+  workoutId: string; // workout doc the lift was logged in
 }
 
 export interface ComputedStats {
@@ -29,6 +29,16 @@ export function normalizeExerciseKey(name: string): string {
     .replace(/[^a-z0-9]+$/, "");
 }
 
+// Formats a Date as "YYYY-MM-DD" in the **local** timezone. Lift dates and the
+// week-Monday bucket must share this basis: using UTC (toISOString) here while
+// bucketing locally shifts lifts logged near midnight into the wrong day/week.
+export function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function getCurrentWeekMonday(): string {
   return getMondayOf(new Date());
 }
@@ -45,10 +55,7 @@ function getMondayOf(date: Date): string {
   const daysFromMonday = (dayOfWeek + 6) % 7;
   const monday = new Date(date);
   monday.setDate(date.getDate() - daysFromMonday);
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, "0");
-  const d = String(monday.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return formatLocalDate(monday);
 }
 
 // mondayStr is injectable for testing; defaults to current week's Monday
@@ -73,49 +80,18 @@ export function computeStats(lifts: Lift[], mondayStr?: string): ComputedStats {
   };
 }
 
-// Removes lifts matching the given set signatures using one-to-one consumption,
-// so duplicate weights/reps only remove the exact count present in `sets`.
-// When both the set and the stored lift carry a workoutId, that must match —
-// the strongest signal, since two different workouts logged the same day can
-// otherwise share an identical weight+reps+date signature. Falls back to date
-// matching (and then weight+reps only) when either side lacks a workoutId, for
-// pre-migration lifts and callers that can't determine one.
-export function removeMatchingLifts(
-  allLifts: Lift[],
-  sets: { weight: number; reps: number; date?: string; workoutId?: string }[],
-): Lift[] {
-  const pool = [...sets];
-  return allLifts.filter((lift) => {
-    const idx = pool.findIndex((s) => {
-      if (s.weight !== lift.weight || s.reps !== lift.reps) return false;
-      if (s.workoutId !== undefined && lift.workoutId !== undefined) {
-        return s.workoutId === lift.workoutId;
-      }
-      return s.date === undefined || s.date === lift.date;
-    });
-    if (idx !== -1) {
-      pool.splice(idx, 1);
-      return false;
-    }
-    return true;
-  });
+// Removes all lifts recorded under the given workout.
+export function removeWorkoutLifts(allLifts: Lift[], workoutId: string): Lift[] {
+  return allLifts.filter((l) => l.workoutId !== workoutId);
 }
 
-// Replaces stored lifts that came from this same workout doc with `sessionLifts`,
-// preserving lifts from every other workout — including ones logged on the same day.
-// Filtering by date alone would wrongly wipe out a different workout's lifts logged
-// the same day; workoutId scopes the replacement to only this workout's contribution.
-// Lifts written before workoutId existed have no workoutId, so they can't be matched
-// that way — those fall back to the old date-based replacement so re-editing a
-// pre-migration workout doesn't duplicate its sets instead of updating them in place.
+// Replaces any stored lifts from this workout with `sessionLifts`,
+// preserving lifts from all other workouts (including same-day ones).
 export function mergeLifts(
   storedLifts: Lift[],
   sessionLifts: Lift[],
   workoutId: string,
-  today: string,
 ): Lift[] {
-  const priorLifts = storedLifts.filter((l) =>
-    l.workoutId !== undefined ? l.workoutId !== workoutId : l.date !== today,
-  );
-  return [...priorLifts, ...sessionLifts];
+  const otherWorkoutLifts = storedLifts.filter((l) => l.workoutId !== workoutId);
+  return [...otherWorkoutLifts, ...sessionLifts];
 }

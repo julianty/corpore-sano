@@ -68,7 +68,7 @@ export function WorkoutTool() {
   const workoutCloseHandler = useCallback(
     (workoutId: string) => {
       setWorkouts((prev) => prev.filter((w) => w.id !== workoutId));
-      FirestoreActions.deleteWorkoutWithHistory(userId, workoutId);
+      FirestoreActions.deleteWorkoutById(userId, workoutId);
     },
     [userId],
   );

@@ -7,7 +7,7 @@ import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector, useAppDispatch } from "@shared/hooks";
 import { authSlice } from "@shared/features/auth/authSlice";
 import { UserProfile } from "@shared/types";
-import { listenAuthState, signInAnonymously, signOut } from "../src/lib/auth";
+import { listenAuthState, signOut } from "../src/lib/auth";
 import { LoginScreen } from "../src/components/LoginScreen";
 
 export type UserProfileContextType = {
@@ -40,50 +40,43 @@ function AppProviders() {
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsubscribe = listenAuthState((user) => {
-      // An anonymous session backs demo mode only — it must not become the
-      // Redux userId, or every `userId === "demoUser"` check and Firestore
-      // path that expects the literal "demoUser" doc would break.
-      if (user && !user.isAnonymous) {
+      if (user) {
         dispatch(
           authSlice.actions.logInUser({
             uid: user.uid,
             displayName: user.displayName ?? user.email ?? "User",
           }),
         );
-      } else if (!user) {
+      } else {
         dispatch(authSlice.actions.logOutUser());
       }
-      // If user is anonymous, do nothing — userId stays "demoUser".
       setAuthChecked(true);
     });
     return unsubscribe;
   }, [dispatch]);
 
-  // Firestore rules require request.auth != null for every path, so these
-  // fetches must wait until a session — real login or a successful anonymous
-  // demo sign-in — actually exists, not just until auth state is checked.
-  const sessionReady = authChecked && (demoMode || userId !== "demoUser");
-
+  // Refresh demo workout dates only when demo mode is explicitly entered — not
+  // on the "demoUser" sentinel, which is the initial Redux state on every cold
+  // start (before the auth listener resolves), so this used to fire for every
+  // logged-in user too.
   useEffect(() => {
-    if (!sessionReady) return;
-    if (userId === "demoUser") {
+    if (demoMode) {
       FirestoreActions.updateDemoData();
     }
-  }, [userId, sessionReady]);
+  }, [demoMode]);
 
   useEffect(() => {
-    if (!sessionReady) return;
     FirestoreActions.fetchUserProfile(userId).then((profile) => {
       if (!profile) return;
       setUserProfile((prev) => ({
         ...prev,
         username: displayName,
-        weightUnit: profile.weightUnit ?? "lbs",
+        weightUnit: profile.weightUnit,
         colorScheme: profile.colorScheme ?? "system",
         customExercises: profile.customExercises ?? {},
       }));
     });
-  }, [userId, displayName, sessionReady]);
+  }, [userId, displayName]);
 
   // Waiting for Firebase to report auth state
   if (!authChecked) {
@@ -107,18 +100,7 @@ function AppProviders() {
     userProfile.colorScheme === "system" ? deviceScheme : userProfile.colorScheme;
 
   if (!isAuthenticated) {
-    return (
-      <LoginScreen
-        onDemoMode={async () => {
-          // Demo mode still needs a real Firebase session so Firestore
-          // requests to the demoUser path satisfy the security rules. Let a
-          // failure propagate to LoginScreen rather than entering demo mode
-          // with no working session.
-          await signInAnonymously();
-          setDemoMode(true);
-        }}
-      />
-    );
+    return <LoginScreen onDemoMode={() => setDemoMode(true)} />;
   }
 
   return (

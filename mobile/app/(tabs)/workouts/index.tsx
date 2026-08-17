@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { useAppSelector } from "@shared/hooks";
-import { Workout } from "@shared/types";
 import { WorkoutCard } from "../../../src/components/WorkoutCard";
 import { useAppTheme, type AppColors } from "../../../hooks/useAppTheme";
 
@@ -71,7 +70,8 @@ export default function WorkoutsScreen() {
     const now = Timestamp.now();
     await FirestoreActions.updateWorkoutById(userId, newDoc.id, {
       date: now,
-    } as Workout);
+      exercises: {},
+    });
     setWorkouts((ws) => [{ id: newDoc.id, date: now }, ...ws]);
     router.push(`/workouts/${newDoc.id}`);
   }

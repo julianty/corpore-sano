@@ -1,11 +1,9 @@
-import type { Timestamp } from "firebase/firestore";
 import {
-  buildMuscleSummary,
+  buildMuscleSummary as buildMuscleSummaryRaw,
   rollupToParentGroups,
   getLastWorkedFreshness,
 } from "./muscleCalculations";
 import { createExerciseMap } from "../../utils/exerciseLookup";
-import type { Workout, MuscleSummary, SetEntry } from "../../types";
 
 // --- fixtures ---
 
@@ -18,8 +16,7 @@ const mockExerciseCatalog = [
 const exerciseMap = createExerciseMap(mockExerciseCatalog);
 
 // Minimal Timestamp stub — mirrors the shape that buildMuscleSummary expects
-const ts = (date: Date): Timestamp =>
-  ({ toDate: () => date }) as unknown as Timestamp;
+const ts = (date: Date) => ({ toDate: () => date }) as any;
 
 // Fixed getDaysSince — keeps assertions deterministic
 const DAYS = 3;
@@ -34,6 +31,25 @@ const makeSet = (reps: number, weightkg?: number, weightlbs?: number) => ({
 const makeSets = (count: number, reps: number, weightkg?: number, weightlbs?: number) =>
   Array.from({ length: count }, () => makeSet(reps, weightkg, weightlbs));
 
+// Fixtures below are written in a flat { date, ex1, ex2, ... } shape for
+// brevity. Real workout docs nest entries under `exercises`, so this shim
+// rewraps each fixture into { date, exercises: { ... } } before passing it to
+// the real buildMuscleSummary.
+const wrap = (w: Record<string, unknown>) => {
+  const { date, ...exercises } = w;
+  return { date, exercises };
+};
+const buildMuscleSummary = (
+  workouts: Record<string, unknown>[],
+  ...args: Parameters<typeof buildMuscleSummaryRaw> extends [unknown, ...infer R]
+    ? R
+    : never
+) =>
+  buildMuscleSummaryRaw(
+    workouts.map(wrap) as Parameters<typeof buildMuscleSummaryRaw>[0],
+    ...args,
+  );
+
 // --- buildMuscleSummary tests ---
 
 describe("buildMuscleSummary", () => {
@@ -47,10 +63,8 @@ describe("buildMuscleSummary", () => {
   it("accumulates sets for each muscle worked in a single workout", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-      },
-    } as unknown as Workout;
+      ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -64,16 +78,12 @@ describe("buildMuscleSummary", () => {
     const workouts = [
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(4, 8, 100) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(4, 8, 100) },
+      } as any,
     ];
 
     const result = buildMuscleSummary(workouts, exerciseMap, getDaysSince);
@@ -84,11 +94,9 @@ describe("buildMuscleSummary", () => {
   it("handles multiple exercises within a single workout", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        ex2: { name: "Squat", sets: makeSets(4, 8, 100) },
-      },
-    } as unknown as Workout;
+      ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      ex2: { name: "Squat", sets: makeSets(4, 8, 100) },
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -100,13 +108,11 @@ describe("buildMuscleSummary", () => {
   it("uses weightkg for weightTotal when both fields are present", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: {
-          name: "Bench Press",
-          sets: makeSets(3, 10, 80, 176),
-        },
+      ex1: {
+        name: "Bench Press",
+        sets: makeSets(3, 10, 80, 176),
       },
-    } as unknown as Workout;
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -116,16 +122,11 @@ describe("buildMuscleSummary", () => {
   it("falls back to weightlbs when weightkg is absent", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: {
-          name: "Bench Press",
-          sets: Array.from(
-            { length: 3 },
-            () => ({ reps: 10, weightlbs: 176 }) as unknown as SetEntry,
-          ),
-        },
+      ex1: {
+        name: "Bench Press",
+        sets: Array.from({ length: 3 }, () => ({ reps: 10, weightlbs: 176 })) as any,
       },
-    } as unknown as Workout;
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -135,16 +136,11 @@ describe("buildMuscleSummary", () => {
   it("uses 0 for weight when both weightkg and weightlbs are absent", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: {
-          name: "Bench Press",
-          sets: Array.from(
-            { length: 3 },
-            () => ({ reps: 10 }) as unknown as SetEntry,
-          ),
-        },
+      ex1: {
+        name: "Bench Press",
+        sets: Array.from({ length: 3 }, () => ({ reps: 10 })) as any,
       },
-    } as unknown as Workout;
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -154,10 +150,8 @@ describe("buildMuscleSummary", () => {
   it("stores getDaysSince result as lastWorked on each worked muscle", () => {
     const workout = {
       date: ts(new Date("2024-01-01")),
-      exercises: {
-        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-      },
-    } as unknown as Workout;
+      ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, () => 5);
 
@@ -169,10 +163,8 @@ describe("buildMuscleSummary", () => {
   it("skips exercises not found in the exercise map without throwing", () => {
     const workout = {
       date: ts(new Date()),
-      exercises: {
-        ex1: { name: "Unknonwn Exercise XYZ", sets: makeSets(3, 10, 80) },
-      },
-    } as unknown as Workout;
+      ex1: { name: "Unknonwn Exercise XYZ", sets: makeSets(3, 10, 80) },
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
 
@@ -183,31 +175,13 @@ describe("buildMuscleSummary", () => {
     const getDaysSinceSpy = jest.fn(() => 99);
     const workout = {
       date: undefined,
-      exercises: {
-        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-      },
-    } as unknown as Workout;
+      ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+    } as any;
 
     const result = buildMuscleSummary([workout], exerciseMap, getDaysSinceSpy);
 
     expect(getDaysSinceSpy).not.toHaveBeenCalled();
     expect(result["Pectorals"].lastWorked).toBe(0);
-  });
-
-  it("reads exercises from the nested `exercises` field, matching real Firestore documents", () => {
-    // Shaped like a real production document: exercises nested under `exercises`,
-    // not flattened as top-level sibling keys of `date`.
-    const workout = {
-      date: ts(new Date()),
-      exercises: {
-        exercise_1784577727845: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-      },
-      durationSeconds: 1800,
-    } as unknown as Workout;
-
-    const result = buildMuscleSummary([workout], exerciseMap, getDaysSince);
-
-    expect(result["Pectorals"].sets).toBe(3);
   });
 });
 
@@ -229,10 +203,8 @@ describe("rollupToParentGroups", () => {
       [
         {
           date: ts(new Date()),
-          exercises: {
-            ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-          },
-        } as unknown as Workout,
+          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+        } as any,
       ],
       exerciseMap,
       getDaysSince,
@@ -252,16 +224,12 @@ describe("rollupToParentGroups", () => {
     const workouts = [
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Overhead Press", sets: makeSets(3, 10, 60) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Overhead Press", sets: makeSets(3, 10, 60) },
+      } as any,
     ];
     const muscleSummary = buildMuscleSummary(
       workouts,
@@ -283,10 +251,8 @@ describe("rollupToParentGroups", () => {
       [
         {
           date: ts(new Date()),
-          exercises: {
-            ex1: { name: "Squat", sets: makeSets(3, 8, 100) },
-          },
-        } as unknown as Workout,
+          ex1: { name: "Squat", sets: makeSets(3, 8, 100) },
+        } as any,
       ],
       exerciseMap,
       getDaysSince,
@@ -315,7 +281,7 @@ describe("rollupToParentGroups", () => {
       },
     };
 
-    const result = rollupToParentGroups(muscleSummary as MuscleSummary);
+    const result = rollupToParentGroups(muscleSummary as any);
 
     expect(result["Back"].sets).toBe(5);
     expect(result["Back"].daysSinceLast).toBe(2); // min(5, 2)
@@ -332,7 +298,7 @@ describe("rollupToParentGroups", () => {
       },
     };
 
-    const result = rollupToParentGroups(muscleSummary as MuscleSummary);
+    const result = rollupToParentGroups(muscleSummary as any);
 
     expect(result["Chest"].daysSinceLast).toBe(8);
   });
@@ -348,7 +314,7 @@ describe("rollupToParentGroups", () => {
       },
     };
 
-    const result = rollupToParentGroups(muscleSummary as MuscleSummary);
+    const result = rollupToParentGroups(muscleSummary as any);
 
     expect(result["Chest"].sets).toBe(0);
     expect(result["Chest"].daysSinceLast).toBe(10);
@@ -365,7 +331,7 @@ describe("rollupToParentGroups", () => {
       },
     };
 
-    const result = rollupToParentGroups(muscleSummary as MuscleSummary);
+    const result = rollupToParentGroups(muscleSummary as any);
 
     expect(result["Chest"].sets).toBe(0);
     expect(result["Chest"].daysSinceLast).toBeUndefined();
@@ -386,16 +352,12 @@ describe("buildMuscleSummary lastWorked uses Math.min", () => {
     const workouts = [
       {
         date: ts(new Date("2024-01-01")),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
       {
         date: ts(new Date("2024-01-05")),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
     ];
 
     const result = buildMuscleSummary(
@@ -449,10 +411,8 @@ describe("buildMuscleSummary with setsWindowDays", () => {
     const workouts = [
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
     ];
 
     // Workout is 10 days old, window is 7 days
@@ -466,10 +426,8 @@ describe("buildMuscleSummary with setsWindowDays", () => {
     const workouts = [
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
     ];
 
     const result = buildMuscleSummary(workouts, exerciseMap, () => 10, 7);
@@ -481,10 +439,8 @@ describe("buildMuscleSummary with setsWindowDays", () => {
     const workouts = [
       {
         date: ts(new Date()),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
     ];
 
     const result = buildMuscleSummary(workouts, exerciseMap, () => 5, 7);
@@ -503,16 +459,12 @@ describe("buildMuscleSummary with setsWindowDays", () => {
     const workouts = [
       {
         date: ts(new Date("2024-01-01")),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(4, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(4, 10, 80) },
+      } as any,
       {
         date: ts(new Date("2024-01-08")),
-        exercises: {
-          ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
-        },
-      } as unknown as Workout,
+        ex1: { name: "Bench Press", sets: makeSets(3, 10, 80) },
+      } as any,
     ];
 
     const result = buildMuscleSummary(

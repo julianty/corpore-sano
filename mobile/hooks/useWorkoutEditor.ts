@@ -2,11 +2,8 @@ import { useState, useEffect } from "react";
 import { Timestamp } from "firebase/firestore";
 import { Workout, Exercise, ExerciseMap, SetEntry } from "@shared/types";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
-import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
-import {
-  workoutToExerciseMap,
-  exerciseMapToWorkout,
-} from "@shared/core/services/workoutTransforms";
+import { normalizeExerciseKey, formatLocalDate } from "@shared/core/services/exerciseHistory";
+import { getExerciseEntries } from "@shared/core/services/workoutShape";
 import { useExerciseHistoryWriter } from "./useExerciseHistoryWriter";
 
 const EMPTY_EXERCISE: Exercise = {
@@ -16,9 +13,21 @@ const EMPTY_EXERCISE: Exercise = {
   sets: [],
 };
 
+function workoutToExerciseMap(workout: Workout): ExerciseMap {
+  return Object.fromEntries(
+    Object.entries(getExerciseEntries(workout)).map(([k, ex]) => [
+      k,
+      Array.isArray(ex.sets) ? ex : { ...ex, sets: [] },
+    ]),
+  ) as ExerciseMap;
+}
+
 export function useWorkoutEditor(userId: string | null, workoutId: string) {
   const [workout, setWorkout] = useState<Workout | null>(null);
-  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter(userId);
+  const { scheduleWrite, flushKey, cancelKey } = useExerciseHistoryWriter(
+    userId,
+    workoutId,
+  );
 
   useEffect(() => {
     if (!userId) return;
@@ -35,20 +44,12 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     await FirestoreActions.updateWorkoutById(userId, workoutId, updated);
   }
 
-  function saveExercises(updatedExercises: ExerciseMap) {
-    if (!workout) return;
-    saveWorkout(
-      exerciseMapToWorkout(updatedExercises, workout.date, workout.durationSeconds),
-    );
-  }
-
   function onSetsChange(key: string, sets: SetEntry[]) {
     if (!workout) return;
     const updated: ExerciseMap = { ...exercisesObject, [key]: { ...exercisesObject[key], sets } };
-    saveExercises(updated);
-    const workoutDateStr =
-      workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-    scheduleWrite(key, updated, workoutDateStr, workoutId);
+    saveWorkout({ ...workout, exercises: updated });
+    const workoutDateStr = formatLocalDate(workout.date?.toDate() ?? new Date());
+    scheduleWrite(key, updated, workoutDateStr);
   }
 
   async function exerciseNameChangeHandler(
@@ -61,34 +62,16 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     const oldKey = normalizeExerciseKey(exercisesObject[key]?.variant ?? "");
     const newKey = normalizeExerciseKey(variant);
     if (oldKey && oldKey !== newKey) {
-      // Commit any in-memory sets to Firestore under the old key before we touch history.
       await flushKey(key, exercisesObject);
-      // Remove only this workout's sets from the old key — prior workouts' lifts must stay.
-      // (Don't use migrateExerciseHistory here: that would move the entire lifetime history,
-      // which is wrong when the user is swapping exercises rather than correcting a typo.)
-      const workoutDateStr =
-        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-      const sets = (exercisesObject[key]?.sets ?? [])
-        .filter((s) => s.weightkg > 0 && s.reps > 0)
-        .map((s) => ({
-          weight: s.weightkg,
-          reps: s.reps,
-          date: workoutDateStr,
-          workoutId,
-        }));
-      await FirestoreActions.removeExerciseSetsFromHistory(userId, oldKey, sets);
     }
     const updated: ExerciseMap = { ...exercisesObject };
     const patch: Partial<Exercise> = { name, variant };
     if (customExerciseId !== undefined) patch.customExerciseId = customExerciseId;
     else delete updated[key].customExerciseId;
     updated[key] = { ...updated[key], ...patch };
-    saveExercises(updated);
-    if (oldKey !== newKey && newKey) {
-      // Queue a write of this workout's sets under the new key so they land in history.
-      const workoutDateStr =
-        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-      scheduleWrite(key, updated, workoutDateStr, workoutId);
+    saveWorkout({ ...workout, exercises: updated });
+    if (oldKey && newKey && oldKey !== newKey) {
+      await FirestoreActions.migrateExerciseHistory(userId, oldKey, newKey, name);
     }
   }
 
@@ -97,20 +80,11 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
 
     const exercise = exercisesObject[key];
     const firestoreKey = normalizeExerciseKey(exercise?.variant ?? "");
-    const workoutDateStr =
-      workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-    const sets = (exercise?.sets ?? [])
-      .filter((s) => s.weightkg > 0 && s.reps > 0)
-      .map((s) => ({
-        weight: s.weightkg,
-        reps: s.reps,
-        date: workoutDateStr,
-        workoutId,
-      }));
 
     const updatedExercises: ExerciseMap = { ...exercisesObject };
     delete updatedExercises[key];
-    saveExercises(updatedExercises);
+
+    saveWorkout({ ...workout, exercises: updatedExercises });
 
     if (!firestoreKey) return;
 
@@ -119,10 +93,16 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     );
 
     if (duplicateEntry) {
-      scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr, workoutId);
+      const workoutDateStr =
+        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+      scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr);
     } else {
       cancelKey(firestoreKey);
-      await FirestoreActions.removeExerciseSetsFromHistory(userId, firestoreKey, sets);
+      await FirestoreActions.removeWorkoutLiftsFromHistory(
+        userId,
+        firestoreKey,
+        workoutId,
+      );
     }
   }
 
@@ -133,15 +113,13 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
       ...exercisesObject,
       [key]: { ...EMPTY_EXERCISE, order: Object.keys(exercisesObject).length },
     };
-    saveExercises(updated);
+    saveWorkout({ ...workout, exercises: updated });
     return key;
   }
 
   function onDateChange(date: Date) {
     if (!workout) return;
-    saveWorkout(
-      exerciseMapToWorkout(exercisesObject, Timestamp.fromDate(date), workout.durationSeconds),
-    );
+    saveWorkout({ ...workout, date: Timestamp.fromDate(date) });
   }
 
   return {

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Pre-commit gate: ESLint (zero warnings) + Jest (shared src/ suite).
+# Bypass in a pinch with `git commit --no-verify`.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+
+set -e
+
+echo "pre-commit: eslint…"
+npm run lint
+
+echo "pre-commit: jest…"
+npm test -- --silent
+
+echo "pre-commit: ok"

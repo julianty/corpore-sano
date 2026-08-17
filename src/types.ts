@@ -15,7 +15,9 @@ export interface Exercise {
 }
 
 export interface Workout {
-  // This should match the firestore workouts
+  // This should match the firestore workouts.
+  // Exercise entries live under `exercises` (a UUID-keyed sub-map), not at
+  // the top level. See getExerciseEntries() in core/services/workoutShape.ts.
   date: Timestamp | undefined;
   exercises: ExerciseMap;
   durationSeconds?: number;
@@ -31,7 +33,6 @@ export interface WorkoutsObject {
 export interface ExerciseRowProps {
   exercise: Exercise;
   exerciseKey: string;
-  customExerciseId?: string;
   onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (key: string) => void;
   exerciseNameChangeHandler: (
@@ -45,7 +46,6 @@ export interface ExerciseRowProps {
   onHistoryPress?: (key: string) => void;
 }
 export interface ExerciseFieldsProps {
-  customExerciseId?: string;
   exercisesObject: ExerciseMap;
   onSetsChange: (key: string, sets: SetEntry[]) => void;
   closeHandler: (workoutId: string) => void;
@@ -74,6 +74,7 @@ export interface UserProfile {
   username?: string | undefined;
   weightUnit: "lbs" | "kg";
   colorScheme: "light" | "dark" | "system";
+  exerciseHistory?: [ExerciseHistory];
   favoriteExercises?: [string];
   customExercises?: Record<
     string,
@@ -84,4 +85,16 @@ export interface UserProfile {
 export interface WorkoutEntry {
   id: string;
   data: Workout;
+}
+
+// TODO: Make it possible to jump to the workout wherein the maximum lift was hit.
+export interface ExerciseHistory {
+  // Do I need unique exercise IDs?
+  // id: string;
+  // Exercise name e.g. Overhead Press
+  name: string;
+  // Maximum lift on record
+  maxKg: number;
+  // Last recorded lift
+  lastKg: number;
 }

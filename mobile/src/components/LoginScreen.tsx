@@ -9,11 +9,16 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { signIn, signUp } from "../lib/auth";
+import {
+  signIn,
+  signUp,
+  signInWithGoogle,
+  GOOGLE_SIGN_IN_CANCELLED,
+} from "../lib/auth";
 import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface LoginScreenProps {
-  onDemoMode: () => Promise<void>;
+  onDemoMode: () => void;
 }
 
 export function LoginScreen({ onDemoMode }: LoginScreenProps) {
@@ -47,17 +52,17 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
     }
   }
 
-  async function handleDemoMode() {
+  async function handleGoogle() {
     setError("");
     setLoading(true);
     try {
-      await onDemoMode();
+      await signInWithGoogle();
     } catch (e: unknown) {
-      const msg =
-        e instanceof Error
-          ? e.message
-          : "Could not start demo mode. Try again.";
-      setError(msg);
+      const msg = e instanceof Error ? e.message : "";
+      // User dismissed the Google picker — not an error worth surfacing.
+      if (msg !== GOOGLE_SIGN_IN_CANCELLED) {
+        setError(msg || "Google sign-in failed. Try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -126,10 +131,14 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
       <View style={styles.divider} />
 
       <TouchableOpacity
-        style={[styles.demoButton, loading && styles.primaryButtonDisabled]}
-        onPress={handleDemoMode}
+        style={[styles.googleButton, loading && styles.primaryButtonDisabled]}
+        onPress={handleGoogle}
         disabled={loading}
       >
+        <Text style={styles.googleButtonText}>Continue with Google</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.demoButton} onPress={onDemoMode}>
         <Text style={styles.demoButtonText}>Continue as Demo</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
@@ -195,6 +204,19 @@ function makeStyles(c: AppColors) {
       borderTopWidth: 1,
       borderTopColor: c.borderSubtle,
       marginVertical: 24,
+    },
+    googleButton: {
+      paddingVertical: 14,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.borderInput,
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    googleButtonText: {
+      color: c.textPrimary,
+      fontSize: 16,
+      fontWeight: "600",
     },
     demoButton: {
       paddingVertical: 12,

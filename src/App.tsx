@@ -1,6 +1,7 @@
 import { Container, Stack, Text } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { createContext, useEffect, useState } from "react";
 import { Dashboard } from "./components/Dashboard/Dashboard";
 import { Header } from "./components/Header";
@@ -28,28 +29,50 @@ function App() {
     weightUnit: "lbs",
     colorScheme: "dark",
   });
+  // Firestore rules now require request.auth != null for every path, so the
+  // demo-data and profile fetches below must wait for a session (anonymous or
+  // real) to actually exist rather than firing immediately on mount.
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    // The web app has no login gate and defaults to the shared "demoUser"
+    // account, so establish an anonymous session whenever none exists.
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthReady(true);
+      } else {
+        signInAnonymously(auth).catch(() => {
+          // Firestore reads/writes will be denied without a session
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     // Ensure that the demo data is updated when the demo user logs in
+    if (!authReady) return;
     if (userId === "demoUser") {
       FirestoreActions.updateDemoData();
     }
-  }, [userId]);
+  }, [userId, authReady]);
 
   useEffect(() => {
     // TODO: Update this to read favoriteExercises and ExerciseHistory
     // Update user profile based on new user
+    if (!authReady) return;
     const userProfile = FirestoreActions.fetchUserProfile(userId);
     userProfile.then((profile) => {
       const newUserProfile = {
         ...userProfile,
         username: displayName,
-        weightUnit: profile!.weightUnit,
+        weightUnit: profile!.weightUnit ?? "lbs",
         colorScheme: profile!.colorScheme,
       };
       setUserProfile(newUserProfile);
     });
-  }, [userId, displayName]);
+  }, [userId, displayName, authReady]);
   return (
     <Container>
       <UserProfileContext.Provider value={{ userProfile, setUserProfile }}>

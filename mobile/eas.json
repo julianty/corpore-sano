@@ -9,10 +9,26 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC2zJ_DgsoP8ImTXbtzMAbJ5Ebq7eX_10k",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "corpore-sano-2e626.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "corpore-sano-2e626",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "corpore-sano-2e626.appspot.com",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "2036797871",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:2036797871:web:7448bad69ab2df6eef5f5a"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC2zJ_DgsoP8ImTXbtzMAbJ5Ebq7eX_10k",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "corpore-sano-2e626.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "corpore-sano-2e626",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "corpore-sano-2e626.appspot.com",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "2036797871",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:2036797871:web:7448bad69ab2df6eef5f5a"
+      }
     }
   },
   "submit": {

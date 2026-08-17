@@ -97,7 +97,6 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
           value={search}
           onChangeText={setSearch}
           autoFocus
-          color={colors.textPrimary}
         />
         <SectionList
           sections={filtered}

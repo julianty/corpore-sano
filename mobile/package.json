@@ -34,7 +34,8 @@
     "typescript": "~5.9.2"
   },
   "overrides": {
-    "react-native-screens": "~4.16.0"
+    "react-native-screens": "~4.16.0",
+    "expo-font": "~14.0.12"
   },
   "private": true
 }

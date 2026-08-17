@@ -7,6 +7,9 @@ node_modules/
 .expo/
 dist/
 web-build/
+# Generated/force-deleted by `expo start` (see @expo/cli type-generation).
+# Anchored so it only ignores mobile/expo-env.d.ts — src/types/expo-env.d.ts is ours and must stay tracked.
+/expo-env.d.ts
 
 # Native
 .kotlin/

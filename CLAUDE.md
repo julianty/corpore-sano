@@ -95,6 +95,20 @@ All `FirestoreActions` live in `src/helperFunctions/FirestoreActions.tsx`. Reads
 
 Two slices in `src/features/`: `auth` (userId, displayName) and `exercises` (exercise catalog). User profile state lives in React context (`UserProfileContext` in `mobile/app/_layout.tsx`), not Redux.
 
+### Web authentication (`src/App.tsx`)
+
+The web app has **no login gate** and defaults to the shared `"demoUser"`
+account (initial Redux `auth.userId`). The Firestore rules require
+`request.auth != null` on **every** path — including the `users/demoUser` /
+`userStats/demoUser` sandbox — so the web app must establish a session or every
+read/write is permission-denied. `App.tsx` does this: an `onAuthStateChanged`
+listener calls `signInAnonymously` whenever no session exists, and both the
+demo-data and profile-fetch effects are gated on an `authReady` flag so they
+never fire before that session resolves. **Never remove the anonymous-auth
+listener or the `authReady` gate** — doing so silently breaks all web Firestore
+access (this exact regression happened on `ios-build`, which ported the rules
+lockdown but not the anon-auth logic).
+
 ### Mobile authentication (`mobile/src/lib/auth.ts`)
 
 Email/password and Google Sign-In, both landing on the single shared Firebase

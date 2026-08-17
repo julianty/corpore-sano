@@ -2,22 +2,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-    	// Check if the user is a demoUser, admin, or ME
-    	allow read, write: if request.auth.uid in ["demoUser", "admin", "3KsFInijl6eLlWxbimCUzljmCai2"];
-      
-      // Temporary rule for development
-      allow read, write: if request.time < timestamp.date(2026, 8, 31);
+    match /userStats/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Shared public demo sandbox — its data is reset by
+    // FirestoreActions.updateDemoData(), so any authenticated session
+    // (including anonymous) may read/write it.
+    match /users/demoUser/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /userStats/demoUser/{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }

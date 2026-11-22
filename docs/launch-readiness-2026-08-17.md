@@ -57,7 +57,7 @@ After a PR is opened, edit this file's **Status** field for that task (`Open` �
 |---|---|---|---|---|
 | LR-01 | Blocker | PR #1 | EAS production build ships with no Firebase config | `mobile/eas.json` |
 | LR-02 | Blocker | Open | "Continue as Demo" never authenticates → all Firestore denied | `mobile/src/components/LoginScreen.tsx` |
-| LR-03 | Blocker | PR #2 (verified) | `userInterfaceStyle: "light"` breaks system dark mode | `mobile/app.json` |
+| LR-03 | Blocker | Merged | `userInterfaceStyle: "light"` breaks system dark mode | `mobile/app.json` |
 | LR-04 | High | PR #4 | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
 | LR-05 | High | Open | Workout list is unbounded + N+1, refetches on every focus | `mobile/app/(tabs)/workouts/index.tsx` |
 | LR-06 | High | Open | Workout writes fail silently (unawaited, uncaught) | `mobile/hooks/useWorkoutEditor.ts:41` |
@@ -115,7 +115,7 @@ These three break the **shipped** build specifically. All three are invisible in
 
 ## LR-03 — `userInterfaceStyle: "light"` pins the app light; "system" dark mode never resolves
 
-- **Status:** Open
+- **Status:** Merged (PR #2)
 - **Where:** `mobile/app.json` (`"userInterfaceStyle": "light"`) · `mobile/app/_layout.tsx:32` (`useColorScheme() ?? "dark"`), `:99-100` (`resolvedColorScheme`) · `mobile/hooks/useAppTheme.ts:63-67`.
 - **What:** `userInterfaceStyle: "light"` makes Expo write `UIUserInterfaceStyle = Light` into `Info.plist`, which pins the app's iOS trait collection to light. `useColorScheme()` therefore always returns `"light"`, so `resolvedColorScheme` is always `"light"` whenever `userProfile.colorScheme === "system"` — which is the **default for every new user** (`mobile/app/_layout.tsx:34-38`). The manual `"dark"` override still works, because it never consults the device.
 - **Failure sequence:** A user with their phone in dark mode installs the app → app renders light → they never see dark mode unless they find the manual toggle in settings. This is the P2 roadmap item currently marked done in `CLAUDE.md`.
@@ -283,11 +283,17 @@ Append one line per event. Newest last.
 | 2026-08-17 | LR-10 | Human ran `npx expo prebuild --clean && pod install && npx expo run:ios --configuration Release` on a real simulator: launches successfully, `ExpoFontLoader` crash confirmed gone. |
 | 2026-08-17 | LR-10 | `/code-review high` pass found 3 more findings, all fixed in a third commit: (1) `moduleSuffixes` only covered `.native`, not `.ios` — a future `Foo.ios.tsx` platform split would've silently diverged between what Metro bundles and what `tsc` checks; added `.ios` (no `.android`, not wired yet). (2) `expo-font`'s pin was override-only with no explicit dependency — a future Expo SDK bump could silently force a stale `expo-font` underneath `expo`'s own code instead of surfacing as a conflict; added it as an explicit `mobile/package.json` dependency too (mirrors the `react-native-screens` precedent). (3) `firebase-auth-rn.d.ts`'s comment cited the untracked `docs/launch-readiness-2026-08-17.md` — reworded to explain the runtime resolution path inline instead. All four gates re-verified green. |
 | 2026-08-17 | LR-10 | PR #3 squash-merged into `main` (`0428d1d`), branch deleted. Task complete. |
+| 2026-11-22 | LR-03 | `/code-review` of PR #2 found that switching to `"automatic"` lets native chrome follow the device instead of the in-app override. Fixed on the PR: `expo-status-bar` `<StatusBar>` driven by `resolvedColorScheme` in `mobile/app/_layout.tsx` (status bar text could be invisible), and `keyboardAppearance={useAppScheme()}` on all 6 TextInputs. Merged `main` into the branch first (picks up LR-10). All four gates pass. Human waived a fresh simulator run for this minor follow-up. Squash-merged. Remaining review findings logged in Out-of-scope notes. |
 | 2026-11-22 | LR-04 | Verified (`useWorkoutEditor.ts:97` was the only UTC-derived date in write paths). Fixed: replaced with `formatLocalDate(workout.date?.toDate() ?? new Date())`, matching `:51`. Re-grep clean. All four gates pass (root/mobile `tsc` 0, lint 0, jest 65/65). No new test: `formatLocalDate` rollover already covered. PR #4 opened; simulator timezone check pending (human). |
 
 ## Out-of-scope notes
 
 Things noticed during the audit that are **not** tasks. Add to this list rather than fixing opportunistically.
+
+- **(from LR-03 review, 2026-11-22) Dark/light flash on cold start.** `userProfile` starts as `colorScheme: "system"` in `mobile/app/_layout.tsx` until `fetchUserProfile` resolves, so a user who chose an override whose value differs from the device briefly sees the device scheme. Fix needs a decision: cache the last `colorScheme` locally (e.g. AsyncStorage) or keep themed UI hidden until the profile loads. Candidate for a new LR task.
+- **(from LR-03 review) `Alert.alert` dialogs follow the device appearance**, not the in-app override. They can't be themed per app on iOS, so accept this unless you override at the native level.
+- **(from LR-03 review) White splash and loading screen in dark mode.** `mobile/app.json` splash `backgroundColor` is fixed at `#ffffff` with no `dark` variant, and the auth-check spinner `View` in `_layout.tsx` has no background color.
+- **(from LR-03 review) Android:** `userInterfaceStyle` needs `expo-system-ui`, which is not installed. Pick this up when Android is wired, and run the workspace dedup checks when you add it.
 
 - ~15 uncaught `.then()` chains remain across both apps beyond the ones LR-06 addresses. Candidate for a follow-up sweep.
 - `CLAUDE.md` claims the mobile workout list is paginated (it is not — LR-05) and that the P2 dark-mode item is done (it is not — LR-03). Update the doc as part of those tasks.

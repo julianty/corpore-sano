@@ -15,7 +15,7 @@ import {
   signInWithGoogle,
   GOOGLE_SIGN_IN_CANCELLED,
 } from "../lib/auth";
-import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
+import { useAppTheme, useAppScheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface LoginScreenProps {
   onDemoMode: () => void;
@@ -28,6 +28,7 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const colors = useAppTheme();
+  const scheme = useAppScheme();
   const styles = makeStyles(colors);
 
   async function handleSubmit() {
@@ -79,6 +80,8 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
       </Text>
 
       <TextInput
+
+        keyboardAppearance={scheme}
         style={styles.input}
         placeholder="Email"
         placeholderTextColor={colors.textMuted}
@@ -89,6 +92,7 @@ export function LoginScreen({ onDemoMode }: LoginScreenProps) {
         onChangeText={setEmail}
       />
       <TextInput
+        keyboardAppearance={scheme}
         style={styles.input}
         placeholder="Password"
         placeholderTextColor={colors.textMuted}

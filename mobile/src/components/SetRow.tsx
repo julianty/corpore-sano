@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, TextInput, Pressable, Text, StyleSheet } from "react-native";
 import type { SetEntry } from "@shared/types";
-import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
+import { useAppTheme, useAppScheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface Props {
   index: number;
@@ -17,6 +17,7 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
   const [repsText, setRepsText] = useState(String(set.reps));
   const [weightText, setWeightText] = useState(String(set[weightField] ?? 0));
   const colors = useAppTheme();
+  const scheme = useAppScheme();
   const styles = makeStyles(colors);
 
   function stripLeadingZero(v: string) {
@@ -27,6 +28,7 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
     <View style={styles.setRow}>
       <Text style={[styles.setNumLabel, styles.setNumCol]}>{index + 1}</Text>
       <TextInput
+        keyboardAppearance={scheme}
         style={[styles.input, styles.setField]}
         value={repsText}
         onChangeText={(v) => {
@@ -39,6 +41,7 @@ export function SetRow({ index, set, weightUnit, editMode, onUpdate, onRemove }:
         selectTextOnFocus
       />
       <TextInput
+        keyboardAppearance={scheme}
         style={[styles.input, styles.setField]}
         value={weightText}
         onChangeText={(v) => {

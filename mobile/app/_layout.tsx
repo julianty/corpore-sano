@@ -1,6 +1,7 @@
 import { useEffect, useState, createContext } from "react";
 import { View, ActivityIndicator, useColorScheme } from "react-native";
 import { Slot } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { Provider } from "react-redux";
 import { store } from "@shared/store";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
@@ -107,6 +108,10 @@ function AppProviders() {
     <UserProfileContext.Provider
       value={{ userProfile, setUserProfile, handleSignOut, resolvedColorScheme }}
     >
+      {/* app.json's userInterfaceStyle is "automatic", so without this the
+          status bar follows the device, not the in-app override, and its
+          text can be invisible against the background. */}
+      <StatusBar style={resolvedColorScheme === "dark" ? "light" : "dark"} />
       <Slot />
     </UserProfileContext.Provider>
   );

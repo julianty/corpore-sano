@@ -149,7 +149,7 @@ mobile/app/
     _layout.tsx            # Bottom tab navigator
     index.tsx              # Dashboard
     workouts/
-      index.tsx            # Workout list (paginated, date desc)
+      index.tsx            # Workout list (date desc; NOT paginated — unbounded fetch, see LR-05)
       [workoutId].tsx      # Workout detail — exercise summary cards + ExerciseEditDrawer
 ```
 
@@ -226,7 +226,7 @@ Lift `weight` values are stored in **kg** (converted for display). Every lift ca
 
 ### Testing checklist
 
-**Exercise rename history (just fixed):**
+**Exercise rename history (still not manually tested):**
 
 1. Log sets under exercise "A" across multiple past workouts so `exerciseA` has historical data in Firestore.
 2. In a new workout, add exercise "A", log 2+ sets (<30s so timer is still pending).
@@ -241,7 +241,7 @@ Advanced analytics (charts, 1RM, export) are reserved for a paid tier — do not
 
 ### P2
 
-- ~~Fix dark mode — device setting not being read correctly; wire up a manual override toggle in settings~~ ✓ done
+- Fix dark mode — device setting not being read correctly; wire up a manual override toggle in settings — **partially done**: the manual override toggle works, but `mobile/app.json` still pins `userInterfaceStyle: "light"`, so the "system" option never follows the device in a built app. Fix is in PR #2 (LR-03, simulator-verified, unmerged).
 - UI update — mock up and implement UI improvements across the app
 
 ### P3

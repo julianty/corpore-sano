@@ -107,7 +107,6 @@ export function CustomExercises() {
                     returnKeyType="done"
                     selectTextOnFocus
                     placeholderTextColor={colors.textMuted}
-                    color={colors.textPrimary}
                   />
                   <Pressable
                     onPress={() => saveRename(id)}

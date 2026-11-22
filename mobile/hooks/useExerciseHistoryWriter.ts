@@ -15,7 +15,14 @@ export function useExerciseHistoryWriter(
 ) {
   const userIdRef = useRef(userId);
   const timersRef = useRef<
-    Record<string, { timerId: number; write: () => Promise<void> }>
+    // ReturnType<typeof setTimeout>, not `number`: `expo/types` pulls in
+    // @types/node globals (setTimeout -> NodeJS.Timeout) alongside RN's
+    // (setTimeout -> number), so which overload wins depends on declaration
+    // file ordering in the program. This is correct under either.
+    Record<
+      string,
+      { timerId: ReturnType<typeof setTimeout>; write: () => Promise<void> }
+    >
   >({});
 
   useEffect(() => {

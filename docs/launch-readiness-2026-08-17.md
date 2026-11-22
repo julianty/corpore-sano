@@ -58,7 +58,7 @@ After a PR is opened, edit this file's **Status** field for that task (`Open` �
 | LR-01 | Blocker | PR #1 | EAS production build ships with no Firebase config | `mobile/eas.json` |
 | LR-02 | Blocker | Open | "Continue as Demo" never authenticates → all Firestore denied | `mobile/src/components/LoginScreen.tsx` |
 | LR-03 | Blocker | PR #2 (verified) | `userInterfaceStyle: "light"` breaks system dark mode | `mobile/app.json` |
-| LR-04 | High | Open | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
+| LR-04 | High | PR #4 | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
 | LR-05 | High | Open | Workout list is unbounded + N+1, refetches on every focus | `mobile/app/(tabs)/workouts/index.tsx` |
 | LR-06 | High | Open | Workout writes fail silently (unawaited, uncaught) | `mobile/hooks/useWorkoutEditor.ts:41` |
 | LR-07 | High | Open | No ErrorBoundary on mobile — any render throw white-screens | `mobile/app/_layout.tsx` |
@@ -130,7 +130,7 @@ These three break the **shipped** build specifically. All three are invisible in
 
 ## LR-04 — UTC date slice writes lift history under the wrong day
 
-- **Status:** Open
+- **Status:** PR #4 (open). Code fix done and gates pass; simulator timezone check still pending (human).
 - **Where:** `mobile/hooks/useWorkoutEditor.ts:96-97` — `workout.date?.toDate().toISOString().slice(0, 10)`. Compare `:51` and `mobile/app/(tabs)/workouts/[workoutId].tsx:66`, which both correctly use `formatLocalDate`.
 - **What:** `closeHandler` is the only place in the codebase that derives a history date via UTC. Everywhere else uses `formatLocalDate` (`src/core/services/exerciseHistory.ts:35-40`), which reads local `getFullYear/getMonth/getDate`. `exerciseHistory.ts:33` carries a comment warning about this exact hazard, and `exerciseHistory.test.ts:76` has a test asserting the local-time basis. `formatLocalDate` is **already imported** in `useWorkoutEditor.ts:5`.
 - **Failure sequence:** A user in UTC-7 finishes an 8pm workout and removes a duplicate exercise from it. `closeHandler` re-schedules the surviving duplicate's history write stamped with tomorrow's date. That lift now lands in the wrong `setsThisWeek` bucket, and — because week bucketing keys off these date strings — can silently shift a set into the following week's stats.
@@ -283,6 +283,7 @@ Append one line per event. Newest last.
 | 2026-08-17 | LR-10 | Human ran `npx expo prebuild --clean && pod install && npx expo run:ios --configuration Release` on a real simulator: launches successfully, `ExpoFontLoader` crash confirmed gone. |
 | 2026-08-17 | LR-10 | `/code-review high` pass found 3 more findings, all fixed in a third commit: (1) `moduleSuffixes` only covered `.native`, not `.ios` — a future `Foo.ios.tsx` platform split would've silently diverged between what Metro bundles and what `tsc` checks; added `.ios` (no `.android`, not wired yet). (2) `expo-font`'s pin was override-only with no explicit dependency — a future Expo SDK bump could silently force a stale `expo-font` underneath `expo`'s own code instead of surfacing as a conflict; added it as an explicit `mobile/package.json` dependency too (mirrors the `react-native-screens` precedent). (3) `firebase-auth-rn.d.ts`'s comment cited the untracked `docs/launch-readiness-2026-08-17.md` — reworded to explain the runtime resolution path inline instead. All four gates re-verified green. |
 | 2026-08-17 | LR-10 | PR #3 squash-merged into `main` (`0428d1d`), branch deleted. Task complete. |
+| 2026-11-22 | LR-04 | Verified (`useWorkoutEditor.ts:97` was the only UTC-derived date in write paths). Fixed: replaced with `formatLocalDate(workout.date?.toDate() ?? new Date())`, matching `:51`. Re-grep clean. All four gates pass (root/mobile `tsc` 0, lint 0, jest 65/65). No new test: `formatLocalDate` rollover already covered. PR #4 opened; simulator timezone check pending (human). |
 
 ## Out-of-scope notes
 

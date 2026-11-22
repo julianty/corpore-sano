@@ -13,7 +13,7 @@ import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { MuscleTagStep } from "./MuscleTagStep";
 import { useExerciseSearch } from "../../hooks/useExerciseSearch";
-import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
+import { useAppTheme, useAppScheme, type AppColors } from "../../hooks/useAppTheme";
 
 interface ExercisePickerModalProps {
   visible: boolean;
@@ -26,6 +26,7 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
   const [step, setStep] = useState<"search" | "tagMuscle">("search");
   const [pendingName, setPendingName] = useState("");
   const colors = useAppTheme();
+  const scheme = useAppScheme();
   const styles = makeStyles(colors);
 
   const ctx = useContext(UserProfileContext);
@@ -91,13 +92,13 @@ export function ExercisePickerModal({ visible, onSelect, onClose }: ExercisePick
           </Pressable>
         </View>
         <TextInput
+          keyboardAppearance={scheme}
           style={styles.searchInput}
           placeholder="Search exercises..."
           placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
           autoFocus
-          color={colors.textPrimary}
         />
         <SectionList
           sections={filtered}

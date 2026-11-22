@@ -4,7 +4,7 @@ import { UserProfileContext } from "../../app/_layout";
 import { useAppSelector } from "@shared/hooks";
 import { FirestoreActions } from "@shared/helperFunctions/FirestoreActions";
 import { normalizeExerciseKey } from "@shared/core/services/exerciseHistory";
-import { useAppTheme, type AppColors } from "../../hooks/useAppTheme";
+import { useAppTheme, useAppScheme, type AppColors } from "../../hooks/useAppTheme";
 
 const PARENT_GROUPS = ["Shoulders", "Back", "Chest", "Arms", "Core", "Legs"];
 
@@ -14,6 +14,7 @@ export function CustomExercises() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const colors = useAppTheme();
+  const scheme = useAppScheme();
   const styles = makeStyles(colors);
 
   if (!ctx) return null;
@@ -100,6 +101,7 @@ export function CustomExercises() {
               {isEditing && (
                 <View style={styles.editBody}>
                   <TextInput
+                    keyboardAppearance={scheme}
                     style={styles.input}
                     value={draftName}
                     onChangeText={setDraftName}
@@ -107,7 +109,6 @@ export function CustomExercises() {
                     returnKeyType="done"
                     selectTextOnFocus
                     placeholderTextColor={colors.textMuted}
-                    color={colors.textPrimary}
                   />
                   <Pressable
                     onPress={() => saveRename(id)}

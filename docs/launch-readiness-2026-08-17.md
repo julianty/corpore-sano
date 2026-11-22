@@ -294,7 +294,7 @@ Things noticed during the audit that are **not** tasks. Add to this list rather 
 
 - **(from LR-03 review, 2026-11-22) Dark/light flash on cold start.** `userProfile` starts as `colorScheme: "system"` in `mobile/app/_layout.tsx` until `fetchUserProfile` resolves, so a user who chose an override whose value differs from the device briefly sees the device scheme. Fix needs a decision: cache the last `colorScheme` locally (e.g. AsyncStorage) or keep themed UI hidden until the profile loads. Candidate for a new LR task.
 - **(from LR-03 review) `Alert.alert` dialogs follow the device appearance**, not the in-app override. They can't be themed per app on iOS, so accept this unless you override at the native level.
-- **(from LR-03 review) White splash and loading screen in dark mode.** `mobile/app.json` splash `backgroundColor` is fixed at `#ffffff` with no `dark` variant, and the auth-check spinner `View` in `_layout.tsx` has no background color.
+- **(from LR-03 review) White splash and loading screen in dark mode.** ~~Splash `backgroundColor` fixed at `#ffffff`~~ fixed 2026-11-22: the splash is now `#0b0b0c` with the app-icon mark. **Still open:** the auth-check spinner `View` in `mobile/app/_layout.tsx` has no background color, so it stays white.
 - **(from LR-03 review) Android:** `userInterfaceStyle` needs `expo-system-ui`, which is not installed. Pick this up when Android is wired, and run the workspace dedup checks when you add it.
 
 - ~15 uncaught `.then()` chains remain across both apps beyond the ones LR-06 addresses. Candidate for a follow-up sweep.

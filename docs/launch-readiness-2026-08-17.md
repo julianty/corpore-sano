@@ -58,7 +58,7 @@ After a PR is opened, edit this file's **Status** field for that task (`Open` �
 | LR-01 | Blocker | Merged (EAS path unverified) | EAS production build ships with no Firebase config | `mobile/eas.json` |
 | LR-02 | Blocker | Open | "Continue as Demo" never authenticates → all Firestore denied | `mobile/src/components/LoginScreen.tsx` |
 | LR-03 | Blocker | Merged | `userInterfaceStyle: "light"` breaks system dark mode | `mobile/app.json` |
-| LR-04 | High | Open | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
+| LR-04 | High | Merged | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
 | LR-05 | High | Open | Workout list is unbounded + N+1, refetches on every focus | `mobile/app/(tabs)/workouts/index.tsx` |
 | LR-06 | High | Open | Workout writes fail silently (unawaited, uncaught) | `mobile/hooks/useWorkoutEditor.ts:41` |
 | LR-07 | High | Open | No ErrorBoundary on mobile — any render throw white-screens | `mobile/app/_layout.tsx` |
@@ -130,7 +130,7 @@ These three break the **shipped** build specifically. All three are invisible in
 
 ## LR-04 — UTC date slice writes lift history under the wrong day
 
-- **Status:** Open
+- **Status:** Merged (PR #4). Verified by a logic check under TZ in place of the simulator run, with the human's approval.
 - **Where:** `mobile/hooks/useWorkoutEditor.ts:96-97` — `workout.date?.toDate().toISOString().slice(0, 10)`. Compare `:51` and `mobile/app/(tabs)/workouts/[workoutId].tsx:66`, which both correctly use `formatLocalDate`.
 - **What:** `closeHandler` is the only place in the codebase that derives a history date via UTC. Everywhere else uses `formatLocalDate` (`src/core/services/exerciseHistory.ts:35-40`), which reads local `getFullYear/getMonth/getDate`. `exerciseHistory.ts:33` carries a comment warning about this exact hazard, and `exerciseHistory.test.ts:76` has a test asserting the local-time basis. `formatLocalDate` is **already imported** in `useWorkoutEditor.ts:5`.
 - **Failure sequence:** A user in UTC-7 finishes an 8pm workout and removes a duplicate exercise from it. `closeHandler` re-schedules the surviving duplicate's history write stamped with tomorrow's date. That lift now lands in the wrong `setsThisWeek` bucket, and — because week bucketing keys off these date strings — can silently shift a set into the following week's stats.
@@ -285,6 +285,8 @@ Append one line per event. Newest last.
 | 2026-08-17 | LR-10 | PR #3 squash-merged into `main` (`0428d1d`), branch deleted. Task complete. |
 | 2026-11-22 | LR-03 | `/code-review` of PR #2 found that switching to `"automatic"` lets native chrome follow the device instead of the in-app override. Fixed on the PR: `expo-status-bar` `<StatusBar>` driven by `resolvedColorScheme` in `mobile/app/_layout.tsx` (status bar text could be invisible), and `keyboardAppearance={useAppScheme()}` on all 6 TextInputs. Merged `main` into the branch first (picks up LR-10). All four gates pass. Human waived a fresh simulator run for this minor follow-up. Squash-merged. Remaining review findings logged in Out-of-scope notes. |
 | 2026-11-22 | LR-01 | Apple account no longer a blocker (paid team `8C8536FBN8`), but the human chose to ship via **local Xcode builds**, not EAS, which avoids EAS entirely. The bug only affects EAS cloud builds, since local builds inline `mobile/.env`, and the 2026-11-22 device install proves that path. Merged PR #1 anyway as a no-op safety net in case EAS is used later. Cloud-build verification waived. Documented the local release flow, including the `.env` requirement and `ios.buildNumber` bumps, in CLAUDE.md. |
+| 2026-11-22 | LR-04 | Verified (`useWorkoutEditor.ts:97` was the only UTC-derived date in write paths). Fixed: replaced with `formatLocalDate(workout.date?.toDate() ?? new Date())`, matching `:51`. Re-grep clean. All four gates pass (root/mobile `tsc` 0, lint 0, jest 65/65). No new test: `formatLocalDate` rollover already covered. PR #4 opened; simulator timezone check pending (human). |
+| 2026-11-22 | LR-04 | No simulator UI automation is available, so the human approved a logic check in place of the simulator run. Under `TZ=Pacific/Kiritimati` (local Nov 23 10:02, UTC Nov 22) the old expression gave `2026-11-22` and `formatLocalDate` gave `2026-11-23`, the correct local date. Under `America/Los_Angeles` (no date mismatch) both agree. The fix is the same call already used by the save path at `useWorkoutEditor.ts:51`. Squash-merged. |
 
 ## Out-of-scope notes
 

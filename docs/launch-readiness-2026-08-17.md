@@ -55,7 +55,7 @@ After a PR is opened, edit this file's **Status** field for that task (`Open` �
 
 | ID | Sev | Status | Title | Primary file |
 |---|---|---|---|---|
-| LR-01 | Blocker | PR #1 | EAS production build ships with no Firebase config | `mobile/eas.json` |
+| LR-01 | Blocker | Merged (EAS path unverified) | EAS production build ships with no Firebase config | `mobile/eas.json` |
 | LR-02 | Blocker | Open | "Continue as Demo" never authenticates → all Firestore denied | `mobile/src/components/LoginScreen.tsx` |
 | LR-03 | Blocker | Merged | `userInterfaceStyle: "light"` breaks system dark mode | `mobile/app.json` |
 | LR-04 | High | Open | UTC date slice writes history under the wrong day | `mobile/hooks/useWorkoutEditor.ts:97` |
@@ -80,7 +80,7 @@ These three break the **shipped** build specifically. All three are invisible in
 
 ## LR-01 — EAS production build ships with no Firebase config
 
-- **Status:** PR #1 (open, not merged) — code fix complete and gates pass; final verification blocked on the human purchasing an Apple Developer Program account, needed to produce a signed cloud build to test on device. No further agent action needed until that's done.
+- **Status:** Merged (PR #1). EAS path fixed but **never exercised**: the human ships via local Xcode builds, not EAS, so the cloud-build verification is waived. Local builds get the config from `mobile/.env` (proven by the 2026-11-22 device install). See CLAUDE.md, "iOS release build".
 - **Where:** `mobile/eas.json` (no `env` or `environment` on any profile) · `mobile/.env` (gitignored via `mobile/.gitignore`) · consumed by `src/initializeFirebase.native.ts:5-11`.
 - **What:** `initializeFirebase.native.ts` reads six `EXPO_PUBLIC_FIREBASE_*` vars from `process.env`. Those live only in `mobile/.env`, which is gitignored and therefore absent from the EAS build context. `mobile/eas.json` declares no `env` block and no `"environment"` key on the `production` profile — and without `"environment"`, EAS dashboard environment variables are not applied to the profile either. So the production bundle inlines `undefined` for every value and calls `initializeApp({ apiKey: undefined, ... })`.
 - **Failure sequence:** `expo run:ios` locally works (the `.env` file is on disk) → EAS production build succeeds with no error → installed app cannot reach Firebase at all. Auth throws `auth/invalid-api-key`; nothing loads. **This only manifests in the build you ship to users.**
@@ -284,6 +284,7 @@ Append one line per event. Newest last.
 | 2026-08-17 | LR-10 | `/code-review high` pass found 3 more findings, all fixed in a third commit: (1) `moduleSuffixes` only covered `.native`, not `.ios` — a future `Foo.ios.tsx` platform split would've silently diverged between what Metro bundles and what `tsc` checks; added `.ios` (no `.android`, not wired yet). (2) `expo-font`'s pin was override-only with no explicit dependency — a future Expo SDK bump could silently force a stale `expo-font` underneath `expo`'s own code instead of surfacing as a conflict; added it as an explicit `mobile/package.json` dependency too (mirrors the `react-native-screens` precedent). (3) `firebase-auth-rn.d.ts`'s comment cited the untracked `docs/launch-readiness-2026-08-17.md` — reworded to explain the runtime resolution path inline instead. All four gates re-verified green. |
 | 2026-08-17 | LR-10 | PR #3 squash-merged into `main` (`0428d1d`), branch deleted. Task complete. |
 | 2026-11-22 | LR-03 | `/code-review` of PR #2 found that switching to `"automatic"` lets native chrome follow the device instead of the in-app override. Fixed on the PR: `expo-status-bar` `<StatusBar>` driven by `resolvedColorScheme` in `mobile/app/_layout.tsx` (status bar text could be invisible), and `keyboardAppearance={useAppScheme()}` on all 6 TextInputs. Merged `main` into the branch first (picks up LR-10). All four gates pass. Human waived a fresh simulator run for this minor follow-up. Squash-merged. Remaining review findings logged in Out-of-scope notes. |
+| 2026-11-22 | LR-01 | Apple account no longer a blocker (paid team `8C8536FBN8`), but the human chose to ship via **local Xcode builds**, not EAS, which avoids EAS entirely. The bug only affects EAS cloud builds, since local builds inline `mobile/.env`, and the 2026-11-22 device install proves that path. Merged PR #1 anyway as a no-op safety net in case EAS is used later. Cloud-build verification waived. Documented the local release flow, including the `.env` requirement and `ios.buildNumber` bumps, in CLAUDE.md. |
 
 ## Out-of-scope notes
 

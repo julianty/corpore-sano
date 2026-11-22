@@ -136,6 +136,46 @@ Email/password and Google Sign-In, both landing on the single shared Firebase
   SHA-1 fingerprints + `google-services.json`. The JS code path is already
   cross-platform.
 
+### iOS release build (local Xcode — no EAS)
+
+iOS builds are made **locally**, not with EAS cloud builds. `mobile/eas.json`
+has Firebase config inlined for its `preview`/`production` profiles (LR-01), so
+EAS would work, but that path has never been exercised.
+
+**The building machine must have `mobile/.env`.** It holds the six
+`EXPO_PUBLIC_FIREBASE_*` vars that Metro inlines into the JS bundle at build
+time. It is gitignored, so a fresh clone lacks it, and a build made without it
+cannot reach Firebase at all (`auth/invalid-api-key`). The build will still
+succeed and no error will appear until launch.
+
+Signing uses the paid Individual team `8C8536FBN8`, pinned as
+`ios.appleTeamId` in `mobile/app.json` so `prebuild --clean` keeps it.
+`mobile/ios/` is gitignored and generated, so always regenerate it rather than
+reusing a stale copy.
+
+```bash
+cd mobile
+CI=1 npx expo prebuild --platform ios --clean   # regenerate ios/ from app.json
+
+# Install a Release build on a connected device:
+cd ios
+xcodebuild -workspace CorporeSano.xcworkspace -scheme CorporeSano \
+  -configuration Release -destination id=<device-udid> \
+  -derivedDataPath build/dd -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device-udid> \
+  build/dd/Build/Products/Release-iphoneos/CorporeSano.app
+```
+
+**App Store / TestFlight upload:**
+
+1. Bump the version in `mobile/app.json` **before** prebuilding. Every upload
+   needs a unique `ios.buildNumber`, which is not currently set, so it
+   defaults to `"1"`. Add it and increment it each upload. Bump `version`
+   (currently `1.0.0`) for user-facing releases.
+2. Run `prebuild --clean` as above, then `open ios/CorporeSano.xcworkspace`.
+3. In Xcode, choose **Product → Archive** with the "Any iOS Device" destination,
+   then **Distribute App → App Store Connect** from the Organizer.
+
 ## Testing
 
 Jest with ts-jest. Firebase and Mantine ESM modules are stubbed in `__mocks__/`. Tests live alongside source: `src/core/services/muscleCalculations.test.ts`, `src/lib/utils.test.ts`.

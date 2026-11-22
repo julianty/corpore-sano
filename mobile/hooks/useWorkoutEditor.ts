@@ -93,8 +93,7 @@ export function useWorkoutEditor(userId: string | null, workoutId: string) {
     );
 
     if (duplicateEntry) {
-      const workoutDateStr =
-        workout.date?.toDate().toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+      const workoutDateStr = formatLocalDate(workout.date?.toDate() ?? new Date());
       scheduleWrite(duplicateEntry[0], updatedExercises, workoutDateStr);
     } else {
       cancelKey(firestoreKey);
